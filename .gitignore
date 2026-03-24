@@ -1,0 +1,48 @@
+# 1. 忽略软连接与特定大文件夹
+autodl-tmp/
+node_modules/
+dist/
+build/
+output/
+runs/
+predictions/
+results*/
+
+# 2. 忽略模型权重与大文件
+*.pth
+*.tar
+*.pkl
+*.pth.tar
+*.onnx
+
+# 3. 忽略日志与临时文件
+*.log
+*.tmp
+*.temp
+temp/
+logs/
+
+# 4. 忽略系统/IDE文件
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 5. 忽略编译产物（Python/Pycache）
+*.pyc
+__pycache__/
+*.class
+target/
+
+# 6. 忽略敏感配置
+config/local.yml
+.env
+.env.local
+!config/example.yml
+!.env.example
+
+# 7. 锁文件
+/package-lock.json
+/yarn.lock
