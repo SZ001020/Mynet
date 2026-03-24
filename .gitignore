@@ -46,3 +46,9 @@ config/local.yml
 # 7. 锁文件
 /package-lock.json
 /yarn.lock
+
+# 3. 忽略特定大型预训练权重
+*.npz
+FTransUNet/pretrain/
+ASMFNet/pretrain/
+RS3Mamba/pretrain/
