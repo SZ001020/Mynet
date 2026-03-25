@@ -51,6 +51,8 @@ os.makedirs(LOG_DIR, exist_ok=True)
 CSV_LOG_PATH = os.path.join(LOG_DIR, "MFNet_{}_seed{}.csv".format(DATASET, SEED))
 CSV_STANDARD_FIELDS = [
     "model", "dataset", "seed", "epoch", "iter", "train_loss",
+    "train_loss_ce", "train_loss_boundary", "train_loss_object", "loss_mode",
+    "lambda_bdy", "lambda_obj", "structure_supervision",
     "val_metric", "best_val_metric", "lr", "batch_size", "window_size", "stride",
     "total_acc", "mean_f1", "kappa", "mean_miou",
     "roads_f1", "buildings_f1", "low_veg_f1", "trees_f1", "cars_f1", "clutter_f1",
@@ -236,7 +238,17 @@ def train(net, optimizer, epochs, scheduler=None, weights=WEIGHTS, save_epoch=1)
     use_amp = os.environ.get("SSRS_MFNET_USE_AMP", "1") == "1"
     micro_bs = int(os.environ.get("SSRS_MFNET_MICRO_BS", "2"))
     eval_num_tiles = int(os.environ.get("SSRS_EVAL_NUM_TILES", "0"))
+    loss_mode = os.environ.get("SSRS_LOSS_MODE", "SEG+BDY+OBJ")
+    lambda_bdy = float(os.environ.get("SSRS_LAMBDA_BDY", "0.1"))
+    lambda_obj = float(os.environ.get("SSRS_LAMBDA_OBJ", "1.0"))
+    use_structure = os.environ.get("SSRS_USE_STRUCTURE_LOSS", "1") == "1"
     scaler = amp.GradScaler("cuda", enabled=use_amp)
+    criterion_b = BoundaryLoss()
+    criterion_o = ObjectLoss()
+
+    valid_loss_modes = {"SEG", "SEG+BDY", "SEG+OBJ", "SEG+BDY+OBJ"}
+    if loss_mode not in valid_loss_modes:
+        raise ValueError("Unsupported SSRS_LOSS_MODE='{}', expected one of {}".format(loss_mode, sorted(valid_loss_modes)))
 
     iter_ = 0
     MIoU_best = 0.00
@@ -257,13 +269,16 @@ def train(net, optimizer, epochs, scheduler=None, weights=WEIGHTS, save_epoch=1)
     for e in range(1, epochs + 1):
         net.train()
         start_time = time.time()
-        for batch_idx, (data, dsm, target) in enumerate(train_loader):
+        for batch_idx, (data, dsm, boundary, object_map, target) in enumerate(train_loader):
             optimizer.zero_grad()
 
             batch_size_curr = data.shape[0]
             step_micro_bs = max(1, min(micro_bs, batch_size_curr))
             num_chunks = (batch_size_curr + step_micro_bs - 1) // step_micro_bs
             batch_loss = 0.0
+            batch_loss_ce = 0.0
+            batch_loss_boundary = 0.0
+            batch_loss_object = 0.0
             output_vis = None
             target_vis = None
 
@@ -271,11 +286,33 @@ def train(net, optimizer, epochs, scheduler=None, weights=WEIGHTS, save_epoch=1)
                 end = min(start + step_micro_bs, batch_size_curr)
                 data_chunk = Variable(data[start:end].cuda(non_blocking=True))
                 dsm_chunk = Variable(dsm[start:end].cuda(non_blocking=True))
+                boundary_chunk = Variable(boundary[start:end].cuda(non_blocking=True))
+                object_chunk = Variable(object_map[start:end].cuda(non_blocking=True))
                 target_chunk = Variable(target[start:end].cuda(non_blocking=True))
 
                 with amp.autocast("cuda", enabled=use_amp):
                     output = net(data_chunk, dsm_chunk, mode='Train')
-                    loss_full = loss_calc(output, target_chunk, weights)
+                    loss_ce = loss_calc(output, target_chunk, weights)
+
+                    if use_structure and loss_mode in ("SEG+BDY", "SEG+BDY+OBJ"):
+                        loss_boundary = criterion_b(output, boundary_chunk)
+                    else:
+                        loss_boundary = output.new_zeros(())
+
+                    if use_structure and loss_mode in ("SEG+OBJ", "SEG+BDY+OBJ"):
+                        loss_object = criterion_o(output, object_chunk)
+                    else:
+                        loss_object = output.new_zeros(())
+
+                    if loss_mode == "SEG":
+                        loss_full = loss_ce
+                    elif loss_mode == "SEG+BDY":
+                        loss_full = loss_ce + lambda_bdy * loss_boundary
+                    elif loss_mode == "SEG+OBJ":
+                        loss_full = loss_ce + lambda_obj * loss_object
+                    else:
+                        loss_full = loss_ce + lambda_bdy * loss_boundary + lambda_obj * loss_object
+
                     loss = loss_full / num_chunks
 
                 if scaler.is_enabled():
@@ -284,11 +321,14 @@ def train(net, optimizer, epochs, scheduler=None, weights=WEIGHTS, save_epoch=1)
                     loss.backward()
 
                 batch_loss += float(loss_full.item())
+                batch_loss_ce += float(loss_ce.item())
+                batch_loss_boundary += float(loss_boundary.item())
+                batch_loss_object += float(loss_object.item())
                 if output_vis is None:
                     output_vis = output.detach()
                     target_vis = target_chunk.detach()
 
-                del data_chunk, dsm_chunk, target_chunk, output, loss_full, loss
+                del data_chunk, dsm_chunk, boundary_chunk, object_chunk, target_chunk, output, loss_ce, loss_boundary, loss_object, loss_full, loss
 
             if scaler.is_enabled():
                 scaler.step(optimizer)
@@ -328,6 +368,13 @@ def train(net, optimizer, epochs, scheduler=None, weights=WEIGHTS, save_epoch=1)
                 "epoch": e,
                 "iter": iter_,
                 "train_loss": float(mean_losses[max(0, iter_ - 1)]),
+                "train_loss_ce": float(batch_loss_ce),
+                "train_loss_boundary": float(batch_loss_boundary),
+                "train_loss_object": float(batch_loss_object),
+                "loss_mode": loss_mode,
+                "lambda_bdy": float(lambda_bdy),
+                "lambda_obj": float(lambda_obj),
+                "structure_supervision": int(use_structure),
                 "val_metric": float(MIoU),
                 "best_val_metric": float(max(MIoU_best, MIoU)),
                 "lr": float(current_lr),
