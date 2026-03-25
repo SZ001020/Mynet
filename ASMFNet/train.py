@@ -53,21 +53,26 @@ DATASET_NAME = os.environ.get("SSRS_DATASET", "Vaihingen")
 LOG_DIR = os.environ.get("SSRS_LOG_DIR", "./runs/week1_baseline")
 os.makedirs(LOG_DIR, exist_ok=True)
 CSV_LOG_PATH = os.path.join(LOG_DIR, "ASMFNet_{}_seed{}.csv".format(DATASET_NAME, SEED))
+CSV_STANDARD_FIELDS = [
+    "model", "dataset", "seed", "epoch", "iter", "train_loss",
+    "val_metric", "best_val_metric", "lr", "batch_size", "window_size", "stride",
+    "total_acc", "mean_f1", "kappa", "mean_miou",
+    "roads_f1", "buildings_f1", "low_veg_f1", "trees_f1", "cars_f1", "clutter_f1",
+    "timestamp",
+]
 
 
 def init_csv_logger(csv_path):
     with open(csv_path, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow([
-            "model", "dataset", "seed", "epoch", "iter", "train_loss",
-            "val_metric", "best_val_metric", "lr", "batch_size", "window_size", "stride"
-        ])
+        writer.writerow(CSV_STANDARD_FIELDS)
 
 
-def append_csv_logger(csv_path, row):
+def append_csv_logger(csv_path, row_dict):
+    ordered_row = [row_dict.get(k, "") for k in CSV_STANDARD_FIELDS]
     with open(csv_path, "a", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(row)
+        writer.writerow(ordered_row)
 
 
 init_csv_logger(CSV_LOG_PATH)
@@ -259,7 +264,7 @@ optimizer = optim.SGD(net.parameters(), lr=base_lr, momentum=0.9, weight_decay=0
 scheduler = optim.lr_scheduler.MultiStepLR(optimizer, [25, 35, 45], gamma=0.1)
 
 
-def test(net, test_ids, num1, num2, all=False, stride=WINDOW_SIZE[0], batch_size=BATCH_SIZE, window_size=WINDOW_SIZE):
+def test(net, test_ids, num1, num2, all=False, stride=WINDOW_SIZE[0], batch_size=BATCH_SIZE, window_size=WINDOW_SIZE, return_details=False):
     # Use the network on the test set
     test_images = (1 / 255 * np.asarray(io.imread(DATA_FOLDER.format(id)), dtype='float32') for id in test_ids)
     test_dsms = (np.asarray(io.imread(DSM_FOLDER.format(id)), dtype='float32') for id in test_ids)
@@ -308,11 +313,23 @@ def test(net, test_ids, num1, num2, all=False, stride=WINDOW_SIZE[0], batch_size
             all_gts.append(gt_e)
             # Compute some metrics
             # metrics(pred.ravel(), gt_e.ravel())
-    accuracy = metrics(np.concatenate([p.ravel() for p in all_preds]),
-                       np.concatenate([p.ravel() for p in all_gts]).ravel())
+    metric_result = metrics(
+        np.concatenate([p.ravel() for p in all_preds]),
+        np.concatenate([p.ravel() for p in all_gts]).ravel(),
+        return_details=return_details,
+    )
+    if return_details:
+        accuracy, metric_details = metric_result
+    else:
+        accuracy = metric_result
+
     if all:
+        if return_details:
+            return accuracy, all_preds, all_gts, metric_details
         return accuracy, all_preds, all_gts
     else:
+        if return_details:
+            return accuracy, metric_details
         return accuracy
 
 
@@ -372,22 +389,33 @@ def train(net, optimizer, epochs, scheduler=None, weights=WEIGHTS, save_epoch=2)
 
         if e % eval_every_epochs == 0:
             eval_test_ids = test_ids[:eval_num_tiles] if eval_num_tiles > 0 else test_ids
-            acc = test(net, eval_test_ids, all=False, stride=eval_stride, num1=e, num2=batch_idx)
+            acc, metric_details = test(net, eval_test_ids, all=False, stride=eval_stride, num1=e, num2=batch_idx, return_details=True)
             current_lr = optimizer.param_groups[0]["lr"]
-            append_csv_logger(CSV_LOG_PATH, [
-                "ASMFNet",
-                DATASET_NAME,
-                SEED,
-                e,
-                iter_,
-                float(mean_losses[max(0, iter_ - 1)]),
-                float(acc),
-                float(max(acc_best, acc)),
-                float(current_lr),
-                BATCH_SIZE,
-                "{}x{}".format(WINDOW_SIZE[0], WINDOW_SIZE[1]),
-                eval_stride,
-            ])
+            append_csv_logger(CSV_LOG_PATH, {
+                "model": "ASMFNet",
+                "dataset": DATASET_NAME,
+                "seed": SEED,
+                "epoch": e,
+                "iter": iter_,
+                "train_loss": float(mean_losses[max(0, iter_ - 1)]),
+                "val_metric": float(acc),
+                "best_val_metric": float(max(acc_best, acc)),
+                "lr": float(current_lr),
+                "batch_size": BATCH_SIZE,
+                "window_size": "{}x{}".format(WINDOW_SIZE[0], WINDOW_SIZE[1]),
+                "stride": eval_stride,
+                "total_acc": metric_details.get("total_acc"),
+                "mean_f1": metric_details.get("mean_f1"),
+                "kappa": metric_details.get("kappa"),
+                "mean_miou": metric_details.get("mean_miou"),
+                "roads_f1": metric_details.get("roads_f1"),
+                "buildings_f1": metric_details.get("buildings_f1"),
+                "low_veg_f1": metric_details.get("low_veg_f1"),
+                "trees_f1": metric_details.get("trees_f1"),
+                "cars_f1": metric_details.get("cars_f1"),
+                "clutter_f1": metric_details.get("clutter_f1"),
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            })
             oa = 0
             if acc > acc_best:
                 if save_best:

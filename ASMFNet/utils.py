@@ -110,7 +110,7 @@ def grouper(n, iterable):
         yield chunk
 
 
-def metrics(predictions, gts, label_values=LABELS):
+def metrics(predictions, gts, label_values=LABELS, return_details=False):
     cm = confusion_matrix(
         gts,
         predictions,
@@ -157,5 +157,20 @@ def metrics(predictions, gts, label_values=LABELS):
     MIoU = np.nanmean(MIoU[:5])
     print('mean MIoU: %.4f' % (MIoU))
     print("---")
+
+    if return_details:
+        details = {
+            "total_acc": float(accuracy),
+            "mean_f1": float(np.nanmean(F1Score[:5])),
+            "kappa": float(kappa),
+            "mean_miou": float(MIoU),
+            "roads_f1": float(F1Score[0]) if len(F1Score) > 0 else None,
+            "buildings_f1": float(F1Score[1]) if len(F1Score) > 1 else None,
+            "low_veg_f1": float(F1Score[2]) if len(F1Score) > 2 else None,
+            "trees_f1": float(F1Score[3]) if len(F1Score) > 3 else None,
+            "cars_f1": float(F1Score[4]) if len(F1Score) > 4 else None,
+            "clutter_f1": float(F1Score[5]) if len(F1Score) > 5 else None,
+        }
+        return accuracy, details
 
     return accuracy

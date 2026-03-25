@@ -134,6 +134,18 @@
 - val_metric_main 建议为 mIoU
 - val_metric_aux 可放 mean F1 或 Boundary F1
 
+建议扩展字段（用于统一横向分析）：
+- total_acc
+- mean_f1
+- kappa
+- mean_miou
+- roads_f1
+- buildings_f1
+- low_veg_f1
+- trees_f1
+- cars_f1
+- clutter_f1
+
 ### 6.3 权重保存规则
 建议按统一命名保存：
 - model_dataset_split_seed_epoch_metric.pth
@@ -191,7 +203,11 @@
 - baseline_summary.md
 - baseline_table.csv
 - val_curves.png
+- loss_curves.png
 - rank_table.csv
+
+建议追加：
+- detailed_metrics_table.csv（统一保存 OA/F1/Kappa/每类 F1）
 
 ### 8.3 汇总最小字段
 建议汇总表至少包含：
@@ -300,6 +316,22 @@
 落地建议：
 - 默认采用 throughput best 作为正式训练参数起点。
 - 当两组吞吐接近时，优先选择显存更安全、训练更稳定的组合作为生产配置。
+
+### 11.11 验证触发节奏不一致（新增）
+- 现象：有的脚本在 epoch 中间按 step 做验证，日志上看起来像“半个 epoch 就评估”。
+- 处理：统一在日志中记录 `epoch + iter`，并在配置中明确验证触发规则（按 step 或按 epoch）。
+
+### 11.12 多卡设备绑定被硬编码覆盖（新增）
+- 现象：设置了 CUDA_VISIBLE_DEVICES，但实际仍只占用默认 GPU。
+- 处理：禁止硬编码 `cuda:0`；优先通过环境变量传递设备；并发训练前后都用 nvidia-smi 复核。
+
+### 11.13 输入尺寸与模型结构约束冲突（新增）
+- 现象：切换 patch/window 尺寸后报 shape mismatch。
+- 处理：把输入尺寸纳入实验配置快照；每次改尺寸先做 smoke test，再启动正式训练。
+
+### 11.14 汇总缺失详细指标或曲线（新增）
+- 现象：报告中出现 N/A 或 No curve data found。
+- 处理：检查 CSV 字段是否完整、是否至少有一条验证记录；必要时从 train.log 回填 detailed metrics。
 
 ## 12. 通用验收标准
 一个模型接入框架后，满足以下条件视为通过：

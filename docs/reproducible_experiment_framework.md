@@ -12,7 +12,7 @@
 仓库目标能力：
 - 统一数据根路径与数据集选择（环境变量驱动）
 - 统一随机种子入口
-- 统一训练日志 CSV 字段
+- 统一训练日志 CSV 字段（基础字段 + 详细指标字段）
 - 统一汇总脚本（自动生成基线表和曲线图）
 - 一键运行脚本（串行跑三模型并汇总）
 
@@ -75,7 +75,7 @@ export MKL_NUM_THREADS=16
 ## 4. 统一指标记录规范
 
 ### 4.1 统一 CSV 字段
-所有模型训练日志统一写入以下字段：
+所有模型训练日志至少写入以下基础字段：
 - model
 - dataset
 - seed
@@ -88,6 +88,19 @@ export MKL_NUM_THREADS=16
 - batch_size
 - window_size
 - stride
+
+建议同时写入以下扩展字段（近期已在三模型统一）：
+- total_acc
+- mean_f1
+- kappa
+- mean_miou
+- roads_f1
+- buildings_f1
+- low_veg_f1
+- trees_f1
+- cars_f1
+- clutter_f1
+- timestamp
 
 ### 4.2 当前实现说明
 当前三个模型均已写入统一字段，但 val_metric 来自各模型现有评估函数输出。
@@ -109,6 +122,8 @@ export MKL_NUM_THREADS=16
 - 读取 SSRS_LOG_DIR 下所有 CSV
 - 生成基线汇总表：week1_baseline_summary.md
 - 生成验证曲线图：week1_val_curves.png
+- 生成训练损失曲线图：week1_loss_curves.png
+- 从 train.log 抽取详细指标并写入汇总表（Total Acc/mean F1/Kappa/mean MIoU/各类 F1）
 
 ### 5.2 一键运行脚本
 使用脚本：
@@ -129,6 +144,7 @@ export MKL_NUM_THREADS=16
 - 各模型 CSV
 - week1_baseline_summary.md
 - week1_val_curves.png
+- week1_loss_curves.png
 
 ### 6.2 权重输出
 - MFNet
@@ -241,6 +257,26 @@ export MKL_NUM_THREADS=16
 - 以吞吐最优参数作为默认训练参数。
 - 若两组吞吐接近，优先选择更稳的组合（OOM 风险更低、波动更小）。
 
+### 9.11 验证节奏导致“半个 epoch 就评估”误解（新增）
+- 现象：日志显示 epoch 尚未结束就触发验证，容易误判为训练流程异常。
+- 原因：代码按 step 间隔触发验证，而不是仅在 epoch 末尾验证。
+- 处理：在日志中同时记录 epoch 与 iter，并在文档中明确“验证触发条件（按步数或按 epoch）”。
+
+### 9.12 多卡并行时 GPU 未按预期工作（新增）
+- 现象：期望用 GPU1 训练，但进程始终占用 GPU0 或只用单卡。
+- 原因：脚本中存在硬编码 device，覆盖了外部 CUDA_VISIBLE_DEVICES。
+- 处理：统一以环境变量决定设备；移除硬编码 `cuda:0`；并发任务前先用 nvidia-smi 二次确认绑定。
+
+### 9.13 ASMFNet 输入尺寸与模块约束冲突（新增）
+- 现象：训练时报尺寸不匹配，常见于 224 与 256 切换时。
+- 原因：部分分支或预训练结构对输入尺寸有隐式约束。
+- 处理：在实验配置里固定窗口尺寸；切换尺寸时先做 1 到 2 epoch smoke test 再正式开跑。
+
+### 9.14 汇总脚本出现 N/A 或空曲线（新增）
+- 现象：summary 表中 detailed metrics 为 N/A，或图中显示 No curve data found。
+- 原因：日志缺字段、未到验证点、或 train.log 未写入可解析指标行。
+- 处理：先检查 CSV 表头与首行数据，再检查 train.log 是否包含指标关键字；必要时补跑短程验证生成最小可汇总样本。
+
 ### 9.2 日志格式不一致
 - 现象：汇总脚本读取失败或字段为空
 - 处理：
@@ -281,3 +317,4 @@ export MKL_NUM_THREADS=16
 执行完成后直接查看：
 - /root/SSRS/runs/week1_baseline/week1_baseline_summary.md
 - /root/SSRS/runs/week1_baseline/week1_val_curves.png
+- /root/SSRS/runs/week1_baseline/week1_loss_curves.png
