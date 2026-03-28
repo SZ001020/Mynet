@@ -38,6 +38,7 @@ IF_SAM = True
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 STRUCTURE_SUPERVISION = os.environ.get("SSRS_USE_STRUCTURE_LOSS", "1") == "1"
+REQUIRE_STRUCTURE_PRIORS = os.environ.get("SSRS_REQUIRE_STRUCTURE_PRIORS", "1") == "1"
 BOUNDARY_TEMPLATE_ENV = os.environ.get("SSRS_BOUNDARY_TEMPLATE", "")
 OBJECT_TEMPLATE_ENV = os.environ.get("SSRS_OBJECT_TEMPLATE", "")
 
@@ -160,6 +161,29 @@ class ISPRS_dataset(torch.utils.data.Dataset):
         for f in self.data_files + self.dsm_files + self.label_files:
             if not os.path.isfile(f):
                 raise KeyError('{} is not a file !'.format(f))
+
+        if STRUCTURE_SUPERVISION and REQUIRE_STRUCTURE_PRIORS:
+            missing_boundary = [f for f in self.boundary_files if f is not None and (not os.path.isfile(f))]
+            missing_object = [f for f in self.object_files if f is not None and (not os.path.isfile(f))]
+            if missing_boundary or missing_object:
+                messages = []
+                if missing_boundary:
+                    messages.append(
+                        "Missing boundary priors (showing up to 3): {}".format(
+                            ", ".join(missing_boundary[:3])
+                        )
+                    )
+                if missing_object:
+                    messages.append(
+                        "Missing object priors (showing up to 3): {}".format(
+                            ", ".join(missing_object[:3])
+                        )
+                    )
+                raise FileNotFoundError(
+                    "Structure supervision is enabled but prior files are missing. "
+                    "Either generate/correct prior files or set SSRS_REQUIRE_STRUCTURE_PRIORS=0 to fallback. "
+                    + " | ".join(messages)
+                )
 
         # Initialize cache dicts
         self.data_cache_ = {}
@@ -419,29 +443,35 @@ class BoundaryLoss(nn.Module):
     def forward(self, pred, gt):
         n, _, _, _ = pred.shape
 
-        pred = torch.softmax(pred, dim=1)
-        class_map = pred.argmax(dim=1).float()
+        pred_prob = torch.softmax(pred, dim=1)
+        confidence = pred_prob.max(dim=1).values
+        pred_boundary_prob = 1.0 - confidence
         gt = gt.float()
 
         gt_b = F.max_pool2d(1 - gt, kernel_size=self.theta0, stride=1, padding=(self.theta0 - 1) // 2)
         gt_b -= 1 - gt
 
-        pred_b = F.max_pool2d(1 - class_map, kernel_size=self.theta0, stride=1, padding=(self.theta0 - 1) // 2)
-        pred_b -= 1 - class_map
+        pred_b = F.max_pool2d(pred_boundary_prob, kernel_size=self.theta0, stride=1, padding=(self.theta0 - 1) // 2)
+        pred_b = torch.clamp(pred_b - pred_boundary_prob, min=0.0)
 
         gt_b_ext = F.max_pool2d(gt_b, kernel_size=self.theta, stride=1, padding=(self.theta - 1) // 2)
         pred_b_ext = F.max_pool2d(pred_b, kernel_size=self.theta, stride=1, padding=(self.theta - 1) // 2)
 
-        gt_b = gt_b.view(n, 2, -1)
-        pred_b = pred_b.view(n, 2, -1)
-        gt_b_ext = gt_b_ext.view(n, 2, -1)
-        pred_b_ext = pred_b_ext.view(n, 2, -1)
+        gt_b = gt_b.view(n, -1)
+        pred_b = pred_b.view(n, -1)
+        gt_b_ext = gt_b_ext.view(n, -1)
+        pred_b_ext = pred_b_ext.view(n, -1)
 
-        p_score = torch.sum(pred_b * gt_b_ext, dim=2) / (torch.sum(pred_b, dim=2) + 1e-7)
-        r_score = torch.sum(pred_b_ext * gt_b, dim=2) / (torch.sum(gt_b, dim=2) + 1e-7)
+        # Skip empty-boundary samples to avoid forcing constant loss when priors are absent.
+        valid = (gt_b.sum(dim=1) > 0) | (pred_b.sum(dim=1) > 0)
+        if not torch.any(valid):
+            return pred.new_zeros(())
+
+        p_score = torch.sum(pred_b * gt_b_ext, dim=1) / (torch.sum(pred_b, dim=1) + 1e-7)
+        r_score = torch.sum(pred_b_ext * gt_b, dim=1) / (torch.sum(gt_b, dim=1) + 1e-7)
 
         bf1 = 2 * p_score * r_score / (p_score + r_score + 1e-7)
-        loss = torch.mean(1 - bf1)
+        loss = torch.mean((1 - bf1)[valid])
         return loss
 
 

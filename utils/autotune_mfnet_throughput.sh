@@ -4,8 +4,9 @@ set -u
 # MFNet throughput autotune (short-run benchmark)
 # It runs tiny training jobs and reports both wall time and throughput.
 
-ROOT_DIR="/root/SSRS"
-MFNET_DIR="/root/SSRS/MFNet"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+MFNET_DIR="$ROOT_DIR/MFNet"
 TS="$(date +%Y%m%d_%H%M%S)"
 OUT_DIR="${SSRS_TUNE_OUT_DIR:-$ROOT_DIR/runs/autotune_mfnet_$TS}"
 LOG_DIR="$OUT_DIR/job_logs"
@@ -21,7 +22,7 @@ TUNE_EPOCHS="${SSRS_TUNE_EPOCHS:-1}"
 TUNE_EPOCH_STEPS="${SSRS_TUNE_EPOCH_STEPS:-120}"
 
 # Shared env defaults
-export SSRS_DATA_ROOT="${SSRS_DATA_ROOT:-/root/SSRS/autodl-tmp/dataset}"
+export SSRS_DATA_ROOT="${SSRS_DATA_ROOT:-$ROOT_DIR/autodl-tmp/dataset}"
 export SSRS_DATASET="${SSRS_DATASET:-Vaihingen}"
 export SSRS_SEED="${SSRS_SEED:-42}"
 export SSRS_EVAL_STRIDE="${SSRS_EVAL_STRIDE:-32}"

@@ -273,13 +273,18 @@ def write_markdown(summary_rows, md_path, curve_rel_path, loss_curve_rel_path):
 
 
 def main():
-    log_dir = os.environ.get("SSRS_LOG_DIR", "/root/SSRS/runs/week1_baseline")
-    output_dir = os.environ.get("SSRS_SUMMARY_DIR", "/root/SSRS/runs/week1_baseline")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.dirname(script_dir)
+    default_runs_dir = os.path.join(repo_root, "runs")
+    default_week1_dir = os.path.join(default_runs_dir, "week1_baseline")
+
+    log_dir = os.environ.get("SSRS_LOG_DIR", default_week1_dir)
+    output_dir = os.environ.get("SSRS_SUMMARY_DIR", default_week1_dir)
 
     os.makedirs(output_dir, exist_ok=True)
 
     csv_paths = sorted(glob.glob(os.path.join(log_dir, "*.csv")))
-    runs_root = os.environ.get("SSRS_RUNS_ROOT", "/root/SSRS/runs")
+    runs_root = os.environ.get("SSRS_RUNS_ROOT", default_runs_dir)
     model_logs = _discover_model_logs(runs_root)
     grouped = defaultdict(list)
     summary_rows = []

@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-export SSRS_DATA_ROOT="${SSRS_DATA_ROOT:-/root/SSRS/autodl-tmp/dataset}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+export SSRS_DATA_ROOT="${SSRS_DATA_ROOT:-$ROOT_DIR/autodl-tmp/dataset}"
 export SSRS_DATASET="${SSRS_DATASET:-Vaihingen}"
 export SSRS_SEED="${SSRS_SEED:-42}"
-export SSRS_LOG_DIR="${SSRS_LOG_DIR:-/root/SSRS/runs/week1_baseline}"
+export SSRS_LOG_DIR="${SSRS_LOG_DIR:-$ROOT_DIR/runs/week1_baseline}"
 export SSRS_BATCH_SIZE="${SSRS_BATCH_SIZE:-10}"
 export SSRS_WINDOW_SIZE="${SSRS_WINDOW_SIZE:-256}"
 export SSRS_EVAL_STRIDE="${SSRS_EVAL_STRIDE:-32}"
@@ -51,21 +54,21 @@ echo "[Week1] OMP/MKL:     $OMP_NUM_THREADS/$MKL_NUM_THREADS"
 echo "[Week1] Running MFNet..."
 export SSRS_MFNET_USE_AMP="${SSRS_MFNET_USE_AMP:-1}"
 export SSRS_MFNET_MICRO_BS="${SSRS_MFNET_MICRO_BS:-2}"
-pushd /root/SSRS/MFNet >/dev/null
+pushd "$ROOT_DIR/MFNet" >/dev/null
 python train.py
 popd >/dev/null
 
 echo "[Week1] Running FTransUNet..."
-pushd /root/SSRS/FTransUNet >/dev/null
+pushd "$ROOT_DIR/FTransUNet" >/dev/null
 python train.py
 popd >/dev/null
 
 echo "[Week1] Running ASMFNet..."
-pushd /root/SSRS/ASMFNet >/dev/null
+pushd "$ROOT_DIR/ASMFNet" >/dev/null
 python train.py
 popd >/dev/null
 
 echo "[Week1] Building summary..."
-python /root/SSRS/utils/summarize_week1_baseline.py
+python "$ROOT_DIR/utils/summarize_week1_baseline.py"
 
 echo "[Week1] Done. Summary at: $SSRS_LOG_DIR/week1_baseline_summary.md"

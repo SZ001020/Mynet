@@ -37,6 +37,10 @@ export SSRS_PERSISTENT_WORKERS=1
 export SSRS_PREFETCH_FACTOR=4
 export SSRS_MFNET_USE_AMP=1
 export SSRS_MFNET_MICRO_BS=2
+export SSRS_USE_STRUCTURE_LOSS=1
+export SSRS_LOSS_MODE=SEG+BDY+OBJ
+export SSRS_LAMBDA_BDY=0.1
+export SSRS_LAMBDA_OBJ=1.0
 export SSRS_EPOCH_STEPS=1000
 export SSRS_EVAL_NUM_TILES=0
 export OMP_NUM_THREADS=16
@@ -133,6 +137,19 @@ export MKL_NUM_THREADS=16
 1. 统一导出环境变量（可覆盖）
 2. 串行运行 MFNet / FTransUNet / ASMFNet
 3. 自动调用汇总脚本输出报告
+
+### 5.3 第 2 周同域增强一键脚本（新增）
+使用脚本：
+- utils/run_week2_same_domain.sh
+
+功能：
+1. 执行训练前就绪检查（数据/GPU/脚本/关键样本）
+2. 运行基线组（MFNet + SEG）
+3. 运行结构约束组（MFNet + SEG+BDY+OBJ）
+4. 自动输出 week2_same_domain_summary.md（含两组对比和增益）
+
+输出目录（默认）：
+- runs/week2_same_domain/<timestamp>/
 
 ## 6. 文件落盘位置
 
@@ -313,6 +330,24 @@ export MKL_NUM_THREADS=16
 
 /root/SSRS/utils/run_week1_baselines.sh
 ```
+
+第 2 周同域增强最小命令：
+
+```bash
+cd /root/Mynet
+export SSRS_DATA_ROOT=/root/Mynet/autodl-tmp/dataset
+export SSRS_DATASET=Vaihingen
+export SSRS_SEED=42
+export SSRS_EPOCH_STEPS=1000
+export SSRS_EPOCHS=50
+export SSRS_LAMBDA_BDY=0.1
+export SSRS_LAMBDA_OBJ=1.0
+
+./utils/run_week2_same_domain.sh
+```
+
+执行完成后查看：
+- runs/week2_same_domain/<timestamp>/week2_same_domain_summary.md
 
 执行完成后直接查看：
 - /root/SSRS/runs/week1_baseline/week1_baseline_summary.md
