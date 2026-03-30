@@ -345,7 +345,8 @@ def train(net, optimizer, epochs, scheduler=None, weights=WEIGHTS, save_epoch=2)
     save_best = os.environ.get("SSRS_SAVE_BEST", "1") == "1"
     save_last = os.environ.get("SSRS_SAVE_LAST", "1") == "1"
     save_interval = int(os.environ.get("SSRS_SAVE_INTERVAL", "0"))
-    save_dir = os.environ.get("SSRS_ASMF_SAVE_DIR", "/root/SSRS/ASMFNet/res2")
+    # Keep checkpoints with the same directory used for CSV logs.
+    save_dir = LOG_DIR
     os.makedirs(save_dir, exist_ok=True)
     best_ckpt_path = os.path.join(save_dir, "ASMFNet_best.pth")
     last_ckpt_path = os.path.join(save_dir, "ASMFNet_last.pth")

@@ -256,12 +256,8 @@ def train(net, optimizer, epochs, scheduler=None, weights=WEIGHTS, save_epoch=1)
     save_last = os.environ.get("SSRS_SAVE_LAST", "1") == "1"
     save_interval = int(os.environ.get("SSRS_SAVE_INTERVAL", "0"))
 
-    if DATASET == 'Vaihingen':
-        save_dir = './resultsv'
-    elif DATASET == 'Potsdam':
-        save_dir = './resultsp'
-    else:
-        save_dir = './resultsh'
+    # Keep checkpoints with the same directory used for CSV logs.
+    save_dir = LOG_DIR
     os.makedirs(save_dir, exist_ok=True)
     best_ckpt_path = os.path.join(save_dir, '{}_best.pth'.format(MODEL))
     last_ckpt_path = os.path.join(save_dir, '{}_last.pth'.format(MODEL))

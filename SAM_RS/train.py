@@ -28,6 +28,9 @@ if DATASET == 'Vaihingen':
 elif DATASET == 'Urban':
      from utils_loveda import *
 
+LOG_DIR = os.environ.get("SSRS_LOG_DIR", "./runs/week1_baseline")
+os.makedirs(LOG_DIR, exist_ok=True)
+
 try:
     from urllib.request import URLopener
 except ImportError:
@@ -125,6 +128,9 @@ def train(net, optimizer, epochs, scheduler=None, weights=WEIGHTS, save_epoch=1)
 
     iter_ = 0
     MIoU_best = 0.30
+    save_dir = LOG_DIR
+    os.makedirs(save_dir, exist_ok=True)
+    best_ckpt_path = os.path.join(save_dir, '{}_best.pth'.format(MODEL))
     criterionb = BoundaryLoss()
     criteriono = ObjectLoss()
     for e in range(1, epochs + 1):
@@ -170,10 +176,7 @@ def train(net, optimizer, epochs, scheduler=None, weights=WEIGHTS, save_epoch=1)
             MIoU = test(net, test_ids, all=False, stride=Stride_Size)
             net.train()
             if MIoU > MIoU_best:
-                if DATASET == 'Vaihingen':
-                    torch.save(net.state_dict(), './resultsv/{}_epoch{}_{}'.format(MODEL, e, MIoU))
-                elif DATASET == 'Urban':
-                    torch.save(net.state_dict(), './resultsu/{}_epoch{}_{}'.format(MODEL, e, MIoU))
+                torch.save(net.state_dict(), best_ckpt_path)
                 MIoU_best = MIoU
 
 if MODE == 'Train':

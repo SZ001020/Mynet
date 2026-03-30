@@ -19,6 +19,9 @@ try:
 except ImportError:
     from urllib import URLopener
 
+LOG_DIR = os.environ.get("SSRS_LOG_DIR", "./runs/week1_baseline")
+os.makedirs(LOG_DIR, exist_ok=True)
+
 # Parameters
 WINDOW_SIZE = (256, 256) # Patch size
 STRIDE = 32 # Stride for testing
@@ -296,6 +299,10 @@ def train(net, optimizer, epochs, scheduler=None, weights=WEIGHTS, save_epoch=2)
     criterion = nn.NLLLoss(weight=weights)
     iter_ = 0
     acc_best = 0
+    save_dir = LOG_DIR
+    os.makedirs(save_dir, exist_ok=True)
+    best_ckpt_path = os.path.join(save_dir, 'CMFNet_best.pth')
+    last_ckpt_path = os.path.join(save_dir, 'CMFNet_last.pth')
 
     for e in range(1, epochs + 1):
         if scheduler is not None:
@@ -340,10 +347,10 @@ def train(net, optimizer, epochs, scheduler=None, weights=WEIGHTS, save_epoch=2)
             # We validate with the largest possible stride for faster computing
             acc = test(net, test_ids, all=False, stride=32)
             if acc > acc_best:
-                torch.save(net.state_dict(), 'segnet256_epoch{}_{}'.format(e, acc))
+                torch.save(net.state_dict(), best_ckpt_path)
                 acc_best = acc
     print("Save final model!!")
-    torch.save(net.state_dict(), 'segnet_final')
+    torch.save(net.state_dict(), last_ckpt_path)
     np.save('mean_losses.npy', mean_losses[:iter_])
     print("Losses saved to mean_losses.npy")
 
