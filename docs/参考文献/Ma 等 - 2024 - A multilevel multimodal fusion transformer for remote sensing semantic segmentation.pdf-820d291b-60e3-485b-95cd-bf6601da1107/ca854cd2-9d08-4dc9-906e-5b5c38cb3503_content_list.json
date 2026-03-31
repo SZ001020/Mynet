@@ -1,0 +1,3686 @@
+[
+    {
+        "type": "text",
+        "text": "A Multilevel Multimodal Fusion Transformer for Remote Sensing Semantic Segmentation ",
+        "text_level": 1,
+        "bbox": [
+            102,
+            71,
+            895,
+            140
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Xianping Ma , Xiaokang Zhang , Member, IEEE, Man-On Pun , Senior Member, IEEE, and Ming Liu ",
+        "bbox": [
+            104,
+            155,
+            888,
+            174
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Abstract— Accurate semantic segmentation of remote sensing data plays a crucial role in the success of geoscience research and applications. Recently, multimodal fusion-based segmentation models have attracted much attention due to their outstanding performance as compared to conventional single-modal techniques. However, most of these models perform their fusion operation using convolutional neural networks (CNNs) or the vision transformer (Vit), resulting in insufficient local–global contextual modeling and representative capabilities. In this work, a multilevel multimodal fusion scheme called FTransUNet is proposed to provide a robust and effective multimodal fusion backbone for semantic segmentation by integrating both CNN and Vit into one unified fusion framework. First, the shallow-level features are first extracted and fused through convolutional layers and shallow-level feature fusion (SFF) modules. After that, deep-level features characterizing semantic information and spatial relationships are extracted and fused by a well-designed fusion Vit (FVit). It applies adaptively mutually boosted attention (Ada-MBA) layers and self-attention (SA) layers alternately in a three-stage scheme to learn cross-modality representations of high interclass separability and low intraclass variations. Specifically, the proposed Ada-MBA computes SA and cross-attention (CA) in parallel to enhance intra- and cross-modality contextual information simultaneously while steering attention distribution toward semantic-aware regions. As a result, FTransUNet can fuse shallow-level and deep-level features in a multilevel manner, taking full advantage of CNN and transformer to accurately characterize local details and global semantics, respectively. Extensive experiments confirm the superior performance of the proposed FTransUNet compared with other multimodal fusion approaches on two fine-resolution remote sensing datasets, namely ISPRS Vaihingen and Potsdam. The source code in this work is available at https://github.com/sstary/SSRS. ",
+        "bbox": [
+            73,
+            202,
+            491,
+            617
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Index Terms— Multilevel multimodal fusion, remote sensing, semantic segmentation, vision transformer (Vit). ",
+        "bbox": [
+            73,
+            623,
+            488,
+            650
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "I. INTRODUCTION ",
+        "text_level": 1,
+        "bbox": [
+            215,
+            665,
+            351,
+            679
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "RECENT technological advances in earth observationhave led to the increasing accessibility to fine-resolution haveledtotheincreasingaccessibilitytofine-esoution ",
+        "bbox": [
+            76,
+            684,
+            488,
+            714
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Manuscript received 30 October 2023; revised 1 February 2024; accepted 29 February 2024. Date of publication 7 March 2024; date of current version 14 March 2024. This work was supported in part by Guangdong Provincial Key Laboratory of Future Networks of Intelligence under Grant 2022B1212010001 and in part by the National Natural Science Foundation of China under Grant 42371374 and Grant 41801323. (Corresponding authors: Man-On Pun; Xiaokang Zhang.) ",
+        "bbox": [
+            73,
+            724,
+            488,
+            805
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Xianping Ma and Man-On Pun are with the School of Science and Engineering, the Future Network of Intelligence Institute (FNii), The Chinese University of Hong Kong (Shenzhen), Shenzhen 518172, China (e-mail: xianpingma@link.cuhk.edu.cn; SimonPun@cuhk.edu.cn). ",
+        "bbox": [
+            73,
+            805,
+            488,
+            851
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Xiaokang Zhang is with the School of Information Science and Engineering, Wuhan University of Science and Technology, Wuhan 430081, China (e-mail: natezhangxk@gmail.com). ",
+        "bbox": [
+            73,
+            851,
+            488,
+            885
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Ming Liu is with MizarVision, Shanghai 201900, China (e-mail: liuming@ mizarvision.com). ",
+        "bbox": [
+            73,
+            885,
+            488,
+            906
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Digital Object Identifier 10.1109/TGRS.2024.3373033 ",
+        "bbox": [
+            86,
+            906,
+            380,
+            919
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "remote sensing data of various modalities such as optical, multispectral, and hyperspectral imagery, synthetic aperture radar (SAR) and light detection and ranging (LiDAR). Effective integration of these multimodal data can provide more comprehensive characterizations of the land surface for many tasks in geoscience research, including change detection [1], [2], land cover mapping [3], [4], object extraction [5], [6], and other tasks [7], [8], [9]. In particular, semantic segmentation as a pixel-wise classification task, which aims to classify each pixel into a specific land cover type, has drawn significant attention. In the literature, various semantic segmentation methods have been proposed by using random forest [10], support vector machine [11], [12], and conditional random field [13]. However, these methods are handicapped by their weak abstract and semantic feature extraction capabilities. Recently, deep learning (DL)-based methods have been successfully developed for remote sensing semantic segmentation by exploiting convolutional neural networks (CNNs) [14], [15], [16], [17], [18], [19], [20], [21], [22], [23], [24], [25]. Despite their excellent performance, these DL-based methods are hindered by the fact that the convolutional operation generally aggregates information from a smaller receptive field. As a result, these methods can only extract local details while overlooking long-range dependencies. ",
+        "bbox": [
+            501,
+            200,
+            921,
+            551
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Interestingly, the computer vision (CV) community has encountered challenges similar to those in remote sensing. To cope with this problem, vision transformer (Vit) [26] was developed for CV applications to compute the relationships between each pair of elements in the feature map by capitalizing on the self-attention (SA) mechanism [27], [28], which enhances the modeling of global contextual information. Empowered with these robust backbones, i.e., CNN and transformers, semantic segmentation for single modality [29], [30], [31], [32] achieved outstanding performance in the CV community. However, only a few works were devoted to the multimodal fusion tasks, emphasizing the fusion of multimodal information according to the characteristics of different modalities [14], [33], [34]. Compared with single-modal data that is limited by sensors, multimodal data is able to show the characteristics of the target from different perspectives. Thereby, better semantic segmentation performance can be achieved by utilizing the complementary properties derived from different modalities. However, the incompatibility of the multimodal data makes the fusion tasks challenging. Compared with natural images, high-resolution remote sensing images have more severe spectral heterogeneity and more complex spatial structures [3], [35]. Moreover, the ground objects in remote sensing data exhibit more significant variations in scales and shapes, which makes it challenging to locate and recognize ",
+        "bbox": [
+            503,
+            553,
+            921,
+            920
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "header",
+        "text": "IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING, VOL. 62, 2024 ",
+        "bbox": [
+            76,
+            35,
+            500,
+            46
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "header",
+        "text": "5403215 ",
+        "bbox": [
+            875,
+            36,
+            919,
+            46
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "footer",
+        "text": "1558-0644 © 2024 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission. ",
+        "bbox": [
+            199,
+            925,
+            795,
+            936
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "footer",
+        "text": "See https://www.ieee.org/publications/rights/index.html for more information. ",
+        "bbox": [
+            289,
+            936,
+            705,
+            949
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "footer",
+        "text": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on January 17,2026 at 15:17:01 UTC from IEEE Xplore. Restrictions apply. ",
+        "bbox": [
+            49,
+            960,
+            942,
+            974
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "objects. As a result, CNNs and transformers-based models derived from CV still exhibit limitations in effectively learning discriminative integrated features. To solve the multimodal fusion problem in remote sensing, three different fusion strategies have been explored: early fusion, middle fusion, and late fusion. Generally, early fusion necessitates proper alignment of multimodal data and may lack robustness for task-independent information, while late fusion is limited in its ability to exploit cross-correlations between multimodal data [17], [36]. In contrast, middle fusion can capture cross-modal dependencies of feature representations, making it more effective in the context of representation learning [37]. However, in this line of research, existing works normally utilize single-level feature fusion based on summation or concatenation and ignore long-range cross-modal dependencies at different feature levels [38]. ",
+        "bbox": [
+            73,
+            71,
+            491,
+            304
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "Motivated by the discussions above, this work proposes a multilevel multimodal fusion strategy, namely Fusion TransUNet (FTransUNet), to overcome the challenges aforementioned in the semantic segmentation of remote sensing data. More specifically, this work first develops a dual-branch model in which the extracted shallow-level fine-grained feature maps from each convolutional layer are fused by shallow-level feature fusion (SFF) module that consists of two squeeze-andexcitation (SE) modules [39]. Note that the SE module can be directly replaced with other upgraded versions to achieve SFF. This CNN-based SFF is designed to characterize objects of various scales and shapes. Next, deep-level contextual features are extracted and fused by the proposed fusion Vit (FVit). In sharp contrast to the TransUNet [31] that targets long-range dependencies for a single modality, the proposed FVit focuses on information enhancement inside the modalities and information exchanges across modalities in a three-stage strategy by applying novel adaptively mutually boosted attention (Ada-MBA) layers and SA layers alternately. More specifically, the proposed FVit first computes SA for each modality in the first stage before the Ada-MBA layer captures the long-range relationships between different modalities by performing cross-attention (CA) and SA simultaneously in the second stage. In particular, two SA modules retain and enhance the intramodal information while two CA modules guide feature fusion by the mutual-association guidance mechanism in Ada-MBA layer, promoting the learning of cross-modality representations with high interclass separability and low intraclass variations. After that, the fused deep-level features are enhanced by SA again in the third stage. Empowered with our multilevel strategy, multimodal remote sensing images are encoded effectively, resolving the problem that remote sensing images are more complicated than natural images. Finally, the resulting shallow-level and deep-level features are fed into a cascaded decoder in which features are fused and upsampled with skip connections to recover the input image size. The contributions of this work are threefold, as summarized in the following. ",
+        "bbox": [
+            73,
+            305,
+            493,
+            854
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "1) A FVit is proposed by capitalizing on SA layers and novel Ada-MBA layers. More specifically, FVit extracts and integrates global contextual information using the mutual-association guidance mechanism in a well-designed three-stage structure that alternately applies Ada-MBA and SA layers. ",
+        "bbox": [
+            91,
+            861,
+            491,
+            950
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "list",
+        "sub_type": "text",
+        "list_items": [
+            "2) A novel multilevel fusion scheme, namely FTransUNet, is proposed to address the multimodal fusion problem by combining FVit with CNN blocks to learn representative features across different modalities. In particular, detailed shallow-level features and contextual deep-level features are successively fused in a multilevel manner to facilitate the learning toward semantic-aware regions, hereby promoting the performance of semantic segmentation for remote sensing images. ",
+            "3) Extensive experiments on two fine-resolution remote sensing datasets, ISPRS Vaihingen and Potsdam, confirm that the proposed FTransUNet substantially outperforms existing models. "
+        ],
+        "bbox": [
+            519,
+            71,
+            921,
+            258
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "The remainder of this article is organized as follows. Section II first reviews the related works on CNN-based and transformer-based segmentation methods. After that, Section III presents the structure of the proposed FTransUNet, whereas Section IV provides details on the extensive experiments conducted. Finally, the conclusion is given in Section V. ",
+        "bbox": [
+            503,
+            258,
+            921,
+            347
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "II. RELATED WORKS ",
+        "text_level": 1,
+        "bbox": [
+            635,
+            363,
+            790,
+            376
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "A. Single-Modal Semantic Segmentation ",
+        "text_level": 1,
+        "bbox": [
+            503,
+            382,
+            779,
+            397
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "The seminal work [29] proposed the first CNN-based endto-end model called fully convolutional network (FCN) for semantic segmentation. However, FCN suffers from blurred edges and inaccurate segmentation due to its over-simplified upsampling operation in its decoder design. To circumvent this problem, UNet [30] adopts a classical encoder-decoder network with an expanding path in its decoder. More specifically, the encoder in the UNet extracts multiscale features with gradual downsampling, while the decoder learns more contextual semantic information by restoring the spatial resolution step by step. Despite their good performance, CNN-based methods are ineffective in extracting global semantic information and long-range dependencies of input images due to the limited receptive fields of CNN [40], [41]. ",
+        "bbox": [
+            501,
+            400,
+            921,
+            603
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "To overcome this challenge, the transformer architecture has been recently proposed in [27] to provide an effective alternative for capturing long-range relationships in natural language processing (NLP). More recently, a transformerbased model called Vit has been successfully developed in [26] for CV applications. Empowered with its capability of sequence-to-sequence modeling, the Vit demonstrates significantly improved performance in extracting global contextual information as compared to the CNN-based methods, which has inspired many following works [31], [42], [43], [44], [45], [46]. ",
+        "bbox": [
+            503,
+            604,
+            921,
+            765
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "B. Multimodal Semantic Segmentation Based on CNN ",
+        "text_level": 1,
+        "bbox": [
+            504,
+            784,
+            872,
+            799
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "Driven by technological advances in earth observation, multimodal remote sensing data such as optical images, multispectral images, and digital surface model (DSM) data, have become increasingly available. Since DSM represents height information for ground objects, it can provide vital information for identifying objects of consistent heights, such as roads and buildings in small geographical areas. Furthermore, DSM can provide clear boundary information that is helpful for all categories. As a result, it can help improve the overall segmentation performance [19], [47]. To utilize ",
+        "bbox": [
+            501,
+            801,
+            921,
+            949
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "page_number",
+        "text": "5403215 ",
+        "bbox": [
+            76,
+            35,
+            120,
+            46
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "header",
+        "text": "IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING, VOL. 62, 2024 ",
+        "bbox": [
+            496,
+            35,
+            921,
+            47
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "footer",
+        "text": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on January 17,2026 at 15:17:01 UTC from IEEE Xplore. Restrictions apply. ",
+        "bbox": [
+            49,
+            962,
+            942,
+            974
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "the multimodal data in remote sensing, pioneering multimodal fusion schemes were developed based on the DL framework to utilize the information derived from multiple sensors. For instance, ResUNet-a was developed in [48] by stacking Red-Green-Blue (RGB) images and the DSM into synthesized inputs of four channels. Clearly, such a primitive fusion of multimodal data cannot effectively handle the heterogeneous statistical properties and noise levels across modalities [49], [50]. To cope with this problem, FuseNet [14] devised a simple two-branch network architecture to fuse RGB and DSM data. More specifically, the RGB and DSM data are processed in parallel by each branch during the encoding stage while feature maps generated by the two branches are added element-wise after each convolutional block. Inspired by FuseNet, vFuseNet [15] was established to leverage multiscale fusion strategies. Despite its many advantages, vFuseNet is handicapped by its simple fusion design using element-wise addition of multimodal feature maps. CMGFNet [47] proposed a gated fusion module to combine two modalities for building extraction, which adaptively learns the discriminative features and removes irrelevant information. IIHN [51] constructed a hypergraph network by introducing an interpretable intuition mechanism. CIMFNet [52] and ABHNet [53] both explored feature fusion from the perspective of adjacent levels. The former was based on the cross-layer gate fusion mechanism while the latter was based on attention mechanisms and residual connections. However, these methods tend to be ineffective in extracting the global semantics as they ignore the long-range spatial relationships. ",
+        "bbox": [
+            73,
+            71,
+            491,
+            494
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "C. Multimodal Semantic Segmentation Based on CNN and Transformer ",
+        "text_level": 1,
+        "bbox": [
+            73,
+            520,
+            475,
+            550
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "More recently, the transformer architecture has been considered for multimodal fusion in semantic segmentation for its outstanding capability in extracting contextual information [20], [26], [32], [54] and fusing different modalities [19], [38], [55], [56], [57], [58], [59]. For instance, TransFuser was developed in [56] to combine feature maps using multiple transformers after each convolutional block. Furthermore, SwinFusion [57] was proposed to first extract shallow-level features using convolutional layers before generating deep-level features using the SA-based Swin Transformer [54], which has shown that the transformer can also serve as the backbone for multimodal fusion tasks. In remote sensing, CMFNet [19] improved the skip connections by exploiting a crossmodal multiscale fusion transformer, which allows the CMFNet to learn robust representations about surface objects of significant variations in scale. EDFT [58] constructed a two-branch network based on Swin Transformer and fused multimodal features by a depth-aware SA module. Similarly, MFTransNet [59] constructed a two-branch network based on CNN while fusing features with an SA module followed by a channel attention module and a spatial attention module. Despite their great performance, these fusion methods did not explore the general network from the perspective of using both CNN and Transformer for feature extraction and fusion, which incurs insufficient modeling of fine-grained local and contextual global information, and subsequently poor feature representations. ",
+        "bbox": [
+            73,
+            556,
+            491,
+            949
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "table",
+        "img_path": "images/3a69091c1890639ae6c26b8be89f9998c4b676114801d985928b8a1e3bed36a4.jpg",
+        "table_caption": [
+            "TABLE I MULTIMODAL FUSION STRATEGIES BASED ON CNN AND TRANSFORMER "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td></td><td>Feature Extraction</td><td>Feature Fusion</td></tr><tr><td>Class 1</td><td>CNN</td><td>Transformer</td></tr><tr><td>Class 2</td><td>Transformer</td><td>CNN or Transformer</td></tr><tr><td>Ours</td><td>CNN, Transformer</td><td>CNN, Transformer</td></tr></table>",
+        "bbox": [
+            547,
+            103,
+            880,
+            154
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "As listed in Table I, the existing methods can be divided into two categories, namely Class 1 including TransFuser [56], SwinFusion [57], CMFNet [19], MFTransUNet [59], and Class 2 including EDFT [58]. In sharp contrast to these existing methods that utilize CNN or Transformer in feature extraction or feature fusion, the proposed FTransUNet takes full advantage of CNN and a well-designed three-stage Transformer in both feature extraction and feature fusion simultaneously. This proposed strategy is shown critical for effective multimodal multilevel fusion using CNN and Transformer backbones. ",
+        "bbox": [
+            501,
+            180,
+            921,
+            339
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "III. PROPOSED METHOD ",
+        "text_level": 1,
+        "bbox": [
+            622,
+            356,
+            800,
+            369
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Fig. 1 depicts the overview of the proposed framework. Specifically, in the CNN backbone, the SFF module is employed for SFF, while an Ada-MBA layer in FVit is designated for deep-level feature fusion. More specifically, the proposed FTransUNet extracts the visible image features (VIS) and DSM features separately using two ResNet branches [60]. The resulting shallow-level features of different scales are enhanced by SFF modules after each CNN block. After that, the fused features are flattened into sequences and subsequently, fed into FVit in which the deep-level features are further fused to learn more contextual representational information by Ada-MBA. Finally, the fused outputs from FVit are added together and reshaped before being fed into a decoder of cascaded upsamplers [31], which helps to recover spatial information with finer precision. ",
+        "bbox": [
+            501,
+            375,
+            921,
+            592
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "For brevity of presentation, dual-modality data, namely VIS images and the DSM data, are used to elaborate the proposed FTransUNet. Furthermore, the VIS images are regarded as the main modality, while the DSM data serve as the assisting modality since the main modality generally provides more information for the earth surface classification than the assisting modality. It should be emphasized that this fusion scheme in FTransUNet can be extended to other multimodal fusion tasks in a straightforward manner. In the following, we will elaborate on the key components of the proposed FTransUNet. ",
+        "bbox": [
+            501,
+            593,
+            921,
+            738
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "A. CNN Fusion ",
+        "text_level": 1,
+        "bbox": [
+            504,
+            756,
+            614,
+            768
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "We denote VIS images and their corresponding DSM data by $X \\in \\mathbb { R } ^ { H \\times W \\times 3 }$ and $Y \\in \\mathbb { R } ^ { H \\times W \\times 1 }$ , respectively, where $H$ and W are the height and width of the inputs. Note that the VIS images are of three channels, whereas the DSM data one channel. Adopting an architecture similar to TransUNet [31], the proposed FTransUNet utilizes a dual-branch encoder that first extracts multiscale features from each modality using one branch. More specifically, each branch of this encoder consists of four convolutional layers for multiscale feature extraction. The downsampled feature maps of size $C _ { i } \\times ( H / 2 ^ { i - 1 } ) \\times$ $( W / 2 ^ { i - 1 } )$ are produced by the ith encoder layer, where i is the layer index of the CNN encoder. These shallow-level ",
+        "bbox": [
+            501,
+            773,
+            921,
+            949
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "header",
+        "text": "MA et al.: MULTILEVEL MULTIMODAL FUSION TRANSFORMER FOR REMOTE SENSING SEMANTIC SEGMENTATION ",
+        "bbox": [
+            75,
+            35,
+            699,
+            45
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "page_number",
+        "text": "5403215 ",
+        "bbox": [
+            877,
+            36,
+            919,
+            45
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "footer",
+        "text": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on January 17,2026 at 15:17:01 UTC from IEEE Xplore. Restrictions apply. ",
+        "bbox": [
+            49,
+            960,
+            942,
+            974
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "image",
+        "img_path": "images/ce9fc3c37a4b8b0baa17e858081139a67c5cc1237c6196f7a624247c87c64e35.jpg",
+        "image_caption": [
+            "Fig. 1. Overview of the proposed FTransUNet with the encoder consisting of CNN and FVit on the left and the decoder shown on the right. CNN blocks contain two branches comprised of two ResNets that extract multimodal shallow-level features and fuse them using four SFF modules. FVit consists of three stages to achieve deep-level feature extraction and fusion. The decoder generates segmentation maps by exploiting fused features using cascaded upsampling techniques [31]. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            124,
+            66,
+            875,
+            551
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "features extracted by the convolutional operation are then fused by the SFF modules. In particular, features derived from the assisting modality are fused into those from the main modality, i.e., VIS, before the fused features are input into the next VIS encoder branch. Furthermore, skip connections are utilized by directly feeding the outputs of the SFF modules to the corresponding decoder layers designed to recover detailed local and contextual information. ",
+        "bbox": [
+            73,
+            640,
+            491,
+            755
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "As shown in Fig. 2, the SFF module first aggregates global information using Global Average Pool (AvgPool) in the VIS and DSM branches, respectively. Given the input channel size $C _ { i }$ for the ith SFF module, the squeeze and excitation process is carried out by the AvgPool and two convolutional operations of kernel size $1 \\times 1$ , followed by the ReLU and the Sigmoid functions. Finally, features from VIS and DSM are weighted and added element-wise, which generates the resulting fused shallow-level features. ",
+        "bbox": [
+            73,
+            755,
+            490,
+            885
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "B. Fusion Vision Transformer ",
+        "text_level": 1,
+        "bbox": [
+            73,
+            896,
+            279,
+            910
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Denote by $x _ { I }$ and $y _ { I }$ the VIS and DSM feature maps of dimension $\\dot { C } _ { I } \\times ( H / 2 ^ { I - 1 } ) \\times ( W / 2 ^ { I - 1 } )$ , respectively, where I ",
+        "bbox": [
+            73,
+            914,
+            491,
+            944
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "and $C _ { I }$ are the layer index and the output channel size for the last layer in the CNN backbone, respectively. $x _ { I }$ and $y _ { I }$ are first tokenized using two embedding layers and one reshape operation. The embedding layers change the input’s channel size from $C _ { I }$ to $C _ { \\mathrm { h i d } }$ before the reshape operation flattens the outputs from the embedding layers into two sequences of 2-D patches denoted by $z _ { 0 } ^ { x }$ and $z _ { 0 } ^ { y }$ of size $C _ { \\mathrm { h i d } } \\times L$ , where $L =$ $\\stackrel { \\cdot } { ( } H \\times W ) / ( 2 ^ { I - 1 } \\times 2 ^ { \\bar { I } - 1 } )$ is the sequence length. Specific position embeddings are added to the vectorized patches $z _ { 0 } ^ { x }$ and $z _ { 0 } ^ { y }$ to retain position information. After that, the tokens $z _ { 0 } ^ { x }$ and $z _ { 0 } ^ { y }$ are fed into FVit. ",
+        "bbox": [
+            501,
+            640,
+            921,
+            797
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Input of the FVit encoder sequentially goes through three processes, including SA layers for deep-level feature enhancement, Ada-MBA layers for deep-level feature fusion and another part of SA layers for fused feature enhancement, with the number of layers $N _ { 1 }$ , $N _ { 2 }$ and $N _ { 3 }$ , respectively. Denote by $z _ { n } ^ { x }$ and $z _ { n } ^ { y }$ the hidden features for the nth layer in the VIS branch and the DSM branch, respectively, where $n \\in$ $1 , 2 , \\ldots , N _ { 1 } + N _ { 2 } + N _ { 3 }$ . It is worth noting that the processes preserve the dimension of the feature maps as $C _ { \\mathrm { h i d } } \\times L$ throughout FVit. In particular, the SA layer is comprised of ",
+        "bbox": [
+            501,
+            799,
+            921,
+            944
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "page_number",
+        "text": "5403215 ",
+        "bbox": [
+            76,
+            36,
+            119,
+            45
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "header",
+        "text": "IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING, VOL. 62, 2024 ",
+        "bbox": [
+            496,
+            35,
+            921,
+            46
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "footer",
+        "text": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on January 17,2026 at 15:17:01 UTC from IEEE Xplore. Restrictions apply. ",
+        "bbox": [
+            49,
+            960,
+            942,
+            974
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "image",
+        "img_path": "images/10c9289dbd83abc0303a2032ad60720a466845f48e929776f2005bf6df0efde5.jpg",
+        "image_caption": [
+            "Fig. 2. Proposed SFF module for SFF in the CNN blocks. There are two branches enhancing the features in channel-wise, and the multimodal information is fused by element-wise addition. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            135,
+            70,
+            433,
+            353
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "two SA modules, two multilayer perceptron (MLP) modules and layer normalization (LN) operators, as shown in Fig. 3(a). Given multimodal features inputs denoted by $z _ { n - 1 } ^ { x }$ and $z _ { n - 1 } ^ { y }$ the SA layer is designed to derive the global relationships for each modality using the Multihead SA mechanism proposed in [26]. Mathematically, the output of the nth SA layer for $n = 1 , 2 , 3$ can be written as follows: ",
+        "bbox": [
+            73,
+            430,
+            490,
+            530
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "text": "$$\np _ {n} ^ {x} = \\mathrm {S A} \\left(\\mathrm {L N} \\left(z _ {n - 1} ^ {x}\\right)\\right) + z _ {n - 1} ^ {x} \\tag {1}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            186,
+            539,
+            488,
+            556
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "text": "$$\np _ {n} ^ {y} = \\operatorname {S A} \\left(\\ln \\left(z _ {n - 1} ^ {y}\\right)\\right) + z _ {n - 1} ^ {y} \\tag {2}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            187,
+            558,
+            488,
+            575
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "text": "$$\nz _ {n} ^ {x} = \\operatorname {M L P} \\left(\\operatorname {L N} \\left(p _ {n} ^ {x}\\right)\\right) + p _ {n} ^ {x} \\tag {3}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            191,
+            577,
+            488,
+            594
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "text": "$$\nz _ {n} ^ {y} = \\operatorname {M L P} \\left(\\operatorname {L N} \\left(p _ {n} ^ {y}\\right)\\right) + p _ {n} ^ {y}. \\tag {4}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            191,
+            595,
+            488,
+            614
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "After the deep-level feature enhancement performed by the SA layer, FVit further fuses multimodal features in an abstract semantic space with rich contextual information using $N _ { 2 }$ Ada-MBA layers, as shown in Fig. 3(b). In this deep-level feature fusion stage, CA and SA are computed simultaneously in the Ada-MBA module to learn the correlation between the main and assisting modalities. The output from the Ada-MBA layer can be written as ",
+        "bbox": [
+            73,
+            619,
+            491,
+            734
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\left(g _ {n} ^ {x}, g _ {n} ^ {y}\\right) = \\operatorname {A d a - M B A} \\left(\\mathrm {L N} \\left(z _ {n - 1} ^ {x}\\right), \\mathrm {L N} \\left(z _ {n - 1} ^ {y}\\right)\\right). \\tag {5}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            133,
+            743,
+            488,
+            761
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Let $q _ { n } ^ { x } = g _ { n } ^ { x } + z _ { n - 1 } ^ { x }$ and $q _ { n } ^ { y } = g _ { n } ^ { y } + z _ { n - 1 } ^ { y }$ . The fused output from the nth layer for $n = 4 , 5 , \\ldots , 9$ can be written as ",
+        "bbox": [
+            73,
+            767,
+            488,
+            796
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "text": "$$\nz _ {n} ^ {x} = \\operatorname {M L P} \\left(\\operatorname {L N} \\left(q _ {n} ^ {x}\\right)\\right) + q _ {n} ^ {x} \\tag {6}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            191,
+            803,
+            488,
+            821
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "text": "$$\nz _ {n} ^ {y} = \\operatorname {M L P} \\left(\\operatorname {L N} \\left(q _ {n} ^ {y}\\right)\\right) + q _ {n} ^ {y}. \\tag {7}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            194,
+            823,
+            488,
+            840
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Fig. 4 illustrates the structure of the proposed Ada-MBA module. Empowered by the multihead design [26], [27], the proposed Ada-MBA module divides its multimodal feature inputs $z _ { n - 1 } ^ { x }$ and $z _ { n - 1 } ^ { y }$ into $H$ equal segments denoted by $z _ { n - 1 , h } ^ { x }$ and $z _ { n - 1 , h } ^ { y }$ for $h = 1 , 2 , \\ldots , H$ , where $H$ is the number of heads. Since the operations of each head are identical, we will omit the index $h$ in the following discussions on the fusion ",
+        "bbox": [
+            73,
+            845,
+            491,
+            949
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "image",
+        "img_path": "images/f737530e9f7a26f0fb27208fb292db7248c08b4d09a45b61b1d08889cb15eb93.jpg",
+        "image_caption": [
+            "(a) "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            552,
+            65,
+            705,
+            358
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "image",
+        "img_path": "images/01fd6f0fdd8adbd726fbe7b18eda64e2a7999f6b1737d0e051b5f41a5d8b562d.jpg",
+        "image_caption": [
+            "",
+            "Fig. 3. (a) Proposed SA layer in FVit. (b) Proposed Ada-MBA layer for deep-level feature fusion in FVit. The SA layer and the Ada-MBA layer are similar in structure, but they have different attention modules. The former extracts the multimodal features while the latter fuses these deep-level semantic features. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            720,
+            65,
+            874,
+            358
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "attention module in the multihead mechanism. Two groups of matrices $\\{ Q _ { x } , K _ { x } , V _ { x } \\}$ and $\\left\\{ Q _ { y } , K _ { y } , V _ { y } \\right\\}$ for multimodal information can be computed by using linear projections $U _ { \\mathrm { q k v } } ^ { x }$ and $U _ { \\mathbf { q k v } } ^ { y }$ , respectively. After that, SA information $( \\mathbf { s a } _ { x }$ , sa y ) and CA information $( \\mathbf { c a } _ { x } , \\mathbf { c a } _ { y } )$ are derived for two modalities simultaneously. More specifically, SA computes intramodal information using $\\{ Q _ { x } , K _ { x } , V _ { x } \\}$ and $\\{ Q _ { y } , K _ { y } , V _ { y } \\}$ while CA computes intermodal information using $\\left\\{ \\dot { Q } _ { x } , \\dot { K } _ { y } , V _ { y } \\right\\}$ and $\\left\\{ Q _ { y } , K _ { x } , V _ { x } \\right\\}$ . This process realizes the extraction and fusion of the deep-level features in one module. As shown in Fig. 4, the process in the Ada-MBA module can be expressed as ",
+        "bbox": [
+            503,
+            477,
+            921,
+            640
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "text": "$$\n[ Q _ {x}, K _ {x}, V _ {x} ] = z _ {n - 1} ^ {x} U _ {\\mathrm {q k v}} ^ {x} \\tag {8}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            604,
+            656,
+            919,
+            674
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "text": "$$\n[ Q _ {y}, K _ {y}, V _ {y} ] = z _ {n - 1} ^ {y} U _ {\\mathrm {q k v}} ^ {y} \\tag {9}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            607,
+            675,
+            919,
+            694
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\mathrm {s a} _ {x} = \\varphi \\left(\\frac {Q _ {x} K _ {x} ^ {\\top}}{\\sqrt {d}}\\right) V _ {x} \\tag {10}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            669,
+            695,
+            919,
+            729
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\mathrm {s a} _ {y} = \\varphi \\left(\\frac {Q _ {y} K _ {y} ^ {\\top}}{\\sqrt {d}}\\right) V _ {y} \\tag {11}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            669,
+            729,
+            919,
+            770
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\mathrm {c a} _ {x} = \\varphi \\left(\\frac {Q _ {x} K _ {y} ^ {\\top}}{\\sqrt {d}}\\right) V _ {y} \\tag {12}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            669,
+            771,
+            919,
+            811
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\mathrm {c a} _ {y} = \\varphi \\left(\\frac {Q _ {y} K _ {x} ^ {\\top}}{\\sqrt {d}}\\right) V _ {x} \\tag {13}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            669,
+            813,
+            919,
+            848
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "where $d$ is the normalization parameter while $\\varphi ( \\cdot )$ and $( \\cdot ) ^ { \\top }$ are the softmax function and the matrix transpose operator, respectively. Equations (12) and (13) are the mutual-association guidance mechanism. It is observed that a guided fusion of the two modalities is achieved by exchanging the partial matrices. ",
+        "bbox": [
+            503,
+            861,
+            921,
+            949
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "header",
+        "text": "MA et al.: MULTILEVEL MULTIMODAL FUSION TRANSFORMER FOR REMOTE SENSING SEMANTIC SEGMENTATION ",
+        "bbox": [
+            75,
+            35,
+            699,
+            45
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "header",
+        "text": "5403215 ",
+        "bbox": [
+            875,
+            36,
+            919,
+            45
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "footer",
+        "text": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on January 17,2026 at 15:17:01 UTC from IEEE Xplore. Restrictions apply. ",
+        "bbox": [
+            49,
+            962,
+            942,
+            974
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "image",
+        "img_path": "images/a756b438acfada55d7ebab8e03f2de6c3b57b1960debef86cd032334dd0f46c9.jpg",
+        "image_caption": [
+            "Fig. 4. Schematic of the Ada-MBA module. This module includes two multihead SA modules and two multihead CA modules, which realizes the intramodal information extraction and the intermodal information fusion, respectively. It should be noted that the two $Q _ { x }$ ’s in the figure are identical. For presentational clarity, we add a label for SA and another label for CA while other matrices are the same. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            81,
+            66,
+            488,
+            292
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Next, the following adaptive mechanism is proposed to fuse SA and CA ",
+        "bbox": [
+            73,
+            398,
+            491,
+            426
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "equation",
+        "text": "$$\ng _ {n} ^ {x} = \\lambda_ {\\mathrm {s a}} ^ {x} \\mathrm {s a} _ {x} + \\lambda_ {c a} ^ {x} \\mathrm {c a} _ {x} \\tag {14}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            207,
+            435,
+            488,
+            452
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "equation",
+        "text": "$$\ng _ {n} ^ {y} = \\lambda_ {\\mathrm {s a}} ^ {y} \\mathrm {s a} _ {y} + \\lambda_ {\\mathrm {c a}} ^ {y} \\mathrm {c a} _ {y} \\tag {15}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            210,
+            454,
+            488,
+            470
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "where $\\lambda _ { \\mathrm { s a } } ^ { x }$ , $\\lambda _ { \\mathrm { s a } } ^ { x }$ , $\\lambda _ { \\mathrm { s a } } ^ { x }$ and $\\lambda _ { \\mathrm { s a } } ^ { x }$ are the learnable weighting coefficients to balance the contributions from SA and CA. ",
+        "bbox": [
+            73,
+            477,
+            488,
+            506
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Finally, the fused feature maps are enhanced by $N _ { 3 }$ SA layers. The procedures from (1)–(4) are repeated for $N _ { 3 }$ times to enhance the fused feature maps for the VIS branch and the DSM branch, respectively. The final output of FVit denoted as $z _ { N } ~ \\in ~ \\mathbb { R } ^ { C _ { \\mathrm { h i d } } \\times L }$ is the feature maps derived from the last SA layer. Based on the proposed FVit, the rich contextual information extracted from multimodal data is deeply fused before being fed into the cascaded decoder. ",
+        "bbox": [
+            73,
+            506,
+            491,
+            623
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "C. Cascaded Decoder ",
+        "text_level": 1,
+        "bbox": [
+            73,
+            643,
+            230,
+            657
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "As shown in Fig. 1, the cascaded decoder recovers the hidden fused features for the final segmentation process by exploiting multiple upsampling modules. More specifically, the decoder first reshapes the 2-D input sequence $z _ { N }$ into 3-D tensors of size $C _ { \\mathrm { d e c } } ^ { \\mathrm { ~ ~ } } \\times ( H / 2 ^ { I - 1 } ) \\stackrel { - } { \\times } ( W / \\bar { 2 } ^ { I - 1 } )$ using the Reconstruction module where $C _ { \\mathrm { d e c } }$ is the input channel number of the first block in the decoder. After that, multiple cascaded decoder blocks restore the spatial resolution to $H \\times W$ by concatenating skip connections from the corresponding CNN backbone layers. Each decoder block consists of an upsampling operator, a convolution (Conv) layer, and a ReLU layer. Finally, the segmentation head performs the final semantic prediction. ",
+        "bbox": [
+            73,
+            661,
+            491,
+            849
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "IV. EXPERIMENTS AND DISCUSSION ",
+        "text_level": 1,
+        "bbox": [
+            151,
+            867,
+            415,
+            881
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "A. Datasets ",
+        "text_level": 1,
+        "bbox": [
+            73,
+            886,
+            158,
+            898
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "1) Vaihingen: The Vaihingen dataset consists of 16 very high-resolution True Orthophotos of an average size of $2 5 0 0 ~ \\times ~ 2 0 0 0$ pixels. Each Orthophoto has three channels, ",
+        "bbox": [
+            73,
+            904,
+            491,
+            950
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "image",
+        "img_path": "images/158b774e1d750c390ad70a918fefa46e84c76ad1a97916aa5e1841629266721c.jpg",
+        "image_caption": [
+            "Fig. 5. Data samples of size $1 0 2 4 \\times 1 0 2 4$ from (a) and (b) Vaihingen and (c) and (d) Potsdam, respectively. The first row shows the orthophotos with three channels (NIRRG for Vaihingen and RGB for Potsdam). The second and third rows show the corresponding depth information and semantic labels pixel-wise. These samples present the auxiliary role of DSM modality for classes with consistent elevation and clear boundaries. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            509,
+            66,
+            916,
+            340
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "namely Near-InfRared, Red, and Green (NIRRG), as well as a normalized DSM of $9 \\mathrm { \\ c m }$ ground sampling distance (GSD). The dataset includes five foreground classes, namely Building (Bui.), Tree (Tre.), Low vegetation (Low.), Car, Impervious surface (Imp.) and one background class (Clutter). Furthermore, 16 orthophotos are divided into one training set of 12 patches and one test set of four patches in which the training set contains those orthophotos indexed by 1, 3, 23, 26, 7, 11, 13, 28, 17, 32, 34, 37 while the test set 5, 21, 15, 30. ",
+        "bbox": [
+            501,
+            430,
+            919,
+            574
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "2) Potsdam: The Potsdam dataset is comprised of 24 very high-resolution True Orthophotos of the size of $6 0 0 0 ~ \\times$ 6000 pixels for each tile. It provides four multispectral channels, namely InfRared, Red, Green, and Blue (IRRGB), as well as a normalized DSM of 5 cm GSD. The foreground classes are the same as in Vaihingen, while the class distribution differs due to the different geographical locations. RGB composites are used in this dataset. 24 orthophotos are divided into 18 patches and six patches for training and test, respectively. More specifically, the training set contains orthophotos indexed by 6_10, 7_10, 2_12, 3_11, 2_10, 7_8, 5_10, 3_12, 5_12, 7_11, 7_9, 6_9, 7_7, 4_12, 6_8, 6_12, 6_7, 4_11 whereas the test 2_11, 3_10, 4_10, 5_11, 6_11, 7_12. ",
+        "bbox": [
+            501,
+            575,
+            919,
+            763
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Some data samples from the two datasets are illustrated in Fig. 5. Unless otherwise specified, a sliding window is used to dynamically collect the training batches, which helps read large images without cropping in advance. The sliding window size is set to $2 5 6 ~ \\times ~ 2 5 6$ with a stride of 256 in the training stage and 32 in the test stage. A smaller stride in the test stage can reduce border effects by averaging the prediction results on the overlapping regions. ",
+        "bbox": [
+            501,
+            763,
+            921,
+            881
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "B. Evaluation Metrics ",
+        "text_level": 1,
+        "bbox": [
+            504,
+            900,
+            658,
+            914
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "To evaluate the segmentation results of the multimodal remote sensing data, the overall accuracy (OA), the mean F1 ",
+        "bbox": [
+            503,
+            919,
+            921,
+            949
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "page_number",
+        "text": "5403215 ",
+        "bbox": [
+            76,
+            36,
+            120,
+            46
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "header",
+        "text": "IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING, VOL. 62, 2024 ",
+        "bbox": [
+            496,
+            35,
+            921,
+            47
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "footer",
+        "text": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on January 17,2026 at 15:17:01 UTC from IEEE Xplore. Restrictions apply. ",
+        "bbox": [
+            49,
+            960,
+            942,
+            974
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "table",
+        "img_path": "images/75fb181c32cce74ce014314c7cb2805935a876b3e43d96b9d95903198c2703e9.jpg",
+        "table_caption": [
+            "TABLE II EXPERIMENTAL RESULTS ON THE VAIHINGEN DATASET. WE PRESENT THE OA OF FIVE FOREGROUND CLASSES AND THREE OVERALL PERFORMANCE METRICS. BOLD VALUES ARE THE BEST "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td rowspan=\"2\">Type</td><td rowspan=\"2\">Method</td><td colspan=\"6\">OA(%)</td><td rowspan=\"2\">mF1(%)</td><td rowspan=\"2\">mIoU(%)</td></tr><tr><td>Bui.</td><td>Tre.</td><td>Low.</td><td>Car</td><td>Imp.</td><td>Total</td></tr><tr><td rowspan=\"8\">CNN-based</td><td>ABCNet [61]</td><td>94.10</td><td>90.81</td><td>78.53</td><td>64.12</td><td>89.70</td><td>89.25</td><td>85.34</td><td>75.20</td></tr><tr><td>PSPNet [62]</td><td>94.52</td><td>90.17</td><td>78.84</td><td>79.22</td><td>92.03</td><td>89.94</td><td>86.55</td><td>76.96</td></tr><tr><td>MAResU-Net [63]</td><td>94.84</td><td>89.99</td><td>79.09</td><td>85.89</td><td>92.19</td><td>90.17</td><td>88.54</td><td>79.89</td></tr><tr><td>vFuseNet [15]</td><td>95.92</td><td>91.36</td><td>77.64</td><td>76.06</td><td>91.85</td><td>90.49</td><td>87.89</td><td>78.92</td></tr><tr><td>FuseNet [14]</td><td>96.28</td><td>90.28</td><td>78.98</td><td>81.37</td><td>91.66</td><td>90.51</td><td>87.71</td><td>78.71</td></tr><tr><td>ESANet [33]</td><td>95.69</td><td>90.50</td><td>77.16</td><td>85.46</td><td>91.39</td><td>90.61</td><td>88.18</td><td>79.42</td></tr><tr><td>SA-GATE [64]</td><td>94.84</td><td>92.56</td><td>81.29</td><td>87.79</td><td>91.69</td><td>91.10</td><td>89.81</td><td>81.27</td></tr><tr><td>CMGFNet [47]</td><td>97.75</td><td>91.60</td><td>80.03</td><td>87.28</td><td>92.35</td><td>91.72</td><td>90.00</td><td>82.26</td></tr><tr><td rowspan=\"5\">Transformer-based</td><td>TransUNet [31]</td><td>96.48</td><td>92.77</td><td>76.14</td><td>69.56</td><td>91.66</td><td>90.96</td><td>87.34</td><td>78.26</td></tr><tr><td>CMFNet [19]</td><td>97.17</td><td>90.82</td><td>80.37</td><td>85.47</td><td>92.36</td><td>91.40</td><td>89.48</td><td>81.44</td></tr><tr><td>UNetFormer [44]</td><td>96.23</td><td>91.85</td><td>79.95</td><td>86.99</td><td>91.85</td><td>91.17</td><td>89.85</td><td>81.97</td></tr><tr><td>MFTransNet [59]</td><td>96.41</td><td>91.48</td><td>80.09</td><td>86.52</td><td>92.11</td><td>91.22</td><td>89.62</td><td>81.61</td></tr><tr><td>FTransUNet (Ours)</td><td>98.20</td><td>91.94</td><td>81.49</td><td>91.27</td><td>93.01</td><td>92.40</td><td>91.21</td><td>84.23</td></tr></table>",
+        "bbox": [
+            158,
+            114,
+            836,
+            290
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "score (mF1), and the mean intersection over union (mIoU) are employed. These standard statistical indices can provide fair comparisons of the performance of the proposed FTransUNet and other state-of-the-art methods. More specifically, we compute mF1 and mIoU of the five foreground classes. In addition, we also include Clutter or Background in the evaluation of OA whose definition is given by ",
+        "bbox": [
+            73,
+            316,
+            491,
+            419
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\mathrm {O A} = \\frac {\\mathrm {T P} + \\mathrm {T N}}{\\mathrm {T P} + \\mathrm {F P} + \\mathrm {T N} + \\mathrm {F N}} \\tag {16}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            184,
+            422,
+            490,
+            454
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "where TP, TN, FP, and FN denote true positive, true negative, false positive, and false negative, respectively. Furthermore, F1 and IoU are calculated for each foreground class indexed by $c$ according to the following formula: ",
+        "bbox": [
+            73,
+            458,
+            488,
+            518
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "equation",
+        "text": "$$\nF 1 = 2 \\times \\frac {Q _ {c} \\times R _ {c}}{Q _ {c} + R _ {c}} \\tag {17}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            233,
+            521,
+            488,
+            553
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\mathrm {I o U} = \\frac {\\mathrm {T P} _ {c}}{\\mathrm {T P} _ {c} + \\mathrm {F P} _ {c} + \\mathrm {F N} _ {c}} \\tag {18}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            197,
+            554,
+            488,
+            585
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "where $\\mathrm { T P } _ { c }$ , $\\mathrm { F P } _ { c }$ and $\\mathrm { F N } _ { c }$ are true positives, false positives, and false negatives for the cth class, respectively. Finally, $Q _ { c }$ and $R _ { c }$ are given by ",
+        "bbox": [
+            73,
+            589,
+            488,
+            633
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "equation",
+        "text": "$$\nQ _ {c} = \\frac {\\mathrm {T P} _ {c}}{\\mathrm {T P} _ {c} + \\mathrm {F P} _ {c}} \\tag {19}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            218,
+            633,
+            488,
+            666
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "equation",
+        "text": "$$\nR _ {c} = \\frac {\\mathrm {T P} _ {c}}{\\mathrm {T P} _ {c} + \\mathrm {F N} _ {c}}. \\tag {20}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            223,
+            666,
+            488,
+            698
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "We derive the mean values, namely mF1 and mIoU, upon obtaining F1 and IoU for the five useful foreground classes according to the definitions above. ",
+        "bbox": [
+            73,
+            700,
+            488,
+            744
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "C. Implementation Details ",
+        "text_level": 1,
+        "bbox": [
+            73,
+            756,
+            256,
+            770
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "The experiments were all implemented with PyTorch on a single NVIDIA GeForce RTX 3090 GPU with 24 GB RAM. All models were trained using the stochastic gradient descent (SGD) algorithm with a learning rate of 0.01, a momentum of 0.9, a decaying coefficient of 0.0005, and a batch size of 10. Simple data augmentations, e.g., random rotation and flipping, are applied after the sliding window collects samples. The CNN backbone used in the proposed FTransUNet is comprised of two ResNet50 models, each of which consists of four convolutional layers, i.e., $I = 4$ , with a hidden size of $C _ { \\mathrm { h i d } } = 7 6 8$ . FVit has in total $N _ { 1 } + N _ { 2 } + N _ { 3 } = 1 2$ transformer layers with $N _ { 1 } = 3$ , $N _ { 2 } = 6$ , and $N _ { 3 } = 3$ . The number of heads ",
+        "bbox": [
+            73,
+            773,
+            491,
+            949
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "in each layer is set to $H = 1 2$ while the channel size is set to $C _ { \\mathrm { d e c } } = 5 1 2$ . Finally, all transformer backbones and ResNet50 were pretrained on ImageNet [65] for better initialization. ",
+        "bbox": [
+            503,
+            316,
+            919,
+            363
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "D. Performance Comparison ",
+        "text_level": 1,
+        "bbox": [
+            504,
+            380,
+            702,
+            395
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "We benchmarked the performance of the proposed FTransUNet against twelve representative state-of-the-art methods, namely ABCNet [61], PSPNet [62], MAResU-Net [63], vFuseNet [15], FuseNet [14], ESANet [33], TransUNet [31], SA-GATE [64], UNetFormer [44], CMFNet [19], MFTransNet [59], and CMGFNet [47]. In our experiments, ABCNet, PSPNet, MAResU-Net, and UNetFormer only considered the main modal information, i.e., the VIS images. These advanced single-modal methods can illustrate the influence of DSM data, in other words, the advantages of multimodal over single-modal. In contrast, other methods took into account crossmodal data. In particular, the following modification was made on the baseline method TransUNet for a fair comparison: We modified the input layer and stacked VIS and DSM data into four channels for network training and test as suggested in [15] and [48]. The quantitative results are listed in Tables II and III. ",
+        "bbox": [
+            501,
+            398,
+            921,
+            643
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "1) Performance Comparison on the Vaihingen Dataset: As presented in Table II, the proposed FTransUNet showed significant improvements in terms of OA, mF1, and mIoU as compared to the baseline TransUNet, which confirmed that the novel FTransUNet successfully fused shallow-level and deep-level features by extracting complementary information from the assisting modality and effectively deriving robust representations. Compared with existing state-of-the-art models, FTransUNet outperformed on four classes, namely Building, Low vegetation, Car and Impervious surface. In particular, on the Vaihingen dataset, FTransUNet provided a substantial improvement of $3 . 4 8 \\%$ on the Car class as compared to the existing method SA-GATE. Furthermore, the classification accuracy for Impervious surface has been enhanced by $0 . 6 5 \\%$ compared to the existing method CMFNet and the classification accuracy for Building has been enhanced by $0 . 4 5 \\%$ compared to the existing method CMGFNet. These results can be explained by the fact that FTransUNet can more effectively extract and fuse multilevel multimodal features by exploiting CNN and transformer successively as compared to CMFNet. Furthermore, as CMGFNet was designed for ",
+        "bbox": [
+            501,
+            645,
+            921,
+            949
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "header",
+        "text": "MA et al.: MULTILEVEL MULTIMODAL FUSION TRANSFORMER FOR REMOTE SENSING SEMANTIC SEGMENTATION ",
+        "bbox": [
+            75,
+            35,
+            699,
+            45
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "header",
+        "text": "5403215 ",
+        "bbox": [
+            877,
+            36,
+            919,
+            45
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "footer",
+        "text": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on January 17,2026 at 15:17:01 UTC from IEEE Xplore. Restrictions apply. ",
+        "bbox": [
+            49,
+            960,
+            942,
+            974
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "image",
+        "img_path": "images/f24ac51146492e6ae7aecb78288a6eabd801652d5a0e47f635dea6c137c8e1d0.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            133,
+            68,
+            310,
+            202
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/a0733458ebd44e3cb7d394bd1044a5920eb6c82c77292ee92960a59c3a869390.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            318,
+            68,
+            493,
+            202
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/fccd567512ac42204b364459ba0d214dae9129dbc3ff2e7df9d5b39e47fb0432.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            501,
+            68,
+            676,
+            202
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/1482e2415665f086e944a5b9f8235d20386226eafc861ecaedf6a376c000ed55.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            684,
+            68,
+            859,
+            202
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/372586155e157d1e5e847bbafb61caf4d69cc5f314d4bafec5269b2a4a4133fb.jpg",
+        "image_caption": [
+            "(e) "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            135,
+            219,
+            310,
+            354
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/8253733974ecfb738eb2ecc7db9a57261ce3829469f61953467e1bb19bc2931c.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            320,
+            219,
+            495,
+            354
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/8481327e3674fef78bf865e381bad1fd38e6b3a609ba815922f3425fdd9135f2.jpg",
+        "image_caption": [
+            "(g) "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            503,
+            219,
+            678,
+            354
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/ea966558cee6c827318e0780e0acc31187c415f393a1f541d5943708bb3362d1.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            686,
+            219,
+            862,
+            354
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/4d74c6f82d49bbb070a318fc724b1e387236a4d5abd04e17614bfdd443dcb0f6.jpg",
+        "image_caption": [
+            "i "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            135,
+            371,
+            310,
+            505
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/55f4c9680f8de55e445661f0b22f4833d965167dbe6236a1e4f0d618ed93ebd7.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            320,
+            371,
+            493,
+            505
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/23a9391e1a3377edc48dd204353ef39f712e994ab878c2d0e23cc017d05b42ab.jpg",
+        "image_caption": [
+            "(k) "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            503,
+            371,
+            678,
+            505
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/a99a9f02a44b57bc8619aeca68bff6adf3aa383baa8e25146804b4f650a43b72.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            686,
+            371,
+            862,
+            505
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/6f983de8c603ba1d7b302d1b46a9721ca588edf081d6f2b3f8cbec9c910bd361.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            135,
+            522,
+            310,
+            656
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/99dca8e6d453837faee95372950ef245fad7fbfebca12bd618ec0792da7c2700.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            320,
+            522,
+            495,
+            655
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/fb40dd2dc05643e10eef723f2463395e1e56c50d4d0139edb05fb93be99352fb.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            503,
+            522,
+            678,
+            656
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/93793f76ab79cdd40cc356ffb57dc5a8228799251f465267554761991eab3d7e.jpg",
+        "image_caption": [
+            "",
+            "impervious surface ",
+            "building ",
+            "low vegetation ",
+            "tree ",
+            "car ",
+            "clutter ",
+            "Fig. 6. Qualitative performance comparisons on the Vaihingen test set with the size of $1 8 0 0 ~ \\times ~ 1 8 0 0$ . (a) NIRRG images, (b) DSM, (c) Ground truth, (d) ABCNet, (e) PSPNet, (f) MAResU-Net, (g) vFuseNet, (h) FuseNet, (i) ESANet, (j) TransUNet, (k) SA-GATE, (l) CMFNet, (m) UNetFormer, (n) MFTransNet, (o) CMGFNet, and (p) proposed FTransUNet. Two purple boxes are added to all subfigures to highlight the differences. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            686,
+            522,
+            862,
+            656
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "building extraction, global information was not well taken into consideration for multicategory classification tasks. In contrast, the proposed FTransUNet is designed to effectively derive and exploit the depth information from the DSM images. As a result, the fused features for classes of distinctive depth values have become more distinguishable. For instance, Building and Impervious surface generally exhibit higher and lower depth values, respectively. In terms of the overall performance, the proposed FTransUNet achieved OA of $9 2 . 4 0 \\%$ , mF1 score of $9 1 . 2 1 \\%$ and mIoU of $8 4 . 2 3 \\%$ , which stands for an increase of $1 . 4 4 \\%$ , $3 . 8 7 \\%$ and $5 . 9 7 \\%$ as compared to the corresponding ",
+        "bbox": [
+            73,
+            775,
+            493,
+            936
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "performance of the baseline TransUNet, respectively. These results confirmed that the proposed FTransUNet achieved better generalization performance. ",
+        "bbox": [
+            501,
+            775,
+            919,
+            819
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Fig. 6 shows a visualization example of the results obtained by all twelve methods under consideration. It is observed that remote sensing images are more complex than natural images as stated in Section I: 1) Building varies greatly in scale, with neat borders but various shapes and 2) Tree and Low vegetation are interleaved. Clearly, the proposed FTransUNet can identify complex edges with smoother results, providing a complete and connected object with fewer independent points. ",
+        "bbox": [
+            501,
+            819,
+            921,
+            935
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "page_number",
+        "text": "5403215 ",
+        "bbox": [
+            76,
+            36,
+            119,
+            45
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "header",
+        "text": "IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING, VOL. 62, 2024 ",
+        "bbox": [
+            496,
+            35,
+            921,
+            46
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "footer",
+        "text": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on January 17,2026 at 15:17:01 UTC from IEEE Xplore. Restrictions apply. ",
+        "bbox": [
+            49,
+            960,
+            942,
+            974
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "table",
+        "img_path": "images/f8721155ef50b13460cd41de9290305e8679dec6881df80388adcb150aae5f9e.jpg",
+        "table_caption": [
+            "TABLE III EXPERIMENTAL RESULTS ON THE POSTDAM DATASET. WE PRESENT THE OA OF FIVE FOREGROUND CLASSES AND THREE OVERALL PERFORMANCE METRICS. BOLD VALUES ARE THE BEST "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td rowspan=\"2\">Type</td><td rowspan=\"2\">Method</td><td colspan=\"6\">OA(%)</td><td rowspan=\"2\">mF1(%)</td><td rowspan=\"2\">mIoU(%)</td></tr><tr><td>Bui.</td><td>Trec.</td><td>Low.</td><td>Car</td><td>Imp.</td><td>Total</td></tr><tr><td rowspan=\"8\">CNN-based</td><td>ABCNet [61]</td><td>96.23</td><td>78.92</td><td>86.40</td><td>92.92</td><td>88.90</td><td>87.52</td><td>88.14</td><td>79.26</td></tr><tr><td>PSPNet [62]</td><td>97.03</td><td>83.13</td><td>85.67</td><td>88.81</td><td>90.91</td><td>88.67</td><td>88.92</td><td>80.36</td></tr><tr><td>MAResU-Net [63]</td><td>96.82</td><td>83.97</td><td>87.70</td><td>95.88</td><td>92.19</td><td>89.82</td><td>90.86</td><td>83.61</td></tr><tr><td>vFuseNet [15]</td><td>97.23</td><td>84.29</td><td>89.03</td><td>95.49</td><td>91.62</td><td>90.22</td><td>91.26</td><td>84.26</td></tr><tr><td>FuseNet [14]</td><td>97.48</td><td>85.14</td><td>87.31</td><td>96.10</td><td>92.64</td><td>90.58</td><td>91.60</td><td>84.86</td></tr><tr><td>ESANet [33]</td><td>97.10</td><td>85.31</td><td>87.81</td><td>94.08</td><td>92.76</td><td>89.74</td><td>91.22</td><td>84.15</td></tr><tr><td>SA-GATE [64]</td><td>96.54</td><td>81.18</td><td>85.35</td><td>96.63</td><td>90.77</td><td>87.91</td><td>90.26</td><td>82.53</td></tr><tr><td>CMGFNet [47]</td><td>97.41</td><td>86.80</td><td>86.68</td><td>95.68</td><td>92.60</td><td>90.21</td><td>91.40</td><td>84.53</td></tr><tr><td rowspan=\"5\">Transformer-based</td><td>TransUNet [31]</td><td>96.63</td><td>82.65</td><td>89.98</td><td>93.17</td><td>91.93</td><td>90.01</td><td>90.97</td><td>83.74</td></tr><tr><td>CMFNet [19]</td><td>97.63</td><td>87.40</td><td>88.00</td><td>95.68</td><td>92.84</td><td>91.16</td><td>92.10</td><td>85.63</td></tr><tr><td>UNetFormer [44]</td><td>97.69</td><td>86.47</td><td>87.93</td><td>95.91</td><td>92.27</td><td>90.65</td><td>91.71</td><td>85.05</td></tr><tr><td>MFTransNet [59]</td><td>97.37</td><td>85.71</td><td>86.92</td><td>96.05</td><td>92.45</td><td>89.96</td><td>91.11</td><td>84.04</td></tr><tr><td>FTransUNet (Ours)</td><td>97.78</td><td>88.27</td><td>88.48</td><td>96.31</td><td>93.17</td><td>91.34</td><td>92.41</td><td>86.20</td></tr></table>",
+        "bbox": [
+            161,
+            114,
+            836,
+            289
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "table",
+        "img_path": "images/a2216e250d4ab212274af4c972412bde15c6f424e2c501dc0c145f0713090fbc.jpg",
+        "table_caption": [
+            "TABLE IV EXPERIMENTAL RESULTS ON THE POSTDAM DATASET FOR SPECTRUM ANALYSIS. WE PRESENT THE OA OF FIVE FOREGROUND CLASSES AND THREE OVERALL PERFORMANCE METRICS "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td rowspan=\"2\">Method</td><td rowspan=\"2\">Bands</td><td colspan=\"6\">OA(%)</td><td rowspan=\"2\">mF1(%)</td><td rowspan=\"2\">mIoU(%)</td></tr><tr><td>Bui.</td><td>Tre.</td><td>Low.</td><td>Car</td><td>Imp.</td><td>Total</td></tr><tr><td rowspan=\"2\">UNetFormer [44]</td><td>RGB</td><td>97.69</td><td>86.47</td><td>87.93</td><td>95.91</td><td>92.27</td><td>90.65</td><td>91.71</td><td>85.05</td></tr><tr><td>IRRG</td><td>97.83</td><td>86.96</td><td>88.67</td><td>96.16</td><td>91.38</td><td>90.75</td><td>91.85</td><td>85.22</td></tr><tr><td rowspan=\"3\">FTransUNet</td><td>RGB</td><td>96.63</td><td>82.65</td><td>89.98</td><td>93.17</td><td>91.93</td><td>90.01</td><td>90.97</td><td>83.74</td></tr><tr><td>RGB+DSM</td><td>97.78</td><td>88.27</td><td>88.48</td><td>96.31</td><td>93.17</td><td>91.34</td><td>92.41</td><td>86.20</td></tr><tr><td>IRRG+DSM</td><td>97.67</td><td>87.77</td><td>89.30</td><td>96.81</td><td>93.24</td><td>91.53</td><td>92.49</td><td>86.32</td></tr></table>",
+        "bbox": [
+            178,
+            339,
+            820,
+            425
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Specifically, the SFF carried out by SE modules in CNN is beneficial for retaining details of objects with various scales and shapes, resulting in accurate edges of Building and Impervious surface objects. Furthermore, the deep-level feature fusion stage in FVit can more accurately recognize complex long-distance semantic information, which helps identify a complete object with reduced scattered points. These advantages enabled the proposed FTransUNet to achieve more accurate classification as compared to other single-modal or multimodal methods. There are two purple boxes in Fig. 6(a)–(p). It is observed that in the upper right box, FTransUNet clearly segmented the trees arranged in a successive row. In the lower box, FTransUNet effectively identified the low vegetation around the building, providing a more tidy and complete segmentation of the building. ",
+        "bbox": [
+            73,
+            436,
+            491,
+            654
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "2) Performance Comparison on the Potsdam Dataset: Experiments on the Potsdam dataset also demonstrated results similar to those derived from the Vaihingen dataset. As presented in Table III, the classification accuracy for Building, Tree, Car and Impervious surface were $9 7 . 7 8 \\%$ , $8 8 . 2 7 \\%$ $9 6 . 3 1 \\%$ and $9 3 . 1 7 \\%$ , respectively, which amounts to an increase of $1 . 1 5 \\%$ , $5 . 6 2 \\%$ , $3 . 1 4 \\%$ and $1 . 2 4 \\%$ as compared to the baseline TransUNet. The corresponding OA, mF1 score and mIoU values were $9 1 . 3 4 \\%$ , $9 2 . 4 1 \\%$ , $8 6 . 2 0 \\%$ , respectively, which corresponds to increases of $1 . 3 3 \\%$ , $1 . 4 4 \\%$ , and $2 . 4 6 \\%$ , respectively, over TransUNet. In particular, substantial improvements were achieved for Building, Tree, and Impervious surface as compared to other state-of-the-art methods. ",
+        "bbox": [
+            73,
+            655,
+            490,
+            843
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Fig. 7 shows a visualization example from Potsdam for all methods under consideration. It is observed that the proposed FTransUNet could more accurately classify objects like Building and small-scale objects like Car. This was achieved by the synergy of the CNN fusion and FVit in FTransUNet: The CNN fusion extracts robust representations of the basic features of ground objects while FVit recognizes complex remote sensing ",
+        "bbox": [
+            73,
+            843,
+            491,
+            945
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "image content on the basis of the robust shallow-level features. In sharp contrast, most existing methods misclassified object boundaries, inflicting scattered artifacts. Two purple boxes are added in Fig. 7(a)–(p). The upper box shows Building covered by Tree. It can be observed that FTransUNet was more accurate in segmenting trees in this complex scene. Meanwhile, the segmentation of the building under the tree was closer to the ground truth. The lower left box shows the segmentation of the Tree in the area of Low vegetation. Inspection of Fig. 7 suggests that FTransUNet successfully divided the edges of the trees. ",
+        "bbox": [
+            501,
+            436,
+            919,
+            595
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Next, we performed spectrum analysis on Postdam dataset of IRRGB four bands. The analysis is designed to compare the difference between IRRG and RGB in single-modal and multimodal segmentation tasks as presented in Table IV. The results in the first and second rows suggest that NIRRG was more informative than RGB for semantic segmentation. This may be due to the fact that NIRRG can better characterize plants (Tree and Low vegetation). Similar observations were obtained for IRRG and RGB by inspecting the fourth and fifth rows in Table IV. Furthermore, a comparison of the third and fourth rows reveals that the DSM data provided a noticeable improvement in overall segmentation performance, though the accuracy for Low vegetation degraded by $1 . 5 \\%$ . To shed light on this observation, Table V compared the accuracy for each category using the Vaihingen dataset and the Potsdam dataset. While the overall performance has been substantially improved by the proposed FTransUNet on both datasets, the accuracy for Low vegetation and Tree exhibited slightly different change patterns on the two datasets. More specifically, the proposed FTransUNet greatly improved the performance of Low vegetation with minor degradation for Tree on the Vaihingen dataset. However, the result was the opposite for the Potsdam dataset, i.e., improvement for Tree but minor degradation for Low vegetation. These results may ",
+        "bbox": [
+            501,
+            597,
+            919,
+            945
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "header",
+        "text": "MA et al.: MULTILEVEL MULTIMODAL FUSION TRANSFORMER FOR REMOTE SENSING SEMANTIC SEGMENTATION ",
+        "bbox": [
+            75,
+            35,
+            699,
+            45
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "page_number",
+        "text": "5403215 ",
+        "bbox": [
+            877,
+            36,
+            919,
+            45
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "footer",
+        "text": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on January 17,2026 at 15:17:01 UTC from IEEE Xplore. Restrictions apply. ",
+        "bbox": [
+            49,
+            960,
+            942,
+            974
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "image",
+        "img_path": "images/17dffaee2dcef91dbc09117cbf878a203414b05b072755758e9fd1ada1e29c09.jpg",
+        "image_caption": [
+            "(a) "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            133,
+            66,
+            308,
+            200
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "image",
+        "img_path": "images/6bc419038d0b3b426e286f5be25bc6c5034a60062e274a8d8cd3883d32db75a8.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            316,
+            66,
+            493,
+            200
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "image",
+        "img_path": "images/c53ea1b352345fde6cbdc107eebb9d6883889bb30b08c9a9dbae88a416024aa9.jpg",
+        "image_caption": [
+            "（c）)"
+        ],
+        "image_footnote": [],
+        "bbox": [
+            501,
+            66,
+            678,
+            200
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "image",
+        "img_path": "images/83946355034f985bdf13a76d82e4e1a9fde234cea1c268db596c4434045e3892.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            686,
+            66,
+            862,
+            200
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "image",
+        "img_path": "images/38c4dd6255abb8b984ac611e73782f8c74057b6ed0291efa35bf2046da220ace.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            133,
+            219,
+            308,
+            354
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "image",
+        "img_path": "images/3330ded59e56649dd60bf86224ff80b1e234cc69be93e2b164a30ed3fc4207b8.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            316,
+            219,
+            493,
+            354
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "image",
+        "img_path": "images/18738ead4a3cf7bf5836065a03e09387b976ba15c12460a7a11f4285291ee623.jpg",
+        "image_caption": [
+            "(g) "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            501,
+            219,
+            676,
+            354
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "image",
+        "img_path": "images/88b5c46c22e5bf3c50e8a745709e9d5f186d558eb7ae29698f4f772c99cb9cdd.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            686,
+            219,
+            862,
+            354
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "image",
+        "img_path": "images/7ddd1622e56e6dad0399d081709cc15eeb681bf484cfe2c6027394daff8fb1b7.jpg",
+        "image_caption": [
+            "i) "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            133,
+            371,
+            308,
+            506
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "image",
+        "img_path": "images/4f9f7839607599292e92f199a5dfaabceebfe58fed9e823209e927bb1de483a4.jpg",
+        "image_caption": [
+            "i "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            316,
+            371,
+            493,
+            506
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "image",
+        "img_path": "images/1fb3cb36011e04d68d9194e5ea9d3dfd50c52c69bdd83e54542be21592835db1.jpg",
+        "image_caption": [
+            "(k) "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            501,
+            371,
+            676,
+            506
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "image",
+        "img_path": "images/c976dec9ceffaac8d017dcf882750cae09d8b36f5a88bb39850dec0ce65283fe.jpg",
+        "image_caption": [
+            "() "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            686,
+            371,
+            862,
+            506
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "image",
+        "img_path": "images/680a0694f5cbfb953737af3d4a65cd6a8839cbe4adf8a97ead1abf6249d15515.jpg",
+        "image_caption": [
+            "",
+            "impervious surface "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            133,
+            523,
+            308,
+            657
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "image",
+        "img_path": "images/f90f14bdebb3849a1b05cc0f6f73dfefc49e2b0ab2e1ad2ce30b2621c5ba0a15.jpg",
+        "image_caption": [
+            "building "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            316,
+            523,
+            493,
+            657
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "(n) ",
+        "bbox": [
+            387,
+            660,
+            411,
+            676
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "image",
+        "img_path": "images/b44e73a0e536c6061aa7f869614905dbdb3ef2ad60514d817a825e0d625e08a4.jpg",
+        "image_caption": [
+            "low vegetation "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            416,
+            678,
+            480,
+            691
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "image",
+        "img_path": "images/5618e66aca40c9ebfd282b9f30764e2518e60af4fffe487a4a26979d4e60fd64.jpg",
+        "image_caption": [
+            "() ",
+            "tree "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            501,
+            523,
+            676,
+            657
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "image",
+        "img_path": "images/a7d1a00dcc928c3b4618be8fc5c2c8183dfcb0af3c2c6b9b1a28072b59515dd3.jpg",
+        "image_caption": [
+            "",
+            "car ",
+            "clutter ",
+            "Fig. 7. Qualitative performance comparisons on the Potsdam test set with the size of $2 0 0 0 \\times 2 0 0 0$ . (a) RGB images, (b) DSM, (c) Ground truth, (d) ABCNet, (e) PSPNet, (f) MAResU-Net, (g) vFuseNet, (h) FuseNet, (i) ESANet, (j) TransUNet, (k) SA-GATE, (l) CMFNet, (m) UNetFormer, (n) MFTransNet, (o) CMGFNet, and (p) proposed FTransUNet. Two purple boxes are added to all subfigures to highlight the differences. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            686,
+            523,
+            862,
+            657
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "be caused by the fact that the two categories share great similarities in color with highly irregular shapes of uncertain boundaries. As a result, it remains challenging to differentiate Tree and Low vegetation while improving overall performance. ",
+        "bbox": [
+            73,
+            771,
+            490,
+            829
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "As evidenced in Table V, the proposed FTransUNet can improve the accuracy for most categories on both datasets by effectively exploiting the additional DSM data. In particular, noticeable improvement on Building and Impervious Surface was observed as ground objects belonging to these two categories usually possess distinct elevation characteristics. Furthermore, since Car is mostly located on Road, it was also helpful to identify the boundary of Car from Road whose ",
+        "bbox": [
+            73,
+            829,
+            491,
+            946
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "height is relatively consistent. Finally, as discussed before, the elevation characteristics of Tree and Low vegetation are rather similar, the FTransUNet experienced challenges in improving the accuracy for both categories. So, the proposed FTransUNet was able to achieve significant overall performance improvement on both datasets. ",
+        "bbox": [
+            501,
+            771,
+            921,
+            857
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "E. Structure Analysis ",
+        "text_level": 1,
+        "bbox": [
+            504,
+            873,
+            651,
+            887
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "The proposed three-stage FVit structure includes $N _ { 1 }$ SA layers for deep-level feature enhancement, $N _ { 2 }$ Ada-MBA layers for deep-level feature fusion followed by $N _ { 3 }$ SA layers for fusion feature enhancement. To shed light on this structure, ",
+        "bbox": [
+            503,
+            888,
+            921,
+            946
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "page_number",
+        "text": "5403215 ",
+        "bbox": [
+            76,
+            35,
+            120,
+            46
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "header",
+        "text": "IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING, VOL. 62, 2024 ",
+        "bbox": [
+            496,
+            35,
+            921,
+            46
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "footer",
+        "text": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on January 17,2026 at 15:17:01 UTC from IEEE Xplore. Restrictions apply. ",
+        "bbox": [
+            49,
+            962,
+            942,
+            974
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "table",
+        "img_path": "images/99bdff9c889c529b529c128ed79d87257520ff7ac4781c6beb38205194dbbf03.jpg",
+        "table_caption": [
+            "TABLE V EXPERIMENTAL RESULTS ON DSM ANALYSIS. WE PRESENT THE OA OF FIVE FOREGROUND CLASSES AND THREE OVERALL PERFORMANCE METRICS "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td rowspan=\"2\">Dataset</td><td rowspan=\"2\">Bands</td><td colspan=\"5\">OA(%)</td></tr><tr><td>Bui.</td><td>Tre.</td><td>Low.</td><td>Car</td><td>Imp.</td></tr><tr><td rowspan=\"2\">Vaihingen</td><td>NIRRG</td><td>96.48</td><td>92.77</td><td>76.14</td><td>69.56</td><td>91.66</td></tr><tr><td>NIRRG+DSM</td><td>98.20 (+1.72)</td><td>91.94 (-0.83)</td><td>81.49 (+5.35)</td><td>91.27 (+21.71)</td><td>93.01 (+1.35)</td></tr><tr><td rowspan=\"2\">Potsdam</td><td>RGB</td><td>96.63</td><td>82.65</td><td>89.98</td><td>93.17</td><td>91.93</td></tr><tr><td>RGB+DSM</td><td>97.78 (+1.15)</td><td>88.27 (+5.62)</td><td>88.48 (-1.50)</td><td>96.31 (+3.14)</td><td>93.17 (+1.24)</td></tr></table>",
+        "bbox": [
+            176,
+            102,
+            823,
+            178
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "image",
+        "img_path": "images/29ae10bf1e52b9f375ceb9f63d0e9363dc0f297bf4604d56f88f6b0fd9b11753.jpg",
+        "image_caption": [
+            "Fig. 8. Illustration of different FVit structures adopted in the experiments. (a) stru1, (b) stru2, (c) stru3, (d) stru4, (e) stru5, and (f) three-stage. We constructed five different structures with 12 attention layers to illustrate the superiority of the three-stage designation. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            124,
+            191,
+            875,
+            311
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "table",
+        "img_path": "images/f000b0906e7adbb5ab9f8447b4610bd56e9123aec0c76bdc6f67c2d33d8db04e.jpg",
+        "table_caption": [],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Structure</td><td>OA(%)</td><td>mF1(%)</td><td>mIoU(%)</td></tr><tr><td>stru1</td><td>92.13</td><td>90.60</td><td>83.25</td></tr><tr><td>stru2</td><td>92.06</td><td>90.70</td><td>83.39</td></tr><tr><td>stru3</td><td>92.33</td><td>90.82</td><td>83.58</td></tr><tr><td>stru4</td><td>92.35</td><td>90.91</td><td>83.75</td></tr><tr><td>stru5</td><td>92.26</td><td>90.75</td><td>83.46</td></tr><tr><td>three-stage</td><td>92.40</td><td>91.21</td><td>84.23</td></tr></table>",
+        "bbox": [
+            102,
+            369,
+            464,
+            539
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "in-depth structure analyses were conducted. As shown in Table VI, six sets of structure experiments were performed by varying the numbers and the order of SA layers and Ada-MBA layers. As shown in Fig. 8, the first experiment labeled as “stru1” utilizes FVit comprised of only 12 SA layers, i.e., the deep-level features in two branches are not fused by the Ada-MBA layers. In contrast, the second experiment labeled as “stru2” and the third experiment labeled as “stru3” consider the cases that FVit is comprised of only $1 2 \\ \\mathrm { C A }$ layers and 12 Ada-MBA layers, respectively. Furthermore, the fourth experiment labeled as “stru4” represents six SA layers and six Ada-MBA layers, while the fifth experiment labeled as “stru5” stands for six blocks each of which is one SA layer followed by one Ada-MBA layer. Finally, the sixth experiment employs the proposed three-stage fusion structure, i.e., three SA layers followed by six Ada-MBA layers and three additional SA layers. ",
+        "bbox": [
+            73,
+            556,
+            491,
+            803
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "As shown in Table VI, the structure analysis results showed that the first experiment “stru1,” i.e., SA layers only, had the worst performance, suggesting the importance of the crossmodal fusion on deep-level features. Furthermore, Table VI confirmed that the hybrid designs employed in the fourth experiment “stru4,” in the fifth experiment “stru5” and the sixth experiment “three-stage,” i.e., the proposed FVit, outperformed the simple SA layers only “stru1,” the simple CA layers only “stru2” and the Ada-MBA layers only “stru3.” Finally, the design of “stru5” was not as effective as the pro-",
+        "bbox": [
+            73,
+            804,
+            491,
+            949
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "table",
+        "img_path": "images/a3966c4226df9d622c060c3c6b70df07c9776118b4d6d25e418b3da8c45093ea.jpg",
+        "table_caption": [
+            "TABLE VIIABLATION STUDY OF THE PROPOSED APPROACH, WHERE SFF REFERS TOSFF IN CNN BLOCKS AND DFF REPRESENTS DEEP-LEVEL FEATUREFUSION IN FVIT. THE RESULT SHOWS THAT IT IS NECESSARY TOFUSE MULTIMODAL INFORMATION IN SHALLOW-LEVEL ANDDEEP-LEVEL FEATURES SIMULTANEOUSLY"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>SFF</td><td>DFF</td><td>OA(%)</td><td>mF1(%)</td><td>mIoU(%)</td></tr><tr><td>✓</td><td></td><td>92.13</td><td>90.60</td><td>83.25</td></tr><tr><td></td><td>✓</td><td>91.73</td><td>90.67</td><td>83.32</td></tr><tr><td>✓</td><td>✓</td><td>92.40</td><td>91.21</td><td>84.23</td></tr></table>",
+        "bbox": [
+            566,
+            449,
+            859,
+            500
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "posed FVit structure. In summary, the six experiments showed that carefully designed hybrid structures combining SA and Ada-MBA layers effectively enhanced feature extraction and fusion. More specifically, it is evidenced from Table VI that intramodal feature extraction done through SA and the cross-modal feature fusion achieved by Ada-MBA are critical for performance improvement. In particular, the proposed three-stage FVit structure plays a crucial role in deep-level feature enhancement, deep-level feature fusion, and fusion feature enhancement. This exemplifies that the proposed FTransUNet differs from existing works by leveraging both CNN and transformer to extract and fuse features simultaneously. ",
+        "bbox": [
+            501,
+            527,
+            921,
+            704
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "F. Ablation Study ",
+        "text_level": 1,
+        "bbox": [
+            504,
+            726,
+            627,
+            739
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "To verify the effectiveness of each proposed component in FTransUNet, ablation experiments were carried out by removing specific components while keeping the dual-branch framework. As shown in Table VII, two ablation experiments were designed based on our fusion scheme. In the first experiment, the proposed FVit was disassembled into two single-modal Vit modules, i.e., two independent SA-based transformers, while the SFF modules in CNN blocks are kept as before. In contrast, the second experiment removed the SFF modules in CNN with shallow-level features from two modalities individually extracted by the two branches. ",
+        "bbox": [
+            501,
+            744,
+            921,
+            904
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Inspection of Table VII suggests that both shallow-level and deep-level feature fusion modules are critical for the proposed FTransUNet to provide improved performance. More ",
+        "bbox": [
+            503,
+            905,
+            921,
+            949
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "header",
+        "text": "MA et al.: MULTILEVEL MULTIMODAL FUSION TRANSFORMER FOR REMOTE SENSING SEMANTIC SEGMENTATION ",
+        "bbox": [
+            75,
+            35,
+            699,
+            45
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "header",
+        "text": "5403215 ",
+        "bbox": [
+            875,
+            36,
+            919,
+            45
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "footer",
+        "text": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on January 17,2026 at 15:17:01 UTC from IEEE Xplore. Restrictions apply. ",
+        "bbox": [
+            49,
+            960,
+            942,
+            974
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "image",
+        "img_path": "images/e04467751d77bba6f213a6d31897bfa617e524e0d0d3c70021603dd1d5baaf24.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            102,
+            70,
+            197,
+            142
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/5be01570fc061feb1c73b7359db07a612e957a697f5001bf92551578b79f7994.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            200,
+            71,
+            290,
+            142
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/963877b95759380c9a587679c08303366171c33a96ea0d6a28efe17fea90f3f5.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            292,
+            71,
+            383,
+            142
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/84cd02ce6912123420a0ae81ac584328e631be026dfa38caa8fad087d668c362.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            385,
+            71,
+            478,
+            142
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/450d78a110f87684ae3886f915a146740bd96769752b040440af82a2ea0d1a6b.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            102,
+            152,
+            196,
+            222
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/d3de8d1f9270a2f6a6a814bfd458f1d484bcd3f54add4928e138dfc11009ec54.jpg",
+        "image_caption": [
+            "(a) "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            199,
+            154,
+            290,
+            222
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/9c0caae41f0f8d35478da2834218719ef0cc5b19795a12e036d3035fc98299cf.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            292,
+            154,
+            383,
+            222
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/b7e40966199a4efe2e1758c7d3e97a74218a5607340b27c964b7db41bf33e88a.jpg",
+        "image_caption": [
+            "",
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            385,
+            154,
+            478,
+            222
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/3c658aea66eebe53186d5312ed286d9b90655f3c1248c32bb02b5516667db86a.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            491,
+            71,
+            581,
+            141
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/48791715054cfb4896bb609a572e90dfea97284b9444a1fce1cf3d721348b856.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            586,
+            71,
+            676,
+            142
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/cdcbfcb45f76dbdff2305ccb406f5848a8ce7599f67f8b6884423fc7f3e04c82.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            681,
+            71,
+            769,
+            142
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/697dbb25fd667cc140d5d98d1a292dd57aa97bf8a786b6ce980ecca169a8bb63.jpg",
+        "image_caption": [
+            "$\\left( \\mathsf { b } _ { 4 } \\right)$ "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            774,
+            71,
+            864,
+            142
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/125568b1a4b9d833eb9d2c0b3b7b08bd72c526624d5ded535010f188ece26d47.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            493,
+            154,
+            581,
+            222
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/4f61ed978ad995b0dac2cbff82e9f5d36e5f615b76a4729d8b8b94e8b1050514.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            586,
+            154,
+            676,
+            222
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/ec5d89c928457bc725bd041532a1eca138dc4b8714c6a28172b98c4ba7c1b25b.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            681,
+            154,
+            771,
+            222
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/a6db160c514176d799683b5995db61ce9a0c4bf9dce816bc23d8852a9fe253dd.jpg",
+        "image_caption": [
+            "",
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            774,
+            154,
+            864,
+            222
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/3b6135d2354c9b0edb25ee502f434c55a12392b37bd695975ffa9beecf14752e.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            102,
+            253,
+            196,
+            325
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/5c80902211525e8d32250001b80860112bdf98113b8844103ee0262109e920d2.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            200,
+            255,
+            290,
+            325
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/aa34318c9733ed88af2dd81800cf715d432b311e6b4aa41eab18ad0ed397dd1c.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            292,
+            256,
+            383,
+            325
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/98c47aab137d423ac322c974be808cb193a9e550ed8302dd6526a715b3f2e409.jpg",
+        "image_caption": [
+            "(c4) "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            385,
+            256,
+            478,
+            325
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/c30c9387dd3387a557e1042b4b3201eca1581f23a681eeab1449b4e9b5ba0d84.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            493,
+            255,
+            581,
+            325
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/1c60fe95201b607c17677e2f5ea89ec64dd86d7180930c07dd91296d719c9f0b.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            586,
+            256,
+            676,
+            325
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/877d4bb41243e330852a24f8e85a2b5688a36816c9245e1c143c81d3f4543efd.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            681,
+            256,
+            769,
+            325
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/764e57b377de9acc2b1da88af0e898d1da0064f896b573f8788bf633edec4304.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            774,
+            256,
+            864,
+            325
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/2361a0609e869394c796c792d55dbf3c6c7e24153b305e97d1832725898b95c1.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            102,
+            339,
+            196,
+            406
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/f5efcd4e691b3c007db2f1e33b0787a81afeac11db52f22ae84f41480c792bdd.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            199,
+            339,
+            290,
+            407
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/7b6b0a665af572e2321d9a985bae442b9926c1ca28ff52a7dc41b3f26e1cdc0c.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            292,
+            339,
+            383,
+            407
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/1f5ccda53c26c71c2e26a44dd59ed36cd473f74f7432ea1bf7b5a9f680f26e79.jpg",
+        "image_caption": [
+            "（c8）",
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            385,
+            339,
+            478,
+            407
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/ba5bf62dffbed43d2a6dc86867caf93d6cc8406c4d1f1becf1d83ff8b0dac22a.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            493,
+            339,
+            581,
+            407
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/f84d54137f066d94a40bb41b6d94f0fb39f90a0c22ae6164478016d3f43c9fc2.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            586,
+            339,
+            676,
+            407
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/2b54ce01d91ad810b105fdbd07bf1b96a7ec54ea0f214e78fe4f5342542bbc5e.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            681,
+            339,
+            771,
+            407
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/e3b6b50d64475031f32465fc0a848474dee327e73ccc5271a85b39d08812ec91.jpg",
+        "image_caption": [
+            "",
+            "(d）"
+        ],
+        "image_footnote": [],
+        "bbox": [
+            774,
+            339,
+            864,
+            407
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/04462e68e0e6433093e2e4e1560ecdd45745304e7dbf4ba775d12664b5f9aa9f.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            102,
+            438,
+            196,
+            508
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/cbeb14f5cf566133d7380f9ac16380258245373130d2f9424170d177d574dcca.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            199,
+            438,
+            290,
+            508
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/f71aa0dc7d9b9f85f5a9f899a127dd14ca0e1125be6d47eb6829919ac39bac90.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            292,
+            438,
+            383,
+            508
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/d3dfae2dec2ae8673a029a1bd315150f56da309b52d128783da1a85c87c81bbe.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            385,
+            438,
+            478,
+            508
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/92a8378b8d0a0a7d3615d9706a8ebaf19997584d727b3d33aaac9906fa9dc342.jpg",
+        "image_caption": [
+            "(f1) "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            493,
+            438,
+            581,
+            508
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/d5f5bb1929381dbcad997efbee29830103067307e89cad6cd00818210261e532.jpg",
+        "image_caption": [
+            "(f2) "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            586,
+            438,
+            676,
+            508
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/df78c833a6f2c94134c6f6c6f4c0ce7c59c81ec9183030e305388a815af4060c.jpg",
+        "image_caption": [
+            "(f3) "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            681,
+            438,
+            771,
+            508
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/5f05fb9a263cd94a05bf47dad190266551aa71096aaf65f6dc3807da33da0bf8.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            774,
+            438,
+            864,
+            508
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/1c5e7f58d596bed44b07dd26580e6084946b103f8bb5310ae6d9565af2e24b20.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            102,
+            521,
+            196,
+            589
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/2686853d44317aa74180d67b18c0b06dee22015463820abb517fea6ad1bb2b5a.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            199,
+            521,
+            290,
+            589
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/81757560784642ce0963c242d2c2331157c07f01da616c78d399f307c89b4007.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            292,
+            521,
+            383,
+            589
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/e7c913b61bbc2b3b130112b944fc7110bf8b939619862cb71645e39b6335f650.jpg",
+        "image_caption": [
+            "",
+            "(e) "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            385,
+            521,
+            478,
+            589
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/ccf3311edccb8f5b441095f03b085b9a3538a4c685cce662dd3802b1b6b6ae5c.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            493,
+            521,
+            581,
+            589
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/5ac300e1fa653cd3f72e6ab940b8b97e6e258bf71cbfd1440f5eb734b3fc8447.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            586,
+            521,
+            676,
+            589
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/7162f3d74e106572b6cac2e28d508834015dbd4ba12564458ce6190599f43d91.jpg",
+        "image_caption": [
+            "（f7）)"
+        ],
+        "image_footnote": [],
+        "bbox": [
+            681,
+            521,
+            771,
+            589
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/e719191ea911380e34e653aa88583d0e469c0db0fff3b5f0f3c092e515fe6fcf.jpg",
+        "image_caption": [
+            ""
+        ],
+        "image_footnote": [],
+        "bbox": [
+            774,
+            521,
+            864,
+            589
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/9822d5ad590a30ca1faba22fdbd42f3265542a0eb9599ded8d78442d36e319b3.jpg",
+        "image_caption": [
+            "(f）",
+            "Fig. 9. Six groups of heatmap samples. (a) (a1) NIIRG, (a2-a4) three heatmaps from TransUNet, (a5) Ground Truth, (a6)–(a8) three heatmaps from FTransUNet. (b)–(f) are organized in the same way. (a)–(f) shows the two models of how to determine a pixel belongs to Building, Car and Tree, respectively. Compared to Building, Car and Tree have smaller shapes, so we added purple boxes to indicate the areas of concern. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            872,
+            513,
+            895,
+            604
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "specifically, SFF can learn and provide robust representations of primary features of ground objects, such as shapes, boundaries, colors, and textures, regardless of the scale variations of ground objects. In addition, deep-level feature fusion helps to distinguish complex remote sensing scenes by exploiting semantic information derived from SFF. To clearly demonstrate the effectiveness of the multilevel fusion scheme, we present the heatmaps generated by the baseline TransUNet and the proposed FTransUNet in Fig. 9(a)–(f). Labels have been added in Fig. 9 to describe each subfigure. The three heatmaps from FTransUNet were collected after shallow-level fusion, after deep-level fusion, and before segmentation head, respectively. The three heatmaps generated by TransUNet were collected from the corresponding layers. The heatmaps in Fig. 9(a)–(f) show how the two models determined a pixel belonging to Building, Car, and Tree, respectively. First, it is easily observed that for all samples, there are more activated ",
+        "bbox": [
+            73,
+            700,
+            491,
+            948
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "(high-value) regions in our method, which means that the FTransUNet can provide more useful global semantics at the overall map scale to facilitate the final prediction with the help of deep-level fusion. Second, the contour of our activated regions is closer to the boundaries of actual ground objects, proving that the shallow-level fusion can extract more local details. The visualization results further confirmed that the proposed multilevel fusion scheme extracted and fused multimodal data more effectively, which led to better semantic segmentation performance. ",
+        "bbox": [
+            501,
+            700,
+            921,
+            847
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "G. Model Complexity Analysis ",
+        "text_level": 1,
+        "bbox": [
+            504,
+            871,
+            714,
+            886
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "We evaluate the computational complexity of the proposed FTransUNet using the following evaluation metrics: the floating point operation count (FLOPs), the number of model parameters, the memory footprint, and the frames per second ",
+        "bbox": [
+            503,
+            890,
+            921,
+            950
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "header",
+        "text": "5403215 ",
+        "bbox": [
+            76,
+            36,
+            120,
+            45
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "header",
+        "text": "IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING, VOL. 62, 2024 ",
+        "bbox": [
+            496,
+            35,
+            921,
+            46
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "footer",
+        "text": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on January 17,2026 at 15:17:01 UTC from IEEE Xplore. Restrictions apply. ",
+        "bbox": [
+            49,
+            962,
+            942,
+            974
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "table",
+        "img_path": "images/502ec21b2dd6ef4f1e88176983175e5728bbb88e9563525ebe1aba4bddd2e7b1.jpg",
+        "table_caption": [
+            "TABLE VIIICOMPUTATIONAL COMPLEXITY ANALYSIS MEASURED BY A $2 5 6 \\times 2 5 6$ IMAGE ON A SINGLE NVIDIA GEFORCE RTX 3090 GPU. MIOUVALUES ARE THE RESULTS ON THE VAIHINGEN DATASET. BOLD VALUES ARE THE BEST"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Method</td><td>Multimodal</td><td>FLOPs (G)</td><td>Parameter (M)</td><td>Memory (MB)</td><td>Speed (FPS)</td><td>MIoU(%)</td></tr><tr><td>ABCNet [61]</td><td>N</td><td>3.9</td><td>13.39</td><td>1598</td><td>15.87</td><td>75.20</td></tr><tr><td>PSPNet [62]</td><td>N</td><td>49.03</td><td>46.72</td><td>3124</td><td>66.01</td><td>76.96</td></tr><tr><td>MAResU-Net [63]</td><td>N</td><td>8.79</td><td>26.27</td><td>1908</td><td>10.62</td><td>79.89</td></tr><tr><td>UNetFormer [44]</td><td>N</td><td>6.04</td><td>24.20</td><td>1980</td><td>13.89</td><td>81.97</td></tr><tr><td>vFuseNet [15]</td><td>Y</td><td>60.36</td><td>44.17</td><td>2618</td><td>16.93</td><td>78.92</td></tr><tr><td>FuseNet [14]</td><td>Y</td><td>58.37</td><td>42.08</td><td>2284</td><td>18.92</td><td>78.71</td></tr><tr><td>ESANet [33]</td><td>Y</td><td>7.73</td><td>34.03</td><td>1914</td><td>10.42</td><td>79.42</td></tr><tr><td>TransUNet [31]</td><td>Y</td><td>32.27</td><td>93.23</td><td>3028</td><td>10.81</td><td>78.26</td></tr><tr><td>SA-GATE [64]</td><td>Y</td><td>41.28</td><td>110.85</td><td>3174</td><td>10.00</td><td>81.27</td></tr><tr><td>CMFNet [19]</td><td>Y</td><td>78.25</td><td>123.63</td><td>4058</td><td>8.62</td><td>81.44</td></tr><tr><td>MFTransUNet [59]</td><td>Y</td><td>8.44</td><td>43.77</td><td>1549</td><td>14.88</td><td>81.61</td></tr><tr><td>CMGFNet [47]</td><td>Y</td><td>19.51</td><td>64.20</td><td>2463</td><td>11.61</td><td>82.26</td></tr><tr><td>FTransUNet</td><td>Y</td><td>45.21</td><td>160.88</td><td>3463</td><td>9.74</td><td>84.23</td></tr></table>",
+        "bbox": [
+            117,
+            114,
+            879,
+            292
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "(FPS). FLOPs are used to evaluate the model complexity whereas the number of model parameters and the memory footprint are used to evaluate the memory requirement. Finally, FPS is designed to assess the execution speed. Ideally, an efficient model should have smaller values in the first three metrics, but larger FPS value. ",
+        "bbox": [
+            73,
+            321,
+            491,
+            409
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Table VIII shows the complexity analysis results of all comparing methods considered in this work. Inspection of Table VIII shows that the proposed FTransUNet exhibited lower FLOPs than conventional FuseNet, vFuseNet, and CMFNet despite we have a larger number of parameters. However, it is observed that the proposed FTransUNet demonstrated better performance than CMFNet in terms of memory occupancy and FPS. This is because FTransUNet used a two-branch encoder and only calculated attention with the global receptive field at the deep-level. Furthermore, compared to lightweight networks, such as UNetFormer, MFTransUNet, and CMGFNet, the proposed FTransUNet provided noticeable segmentation performance improvement with slightly increased model complexity. ",
+        "bbox": [
+            73,
+            409,
+            491,
+            612
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "V. CONCLUSION ",
+        "text_level": 1,
+        "bbox": [
+            220,
+            626,
+            344,
+            638
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "In this work, a novel multilevel multimodal fusion scheme, FTransUNet, has been proposed for semantic segmentation of remote sensing data by exploiting the synergy of CNN and Vit-based fusion. In particular, a CNN-based architecture equipped with the SFF modules is designed to extract and fuse detailed shallow-level features across multiple scales, followed by a FVit that performs deep-level semantic feature extraction and fusion. The proposed three-stage FVit can effectively characterize the complex content of remote sensing data by capitalizing on the novel Ada-MBA modules that use SA to extract deep-level features and a mutual-association mechanism to guide the fusion of multimodal deep-level features. Extensive results on two datasets, ISPRS Vaihingen, and Potsdam, have confirmed that the proposed FTransUNet can achieve superior performance as compared to state-of-theart segmentation methods. ",
+        "bbox": [
+            73,
+            643,
+            491,
+            876
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "There are several extensions of this study that can be further explored. In particular, it remains challenging to distinguish Tree and Low vegetation. Thus, it is interesting to exploit new strategies for ground objects of similar colors and irregular boundaries. Furthermore, since it is labor-intensive to generate ",
+        "bbox": [
+            73,
+            876,
+            491,
+            950
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "DSM data for high-resolution remote sensing images, it is of great practical interest to explore image-based elevation estimation for downstream remote sensing tasks. Finally, it will be interesting to investigate the incorporation of large-scale models such as the segment anything model (SAM) into the semantic segmentation framework in remote sensing. ",
+        "bbox": [
+            501,
+            321,
+            921,
+            409
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "REFERENCES ",
+        "text_level": 1,
+        "bbox": [
+            663,
+            422,
+            761,
+            434
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "list",
+        "sub_type": "ref_text",
+        "list_items": [
+            "[1] R. Touati, M. Mignotte, and M. Dahmane, “Multimodal change detection in remote sensing images using an unsupervised pixel pairwise-based Markov random field model,” IEEE Trans. Image Process., vol. 29, pp. 757–767, 2020. ",
+            "[2] L. Luppino et al., “Code-aligned autoencoders for unsupervised change detection in multimodal remote sensing images,” IEEE Trans. Neural Netw. Learn. Syst., vol. 35, no. 1, pp. 60–72, Jan. 2024, doi: 10.1109/TNNLS.2022.3172183. ",
+            "[3] D. Hong et al., “More diverse means better: Multimodal deep learning meets remote-sensing imagery classification,” IEEE Trans. Geosci. Remote Sens., vol. 59, no. 5, pp. 4340–4354, Aug. 2020. ",
+            "[4] Y. Li, Y. Zhou, Y. Zhang, L. Zhong, J. Wang, and J. Chen, “DKDFN: Domain knowledge-guided deep collaborative fusion network for multimodal unitemporal remote sensing land cover classification,” ISPRS J. Photogramm. Remote Sens., vol. 186, pp. 170–189, Apr. 2022. ",
+            "[5] Z. Xu et al., “Road extraction in mountainous regions from highresolution images based on DSDNet and terrain optimization,” Remote Sens., vol. 13, no. 1, p. 90, Dec. 2020. ",
+            "[6] Y. Meng et al., “Unsupervised building extraction from multimodal aerial data based on accurate vegetation removal and image feature consistency constraint,” Remote Sens., vol. 14, no. 8, p. 1912, Apr. 2022. ",
+            "[7] F. Palsson, J. R. Sveinsson, M. O. Ulfarsson, and J. A. Benediktsson, “Model-based fusion of multi- and hyperspectral images using PCA and wavelets,” IEEE Trans. Geosci. Remote Sens., vol. 53, no. 5, pp. 2652–2663, May 2015. ",
+            "[8] Q. Wei, J. Bioucas-Dias, N. Dobigeon, and J.-Y. Tourneret, “Hyperspectral and multispectral image fusion based on a sparse representation,” IEEE Trans. Geosci. Remote Sens., vol. 53, no. 7, pp. 3658–3668, Jul. 2015. ",
+            "[9] Y. Shen, J. Chen, L. Xiao, and D. Pan, “Optimizing multiscale segmentation with local spectral heterogeneity measure for high resolution remote sensing images,” ISPRS J. Photogramm. Remote Sens., vol. 157, pp. 13–25, Nov. 2019. ",
+            "[10] P. O. Gislason, J. A. Benediktsson, and J. R. Sveinsson, “Random forests for land cover classification,” Pattern Recognit. Lett., vol. 27, no. 4, pp. 294–300, Mar. 2006. ",
+            "[11] X. Lu, J. Zhang, T. Li, and G. Zhang, “Synergetic classification of long-wave infrared hyperspectral and visible images,” IEEE J. Sel. Topics Appl. Earth Observ. Remote Sens., vol. 8, no. 7, pp. 3546–3557, Jul. 2015. ",
+            "[12] L. Gao et al., “Subspace-based support vector machines for hyperspectral image classification,” IEEE Geosci. Remote Sens. Lett., vol. 12, no. 2, pp. 349–353, Feb. 2015. "
+        ],
+        "bbox": [
+            506,
+            441,
+            921,
+            949
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "header",
+        "text": "MA et al.: MULTILEVEL MULTIMODAL FUSION TRANSFORMER FOR REMOTE SENSING SEMANTIC SEGMENTATION ",
+        "bbox": [
+            75,
+            35,
+            699,
+            45
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "page_number",
+        "text": "5403215 ",
+        "bbox": [
+            875,
+            36,
+            919,
+            45
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "footer",
+        "text": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on January 17,2026 at 15:17:01 UTC from IEEE Xplore. Restrictions apply. ",
+        "bbox": [
+            49,
+            962,
+            942,
+            974
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "list",
+        "sub_type": "ref_text",
+        "list_items": [
+            "[13] P. Krähenbühl and V. Koltun, “Efficient inference in fully connected CRFs with Gaussian edge potentials,” in Proc. Adv. Neural Inf. Process. Syst., vol. 24, 2011, pp. 1–9. ",
+            "[14] C. Hazirbas, L. Ma, C. Domokos, and D. Cremers, “FuseNet: Incorporating depth into semantic segmentation via fusion-based CNN architecture,” in Proc. Asian Conf. Comput. Vis., 2016, pp. 213–228. ",
+            "[15] N. Audebert, B. Le Saux, and S. Lefèvre, “Beyond RGB: Very high resolution urban remote sensing with multimodal deep networks,” ISPRS J. Photogramm. Remote Sens., vol. 140, pp. 20–32, Jun. 2018. ",
+            "[16] L. Wang, R. Li, C. Duan, C. Zhang, X. Meng, and S. Fang, “A novel transformer based semantic segmentation scheme for fine-resolution remote sensing images,” IEEE Geosci. Remote Sens. Lett., vol. 19, pp. 1–5, 2022. ",
+            "[17] X. Wu, D. Hong, and J. Chanussot, “Convolutional neural networks for multimodal remote sensing data classification,” IEEE Trans. Geosci. Remote Sens., vol. 60, 2022, Art. no. 5517010. ",
+            "[18] D. Hong, J. Hu, J. Yao, J. Chanussot, and X. X. Zhu, “Multimodal remote sensing benchmark datasets for land cover classification with a shared and specific feature learning model,” ISPRS J. Photogramm. Remote Sens., vol. 178, pp. 68–80, Aug. 2021. ",
+            "[19] X. Ma, X. Zhang, and M.-O. Pun, “A crossmodal multiscale fusion network for semantic segmentation of remote sensing data,” IEEE J. Sel. Topics Appl. Earth Observ. Remote Sens., vol. 15, pp. 3463–3474, 2022. ",
+            "[20] X. He, Y. Zhou, J. Zhao, D. Zhang, R. Yao, and Y. Xue, “Swin transformer embedding UNet for remote sensing image semantic segmentation,” IEEE Trans. Geosci. Remote Sens., vol. 60, 2022, Art. no. 4408715. ",
+            "[21] X. Zhang, B. Zhang, W. Yu, and X. Kang, “Federated deep learning with prototype matching for object extraction from very-high-resolution remote sensing images,” IEEE Trans. Geosci. Remote Sens., vol. 61, 2023, Art. no. 5603316. ",
+            "[22] L. Gao et al., “STransFuse: Fusing Swin transformer and convolutional neural network for remote sensing image semantic segmentation,” IEEE J. Sel. Topics Appl. Earth Observ. Remote Sens., vol. 14, pp. 10990–11003, 2021. ",
+            "[23] X. Ma, X. Zhang, Z. Wang, and M.-O. Pun, “Unsupervised domain adaptation augmented by mutually boosted attention for semantic segmentation of VHR remote sensing images,” IEEE Trans. Geosci. Remote Sens., vol. 61, 2023, Art. no. 5400515. ",
+            "[24] X. Zhang, W. Yu, M.-O. Pun, and W. Shi, “Cross-domain landslide mapping from large-scale remote sensing images using prototypeguided domain-aware progressive representation learning,” ISPRS J. Photogramm. Remote Sens., vol. 197, pp. 1–17, Mar. 2023. ",
+            "[25] J. Zhu, Y. Guo, G. Sun, L. Yang, M. Deng, and J. Chen, “Unsupervised domain adaptation semantic segmentation of high-resolution remote sensing imagery with invariant domain-level prototype memory,” IEEE Trans. Geosci. Remote Sens., vol. 61, 2023, Art. no. 5603518. ",
+            "[26] A. Dosovitskiy et al., “An image is worth $1 6 \\times 1 6$ words: Transformers for image recognition at scale,” in Proc. Int. Conf. Learn. Represent., 2021, pp. 1–22. ",
+            "[27] A. Vaswani, “Attention is all you need,” in Proc. 31st Conf. Neural Inf. Process. Syst., 2017, pp. 1–11. ",
+            "[28] X. Zhang, W. Yu, and M.-O. Pun, “Multilevel deformable attentionaggregated networks for change detection in bitemporal remote sensing imagery,” IEEE Trans. Geosci. Remote Sens., vol. 60, 2022, Art. no. 5621518. ",
+            "[29] J. Long, E. Shelhamer, and T. Darrell, “Fully convolutional networks for semantic segmentation,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR), Jun. 2015, pp. 3431–3440. ",
+            "[30] O. Ronneberger, P. Fischer, and T. Brox, “U-Net: Convolutional networks for biomedical image segmentation,” in Proc. Int. Conf. Med. Image Comput. Comput.-Assist. Intervent., 2015, pp. 234–241. ",
+            "[31] J. Chen et al., “TransUNet: Transformers make strong encoders for medical image segmentation,” 2021, arXiv:2102.04306. ",
+            "[32] H. Cao et al., “Swin-Unet: Unet-like pure transformer for medical image segmentation,” in Proc. Eur. Conf. Comput. Vis., 2022, pp. 205–218. ",
+            "[33] D. Seichter, M. Köhler, B. Lewandowski, T. Wengefeld, and H.-M. Gross, “Efficient RGB-D semantic segmentation for indoor scene analysis,” in Proc. IEEE Int. Conf. Robot. Autom. (ICRA), May 2021, pp. 13525–13531. ",
+            "[34] X. Bai et al., “Transfusion: Robust LiDAR-camera fusion for 3D object detection with transformers,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit., Jun. 2022, pp. 1090–1099. "
+        ],
+        "bbox": [
+            76,
+            71,
+            491,
+            949
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "list",
+        "sub_type": "ref_text",
+        "list_items": [
+            "[35] J. Li et al., “Deep learning in multimodal remote sensing data fusion: A comprehensive review,” Int. J. Appl. Earth Observ. Geoinf., vol. 112, Aug. 2022, Art. no. 102926. ",
+            "[36] D. Hong, L. Gao, R. Hang, B. Zhang, and J. Chanussot, “Deep encoder– decoder networks for classification of hyperspectral and LiDAR data,” IEEE Geosci. Remote Sens. Lett., vol. 19, pp. 1–5, 2022. ",
+            "[37] D. Feng et al., “Deep multi-modal object detection and semantic segmentation for autonomous driving: Datasets, methods, and challenges,” IEEE Trans. Intell. Transp. Syst., vol. 22, no. 3, pp. 1341–1360, Feb. 2020. ",
+            "[38] S. K. Roy, A. Deria, D. Hong, B. Rasti, A. Plaza, and J. Chanussot, “Multimodal fusion transformer for remote sensing image classification,” IEEE Trans. Geosci. Remote Sens., vol. 61, 2023, Art. no. 5515620. ",
+            "[39] J. Hu, L. Shen, and G. Sun, “Squeeze-and-excitation networks,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit., Jun. 2018, pp. 7132–7141. ",
+            "[40] D. Marmanis, K. Schindler, J. D. Wegner, S. Galliani, M. Datcu, and U. Stilla, “Classification with an edge: Improving semantic image segmentation with boundary detection,” ISPRS J. Photogramm. Remote Sens., vol. 135, pp. 158–172, Jan. 2018. ",
+            "[41] K. Nogueira, M. D. Mura, J. Chanussot, W. R. Schwartz, and J. A. Dos Santos, “Dynamic multicontext segmentation of remote sensing images based on convolutional networks,” IEEE Trans. Geosci. Remote Sens., vol. 57, no. 10, pp. 7503–7520, Oct. 2019. ",
+            "[42] R. Strudel, R. Garcia, I. Laptev, and C. Schmid, “Segmenter: Transformer for semantic segmentation,” in Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV), Oct. 2021, pp. 7262–7272. ",
+            "[43] E. Xie et al., “SegFormer: Simple and efficient design for semantic segmentation with transformers,” in Proc. Adv. Neural Inf. Process. Sys. (NIPS), vol. 34, Dec. 2021, pp. 12077–12090. ",
+            "[44] L. Wang et al., “UNetFormer: A UNet-like transformer for efficient semantic segmentation of remote sensing urban scene imagery,” ISPRS J. Photogramm. Remote Sens., vol. 190, pp. 196–214, Aug. 2022. ",
+            "[45] A. Lin, B. Chen, J. Xu, Z. Zhang, G. Lu, and D. Zhang, “DS-TransUNet: Dual Swin transformer U-Net for medical image segmentation,” IEEE Trans. Instrum. Meas., vol. 71, pp. 1–15, 2022. ",
+            "[46] H. Wang, P. Cao, J. Wang, and O. R. Zaiane, “UCTransNet: Rethinking the skip connections in U-Net from a channel-wise perspective with transformer,” in Proc. AAAI Conf. Artif. Intell., 2022, vol. 36, no. 3, pp. 2441–2449. ",
+            "[47] H. Hosseinpour, F. Samadzadegan, and F. D. Javan, “CMGFNet: A deep cross-modal gated fusion network for building extraction from very highresolution remote sensing images,” ISPRS J. Photogramm. Remote Sens., vol. 184, pp. 96–115, Feb. 2022. ",
+            "[48] F. I. Diakogiannis, F. Waldner, P. Caccetta, and C. Wu, “ResUNet—A: A deep learning framework for semantic segmentation of remotely sensed data,” ISPRS J. Photogramm. Remote Sens., vol. 162, pp. 94–114, Apr. 2020. ",
+            "[49] J. Ngiam, A. Khosla, M. Kim, J. Nam, H. Lee, and A. Y. Ng, “Multimodal deep learning,” in Proc. 28th Int. Conf. Mach. Learn. (ICML), 2011, pp. 689–696. ",
+            "[50] T. Baltruaitis, C. Ahuja, and L.-P. Morency, “Multimodal machine learning: A survey and taxonomy,” IEEE Trans. Pattern Anal. Mach. Intell., vol. 41, no. 2, pp. 423–443, Feb. 2018. ",
+            "[51] Q. He, X. Sun, W. Diao, Z. Yan, F. Yao, and K. Fu, “Multimodal remote sensing image segmentation with intuition-inspired hypergraph modeling,” IEEE Trans. Image Process., vol. 32, pp. 1474–1487, 2023. ",
+            "[52] W. Zhou, J. Jin, J. Lei, and L. Yu, “CIMFNet: Cross-layer interaction and multiscale fusion network for semantic segmentation of high-resolution remote sensing images,” IEEE J. Sel. Topics Signal Process., vol. 16, no. 4, pp. 666–676, Jun. 2022. ",
+            "[53] J. Ma, W. Zhou, J. Lei, and L. Yu, “Adjacent bi-hierarchical network for scene parsing of remote sensing images,” IEEE Geosci. Remote Sens. Lett., vol. 20, pp. 1–5, 2023. ",
+            "[54] Z. Liu et al., “Swin transformer: Hierarchical vision transformer using shifted windows,” in Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV), Oct. 2021, pp. 10012–10022. ",
+            "[55] Y.-H.-H. Tsai, S. Bai, P. P. Liang, J. Z. Kolter, L.-P. Morency, and R. Salakhutdinov, “Multimodal transformer for unaligned multimodal language sequences,” in Proc. 57th Annu. Meeting Assoc. Comput. Linguistics, Jul. 2019, pp. 6558–6569. ",
+            "[56] A. Prakash, K. Chitta, and A. Geiger, “Multi-modal fusion transformer for end-to-end autonomous driving,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR), Jun. 2021, pp. 7077–7087. ",
+            "[57] J. Ma, L. Tang, F. Fan, J. Huang, X. Mei, and Y. Ma, “SwinFusion: Cross-domain long-range learning for general image fusion via Swin transformer,” IEEE/CAA J. Autom. Sinica, vol. 9, no. 7, pp. 1200–1217, Jul. 2022. "
+        ],
+        "bbox": [
+            506,
+            71,
+            919,
+            946
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "page_number",
+        "text": "5403215 ",
+        "bbox": [
+            76,
+            36,
+            119,
+            46
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "header",
+        "text": "IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING, VOL. 62, 2024 ",
+        "bbox": [
+            496,
+            35,
+            921,
+            47
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "footer",
+        "text": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on January 17,2026 at 15:17:01 UTC from IEEE Xplore. Restrictions apply. ",
+        "bbox": [
+            49,
+            962,
+            942,
+            974
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "list",
+        "sub_type": "ref_text",
+        "list_items": [
+            "[58] L. Yan, J. Huang, H. Xie, P. Wei, and Z. Gao, “Efficient depth fusion transformer for aerial image semantic segmentation,” Remote Sens., vol. 14, no. 5, p. 1294, Mar. 2022. ",
+            "[59] S. He, H. Yang, X. Zhang, and X. Li, “MFTransNet: A multi-modal fusion with CNN-transformer network for semantic segmentation of HSR remote sensing images,” Mathematics, vol. 11, no. 3, p. 722, Feb. 2023. ",
+            "[60] K. He, X. Zhang, S. Ren, and J. Sun, “Deep residual learning for image recognition,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR), Jun. 2016, pp. 1–9. ",
+            "[61] R. Li, S. Zheng, C. Zhang, C. Duan, L. Wang, and P. M. Atkinson, “ABCNet: Attentive bilateral contextual network for efficient semantic segmentation of fine-resolution remotely sensed imagery,” ISPRS J. Photogramm. Remote Sens., vol. 181, pp. 84–98, Nov. 2021. ",
+            "[62] H. Zhao, J. Shi, X. Qi, X. Wang, and J. Jia, “Pyramid scene parsing network,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR), Jul. 2017, pp. 2881–2890. ",
+            "[63] R. Li, S. Zheng, C. Duan, J. Su, and C. Zhang, “Multistage attention ResU-Net for semantic segmentation of fine-resolution remote sensing images,” IEEE Geosci. Remote Sens. Lett., vol. 19, pp. 1–5, 2022. ",
+            "[64] X. Chen et al., “Bi-directional cross-modality feature propagation with separation-and-aggregation gate for RGB-D semantic segmentation,” in Proc. Eur. Conf. Comput. Vis., 2020, pp. 561–577. ",
+            "[65] J. Deng, W. Dong, R. Socher, L.-J. Li, K. Li, and L. Fei-Fei, “ImageNet: A large-scale hierarchical image database,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit., Jul. 2009, pp. 248–255. "
+        ],
+        "bbox": [
+            76,
+            71,
+            491,
+            368
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "image",
+        "img_path": "images/4e132a4f3de5bd29b7b637bd2cb9e0e5d71f0db6942c9ee8baae30d9c795aac4.jpg",
+        "image_caption": [],
+        "image_footnote": [],
+        "bbox": [
+            506,
+            73,
+            627,
+            189
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Man-On Pun (Senior Member, IEEE) received the B.Eng. degree in electronic engineering from The Chinese University of Hong Kong (CUHK), Hong Kong, in 1996, the M.Eng. degree in computer science from the University of Tsukuba, Tsukuba, Japan, in 1999, and the Ph.D. degree in electrical engineering from the University of Southern California (USC), Los Angeles, CA, USA, in 2006. ",
+        "bbox": [
+            638,
+            73,
+            919,
+            164
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "He was a Post-Doctoral Research Associate with Princeton University, Princeton, NJ, USA, from 2006 to 2008. He is currently an Associate ",
+        "bbox": [
+            638,
+            165,
+            919,
+            196
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Professor with the School of Science and Engineering, The Chinese University of Hong Kong, Shenzhen (CUHKSZ), Shenzhen, China. Prior to joining CUHKSZ in 2015, he held research positions with Huawei (USA), Milford, NJ, USA; Mitsubishi Electric Research Labs (MERL), Boston, MA, USA; and Sony, Tokyo, Japan. His research interests include the AI Internet of Things (AIoT) and applications of machine learning in communications and satellite remote sensing. ",
+        "bbox": [
+            503,
+            198,
+            919,
+            277
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Prof. Pun has received best paper awards from the IEEE VTC 2006 Fall, the IEEE ICC 2008, and IEEE Infocom 2009. He is the Founding Chair of the IEEE Joint SPS-ComSoc Chapter, Shenzhen. He served as an Associate Editor for IEEE TRANSACTIONS ON WIRELESS COMMUNICATIONS from 2010 to 2014. ",
+        "bbox": [
+            503,
+            277,
+            919,
+            333
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "image",
+        "img_path": "images/ce8c456a09d85e551513d9eb905ea6737333766d9e0accc620c696e676007a40.jpg",
+        "image_caption": [],
+        "image_footnote": [],
+        "bbox": [
+            76,
+            417,
+            197,
+            534
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Xianping Ma received the bachelor’s degree in geographical information science from Wuhan University, Wuhan, China, in 2019. He is currently pursuing the Ph.D. degree with The Chinese University of Hong Kong (Shenzhen), Shenzhen, China. ",
+        "bbox": [
+            207,
+            415,
+            488,
+            472
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "His research interests include remote sensing image processing, deep learning, multimodal learning, and unsupervised domain adaptation. ",
+        "bbox": [
+            209,
+            472,
+            488,
+            506
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Mr. Ma has reviewed for IEEE TRANSAC-TIONS ON GEOSCIENCE AND REMOTE SENSING, IEEE JOURNAL OF SELECTED TOPICS IN APPLIED ",
+        "bbox": [
+            209,
+            506,
+            488,
+            539
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "EARTH OBSERVATIONS AND REMOTE SENSING, and APSIPA Transactions on Signal and Information Processing. ",
+        "bbox": [
+            73,
+            540,
+            491,
+            564
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "image",
+        "img_path": "images/66bd36c31ee7bb9007f78744aca48119b912ac9403615982d9f866ea60bc1784.jpg",
+        "image_caption": [],
+        "image_footnote": [],
+        "bbox": [
+            76,
+            608,
+            197,
+            724
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Xiaokang Zhang (Member, IEEE) received the Ph.D. degree in photogrammetry and remote sensing from the School of Remote Sensing and Information Engineering, Wuhan University, Wuhan, China, in 2018. ",
+        "bbox": [
+            207,
+            607,
+            488,
+            662
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "From 2019 to 2022, he was a Post-Doctoral Research Associate with The Hong Kong Polytechnic University, Hong Kong, and The Chinese University of Hong Kong (Shenzhen), Shenzhen, China. Since 2023, he has been a specially appointed Professor with the School of Information Science ",
+        "bbox": [
+            207,
+            664,
+            491,
+            732
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "and Engineering, Wuhan University of Science and Technology, Wuhan. He has authored or coauthored more than 30 scientific publications in international journals and conferences. His research interests include remote sensing image analysis, computer vision, and machine learning. ",
+        "bbox": [
+            73,
+            732,
+            491,
+            777
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Dr. Zhang is currently a reviewer for more than 20 renowned international journals, such as Remote Sensing of Environment, ISPRS Journal of Photogrammetry and Remote Sensing, IEEE TRANSACTIONS ON NEURAL NETWORKS AND LEARNING SYSTEMS, and IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING. ",
+        "bbox": [
+            73,
+            777,
+            491,
+            834
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "image",
+        "img_path": "images/6602b32ca7d1e3420bf8d9f755fa30d525a24e979a2b2e1bc35d30ced09e3d90.jpg",
+        "image_caption": [],
+        "image_footnote": [],
+        "bbox": [
+            506,
+            551,
+            627,
+            667
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Ming Liu received the Bachelor of Engineering degree in computer science and technology from Harbin Institute of Technology, Harbin, China, in 2004. ",
+        "bbox": [
+            638,
+            550,
+            919,
+            595
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "He has been working in the technology field for more than 15 years, with rich successful experience in radio resource management, algorithm innovation and design, product implementation and field validation for wireless GSM, UMTS, and LTE/5G-NR networks. Prior to founding MizarVision Technology, he was with Huawei’s Wireless Department, ",
+        "bbox": [
+            638,
+            595,
+            919,
+            676
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Shanghai, China, for a long time. He was a LTE Wireless Solution Area Leader and a Wireless System Simulation Area Leader with Huawei, Shenzhen, China, where he was involved in the research and development of Huawei Research Institute in North America to explore and apply machine learning and AI technologies in the wireless network operation, optimization, and design space. As a Principal, he led the joint North America/Shanghai/Chengdu team to complete the system simulation modeling and system simulation platform software and hardware design and development of 3G/4G/5G wireless network communication protocols/wireless channel propagation/wireless receivers and other key technologies in the wireless network simulation space. In addition, he has extensive experience in leading/managing teams of technologists, managing multiteam/cross-organizational multidisciplinary teamwork across geographic locations, and a broad background in pre-sales RFP/RFI preparation/response/strategy/defense. ",
+        "bbox": [
+            503,
+            676,
+            921,
+            835
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "header",
+        "text": "MA et al.: MULTILEVEL MULTIMODAL FUSION TRANSFORMER FOR REMOTE SENSING SEMANTIC SEGMENTATION ",
+        "bbox": [
+            75,
+            35,
+            699,
+            46
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "page_number",
+        "text": "5403215 ",
+        "bbox": [
+            877,
+            36,
+            919,
+            46
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "footer",
+        "text": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on January 17,2026 at 15:17:01 UTC from IEEE Xplore. Restrictions apply. ",
+        "bbox": [
+            50,
+            962,
+            942,
+            974
+        ],
+        "page_idx": 14
+    }
+]

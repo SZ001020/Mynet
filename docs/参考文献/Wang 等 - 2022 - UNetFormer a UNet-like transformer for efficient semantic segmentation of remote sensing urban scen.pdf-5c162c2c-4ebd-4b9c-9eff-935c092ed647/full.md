@@ -1,0 +1,690 @@
+# UNetFormer: An UNet-like Transformer for Efficient Semantic Segmentation of Remote Sensing Urban Scene Imagery
+
+Libo Wang1, 2, Rui Li1 , Ce Zhang3, 4, Shenghui Fang1*, Chenxi Duan5 , Xiaoliang Meng1, 2 and Peter M. Atkinson3, 6, 7
+
+1) School of Remote Sensing and Information Engineering, Wuhan University, 129 Luoyu Road, Wuhan, Hubei 430079, China.   
+2) Key Laboratory of Natural Resources Monitoring in Tropical and Subtropical Area of South China, Ministry of Natural Resources, Guangzhou, Guangdong 510000, China.   
+3) Lancaster Environment Centre, Lancaster University, Lancaster LA1 4YQ, UK.  
+4) UK Centre for Ecology & Hydrology, Library Avenue, Lancaster LA1 4AP, UK.  
+5) Faculty of Geo-Information Science and Earth Observation, University of Twente, Enschede, the Netherlands.   
+6) Geography and Environmental Science, University of Southampton, Highfield, Southampton SO17 1BJ, UK.   
+7) Institute of Geographic Sciences and Natural Resources Research, Chinese Academy of Sciences, 11A Datun Road, Beijing 100101, China.
+
+*Corresponding author.
+
+Abstract—Semantic segmentation of remotely sensed urban scene images is required in a wide range of practical applications, such as land cover mapping, urban change detection, environmental protection, and economic assessment. Driven by rapid developments in deep learning technologies, the convolutional neural network (CNN) has dominated semantic segmentation for many years. CNN adopts hierarchical feature representation, demonstrating strong capabilities for local information extraction. However, the local property of the convolution layer limits the network from capturing the global context. Recently, as a hot topic in the domain of computer vision, Transformer has demonstrated its great potential in global information modelling, boosting many vision-related tasks such as image classification, object detection, and particularly semantic segmentation. In this paper, we propose a Transformer-based decoder and construct an UNet-like Transformer (UNetFormer) for real-time urban scene segmentation. For efficient segmentation, the UNetFormer selects the lightweight ResNet18 as the encoder and develops an efficient global-local attention mechanism to model both global and local information in the decoder. Extensive experiments reveal that our method not only runs faster but also produces higher accuracy compared with state-of-the-art lightweight models. Specifically, the proposed UNetFormer achieved $6 7 . 8 \%$ and $5 2 . 4 \%$ mIoU on the UAVid and LoveDA datasets, respectively, while the inference speed can achieve up to 322.4 FPS with a $5 1 2 \times 5 1 2$ input on a single NVIDIA GTX 3090 GPU. In further exploration, the proposed Transformer-based decoder combined with a Swin Transformer encoder also achieves the state-of-the-art result (9 $1 . 3 \%$ F1 and $8 4 . 1 \%$ mIoU) on the Vaihingen dataset. The source code will be freely available at https://github.com/WangLibo1995/GeoSeg.
+
+Index Terms—Semantic Segmentation, Remote Sensing, Vision Transformer, Hybrid Structure, Global-local Context, Urban Scene.
+
+# 1. Introduction
+
+Driven by advances in sensor technology, fine-resolution remotely sensed urban scene images have been captured increasingly across the globe, with abundant spatial details and rich potential semantic contents. Urban scene images have been subjected extensively to semantic segmentation, the task of pixel-level segmentation and classification, leading to various urban-related applications, including land cover mapping (Li et al., 2022b; Maggiori et al., 2016; Marcos et al., 2018), change detection (Xing et al., 2018; Yin et al., 2018), environmental protection (Samie et al., 2020), road and building extraction (Griffiths and Boehm, 2019; Shamsolmoali et al., 2020; Vakalopoulou et al., 2015) and many other practical applications (Picoli et al., 2018; Shen et al., 2019). Recently, a growing wave of deep learning technology (LeCun et al., 2015), in particular the convolutional neural network (CNN), has dominated the task of semantic segmentation (Chen et al., 2014; Chen et al., 2018b; Long et al., 2015; Ronneberger et al., 2015; Zhao et al., 2017a). Compared with traditional machine learning methods for segmentation, such as the support vector machine (SVM) (Guo et al., 2018), random forest (Pal, 2005) and conditional random field (CRF) (Krähenbühl and Koltun, 2011), CNN-based methods are capable of capturing more fine-grained local context information, which underpins its huge capabilities in feature representation and pattern recognition (Zhang et al., 2020a; Zhang et al., 2020b).
+
+Despite the above advantages, the convolution operation with a fixed receptive view is designed to extract local patterns and lacks the ability to model global contextual information or long-range dependencies in its nature. As for semantic segmentation, per-pixel classification is often ambiguous if only local information is modelled, while the semantic content of each pixel
+
+becomes more accurate with the help of global contextual information (Yang et al., 2021a) (Li et al., 2021c). The global and local contextual information is illustrated in Fig. 1. Although the selfattention mechanism alleviates the above issue (Vaswani et al., 2017) (Wang et al., 2018), they normally require significant computational time and memory to capture the global context, thus, reducing their efficiency and restricting their potential for real-time urban applications.
+
+![](images/142551637bd5aa27ccde1d2c9bc182a9c725bbce5001ea582fd42b9a60f5793a.jpg)  
+Fig. 1 Illustration of the global and local contextual information. The local contextual information
+
+is modelled by convolutions (yellow). The global contextual information is modelled by longrange window-wise dependencies (red).
+
+In this paper, we aim to achieve precise urban scene segmentation while ensuring the efficiency of the network simultaneously. Inspired by the recent breakthrough of Transformers in computer vision, we propose a UNet-like Transformer (UNetFormer) to address such a challenge. The UNetFormer innovatively adopts a hybrid architecture consisting of a CNN-based encoder and a specifically designed Transformer-based decoder. Specifically, we adopt the ResNet18 as the encoder and design a global-local Transformer block (GLTB) to construct the decoder. Unlike the
+
+conventional self-attention block in the standard Transformer, the proposed GLTB develops an efficient global-local attention mechanism with an attentional global branch and a convolutional local branch to capture both global and local contexts for visual perception, as illustrated in Fig. 2. In the global branch, the window-based multi-head self-attention and cross-shaped window context interaction module are introduced to capture global contexts with low complexity (Liu et al., 2021). In the global branch, convolutional layers are applied to extract the local context. Finally, to effectively fuse the spatial details and context information as well as further refine the feature maps, a feature refinement head (FRH) is proposed and attached at the end of the network. The trade-off between accuracy and efficiency as well as effective feature refinement allows the proposed method to exceed the state-of-the-art lightweight networks for efficient segmentation of remotely sensed urban scene images, demonstrated by four public datasets: the UAVid (Lyu et al., 2020), ISPRS Vaihingen and Potsdam datasets, as well as the LoveDA (Wang et al., 2021a).
+
+The remainder of this paper is organized as follows. In Section 2, we review the related work on CNN-based and Transformer-based urban scene segmentation and global context modelling. In Section 3, we present the structure of our UNetFormer and introduce the proposed GLTB and FRH. In Section 4, we conduct an ablation study to demonstrate the effectiveness of GLTB and FRH as well as the novel hybrid structure and compare the results with a set of state-of-the-art models applied to the four datasets. In Section 5, we provide a comprehensive discussion. Section 6 is a summary and conclusion.
+
+![](images/bf5deac9c77ef557bbacfc59167c4bee11a3af95ed38c8e16875a5aaccd03a03.jpg)
+
+![](images/9b83ad2784434b5a8e174f17a68c9217ae14f0c7f1f868938a7d171feaa5f89f.jpg)  
+Fig. 2 Illustration of (a) the standard Transformer block and (b) the global-local Transformer block.
+
+# 2. Related work
+
+# 2.1 CNN-based semantic segmentation methods
+
+The fully convolutional network (FCN) (Long et al., 2015) is the first effective CNN structure to address semantic segmentation problems in an end-to-end manner. Since then, CNN-based methods have dominated the semantic segmentation task in the remote sensing field (Kemker et al., 2018; Kotaridis and Lazaridou, 2021; Ma et al., 2019; Tong et al., 2020; Zhao and Du, 2016; Zhu et al., 2017). However, the over-simplified decoder of FCN leads to a coarse-resolution segmentation, limiting the fidelity and accuracy.
+
+To address this problem, an encoder-decoder network, i.e., the UNet, was proposed for semantic segmentation, with two symmetric paths named the contracting path and the expanding path (Ronneberger et al., 2015). The contracting path extracts hierarchical features by gradually downsampling the spatial resolution of the feature maps, while the expanding path learns more
+
+contextual information by progressively restoring the spatial resolution. Subsequently, the encoder-decoder framework has become the standard structure of remote sensing image segmentation networks (Badrinarayanan et al., 2017; Chen et al., 2018a) (Sun et al., 2019). Based on encoder-decoder structure, (Diakogiannis et al., 2020; Yue et al., 2019; Zhou et al., 2018) designed different skip connections to capture more abundant context, while (Liu et al., 2018; Zhao et al., 2017b) (Shen et al., 2019) developed various decoders to retain semantic information.
+
+The encoder-decoder CNN-based methods, although have achieved encouraging performance, encounter bottlenecks in urban scene interpretation (Sherrah, 2016) (Marmanis et al., 2018; Nogueira et al., 2019). To be specific, CNN-based segmentation networks with limited receptive fields can only extract local semantic features and lack the capability to model the global information from the whole image. However, within fine-resolution remotely sensed urban scene images, complicated patterns and human-made objects occur frequently (Kampffmeyer et al., 2016; Marcos et al., 2018) (Audebert et al., 2018). It is difficult to identify these complex objects if only relying on the local infromation.
+
+# 2.2 Global contextual information modelling
+
+To liberate the network from the local pattern focus of CNNs, many attempts have been conducted to modelling global contextual information, while the most popular way is incorporating attention mechanisms into networks. For example, Wang et al. modified the dotproduct self-attention mechanism and applied it to computer vision domains (Wang et al., 2018). Fu et al. appended two types of attention modules on top of a dilated FCN to adaptively integrate local features with their global dependencies (Fu et al., 2019). Huang et al. proposed a criss-cross
+
+attention block to aggregate informative global features (Huang et al., 2020). Yuan et al. developed an object context block to explore object-based global relations (Yuan et al., 2020).
+
+Attention mechanisms also improve the performance of remote sensing image segmentation networks. Yang et al. proposed an attention-fused network to fuse high-level and low-level semantic features and obtain state-of-the-art results in the semantic segmentation of fineresolution remote sensing images (Yang et al., 2021b). Li et al. integrated lightweight spatial and channel attention modules to refine semantic features adaptively for high-resolution remotely sensed image segmentation (Li et al., 2020a). Ding et al. designed a local attention block with an embedding module to capture richer contextual information (Ding et al., 2021). Li et al. developed a linear attention mechanism to reduce the computational complexity while improving performance (Li et al., 2021a). However, the above attention modules restrict the global feature representation due to over-reliance on convolutional operations. Furthermore, a single attention module cannot model the global information at multi-level semantic features in the decoder.
+
+# 2.3 Transformer-based semantic segmentation methods
+
+Recently, several attempts were made to apply the Transformer for global information extraction (Vaswani et al., 2017). Different from the CNN structure, the Transformer translates 2D image-based tasks into 1D sequence-based tasks. Due to the powerful sequence-to-sequence modelling ability, the Transformer demonstrates superior characterization of extracting global context than the above-mentioned attention-alone models and obtains state-of-the-art results on fundamental vision tasks, such as image classification (Dosovitskiy et al., 2020), object detection (Zhu et al., 2020) and semantic segmentation (Zheng et al., 2021). Driven by this, many
+
+researchers in the remote sensing field have applied the Transformer for remote sensing image scene classification (Bazi et al., 2021; Deng et al., 2021), hyperspectral image classification (Hong et al., 2021) (He et al., 2021; Zhong et al., 2021), object detection (Li et al., 2022a), change detection (Chen et al., 2021a), building and road extraction (Chen et al., 2021c) (Sun et al., 2022), and especially semantic segmentation (Li et al., 2020b) (Gao et al., 2021) (Zhang et al., 2022).
+
+Most of the existing Transformers for semantic segmentation still follow the encoder-decoder framework. According to different encoder-decoder combinations, they can be divided into two categories. The first is constructed by a Transformer-based encoder and a Transformer-based decoder, namely the pure Transformer structure. Typical models include the Segmenter (Strudel et al., 2021), SegFormer (Xie et al., 2021) and SwinUNet (Cao et al., 2021). The second adopts a hybrid structure, which is composed of a Transformer-based encoder and a CNN-based decoder. Transformer-based semantic segmentation methods commonly follow the second structure. For example, the TransUNet employed the hybrid vision Transformer (Dosovitskiy et al., 2020) as the encoder for stronger feature extraction and obtains state-of-the-art results in medical image segmentation (Chen et al., 2021b). The DC-Swin introduced Swin Transformer (Liu et al., 2021) as the encoder and designs a densely connected convolutional decoder for fine-resolution remote sensing image segmentation, surpassing the CNN-based methods by a large gap (Wang et al., 2022). (Panboonyuen et al., 2021) also selected the Swin Transformer as the encoder and utilizes various CNN-based decoders, such as UNet (Ronneberger et al., 2015), FPN (Kirillov et al., 2019) and PSP (Zhao et al., 2017a), for semantic segmentation of remotely sensed images, obtaining advanced accuracy (Panboonyuen et al., 2021).
+
+Despite the above advantages, the computational complexity of the Transformer-based encoder is much higher than the CNN-based encoder due to its square-complexity self-attention mechanism (Vaswani et al., 2017), which seriously affects its potential and feasibility for urbanrelated real-time applications. Thus, to fully harness the global context extraction ability of Transformers without resulting in high computational complexity, in this paper, we present a UNet-like Transformer with a CNN-based encoder and a Transformer-based decoder for efficient semantic segmentation of remotely sensed urban scene images. Specifically, for our UNetFormer, we select the lightweight backbone, i.e. ResNet18, as the encoder and develop an efficient globallocal attention mechanism to construct Transformer blocks in the decoder. The proposed efficient global-local attention mechanism adopts a dual-branch structure, i.e. a global branch and a local branch. Such a structure allows the attention block to capture both global and local contexts, thereby surpassing the single-branch efficient attention mechanisms in Transformers that only capture global contexts (Liu et al., 2021; Zhang and Yang, 2021).
+
+# 3. Methodology
+
+As illustrated in Fig. 3, the proposed UNetFormer is constructed using a CNN-based encoder and a Transformer-based decoder. A detailed description of each component is given in the following sections.
+
+![](images/738bfacf3773dc56c5b47f19b02763ad8532c0bc4b533e6546e307864c44bb0d.jpg)  
+Fig. 3. An overview of the UNetFormer.
+
+# 3.1 CNN-based encoder
+
+As the ResNet18 (He et al., 2016) has demonstrated effectiveness and efficiency simultaneously in a wide range of real-time semantic segmentation tasks, we select the pre-trained ResNet18 as the encoder here to extract multi-scale semantic features with significantly low computational cost. ResNet18 consists of four-stage Resblocks, with each stage down-sampling the feature map with a scale factor of 2. In the proposed UNetFormer, the feature maps generated
+
+by each stage are fused with the corresponding feature maps of the decoder by a $1 \times 1$ convolution with the channel dimension in 64, i.e., the skip connection. Specifically, the semantic features produced by the Resblocks are aggregated with the features generated by the GLTB of the decoder using a weighted sum operation. The weighted sum operation weights the two features selectively based on their contributions to segmentation accuracy, thereby learning more generalized fusion features (Tan et al., 2020). The formulation of the weighted sum operation can be denoted as:
+
+$$
+\mathbf {F F} = \alpha \cdot \mathbf {R F} + (1 - \alpha) \cdot \mathbf {G L F} \tag {1}
+$$
+
+where ???????? represents the fused feature, ???? denotes the feature produced by the Resblocks, and ???????? indicates the feature generated by the global-local Transformer block.
+
+# 3.2 Transformer-based decoder
+
+Complicated human-made objects occur frequently in fine-resolution remotely sensed urban images, which makes it difficult to achieve precise real-time segmentation without global semantic information. To capture the global context, mainstream solutions focus on attaching a single attention block at the end of the network (Wang et al., 2018) or introducing Transformers as the encoder (Chen et al., 2021b). The former cannot capture multi-scale global features, whereas the latter significantly increases the complexity of the network and loses spatial details. In contrast, in the proposed UNetFormer, we utilize three global-local Transformer blocks and a feature refinement head to build a lightweight Transformer-based decoder, as shown in Fig. 3. With such a hierarchical and lightweight design, the decoder is capable of capturing both global and local contexts at multiple scales while maintaining high efficiency.
+
+# 3.2.1 Global-local Transformer block (GLTB)
+
+The global-local Transformer block consists of the global-local attention, multilayer perceptron, two batch normalization layers and two additional operations, as shown in Fig. 1 (b).
+
+Global-local attention: Although the global context is crucial for semantic segmentation of complex urban scenes, local information is still essential to preserve rich spatial details. In this regard, the proposed global-local attention constructs two parallel branches to extract the global and local contexts, respectively, as shown in Fig. 4 (a).
+
+As a relatively shallow structure, the local branch employs two parallel convolutional layers with kernel sizes of 3 and 1 to extract the local context. Two batch normalization operations are then attached before the final sum operation.
+
+The global branch deploys the window-based multi-head self-attention to capture global context. As illustrated in Fig 4. (b), we first use a standard $1 \times 1$ convolution to expand the channel dimension of the input 2D feature map $\in \mathbb { R } ^ { B \times C \times H \times W }$ to three times. Then, we apply the window partition operation to split the 1D sequence $\in \mathbb { R } ^ { \left( 3 \times B \times \frac { H } { w } \times \frac { W } { w } \times h \right) \times ( w \times w ) \times \frac { C } { h } }$ nto the query (Q), key i (K) and value (V) vectors. The channel dimension $C$ is set to 64. The window size $w$ and the number of heads $h$ are both set to 8. The details of the window-based multi-head self-attention can refer to Swin Transformer (Liu et al., 2021).
+
+![](images/6266ed0bc99d1bd8e407095d8242f6fd8b51a7612fd7e574729404961b03d155.jpg)  
+(a) The structure of the efficient global-local attenntion
+
+![](images/975602608de57a073d59ab65eb5339491c6e84f8a252b24cdacd4abeb3fd4aee.jpg)  
+(b) Illustration of the window partition operation
+
+![](images/65d8c2dbb11b07fbebced71e539ff84185a3b605fc702ec441b7abd004d67434.jpg)  
+(c) Illustration of the cross-shaped window context interaction   
+Fig. 4. Illustration of the efficient global-local attention.
+
+Performing self-attention in a non-overlapping local window, although being efficient, can
+
+destroy the spatial consistency of urban scenes due to the lack of interactions across windows. The Swin Transformer introduces an extra shifted Transformer block to mine the relationship between local windows. Although the ability to capture cross-window relations increases, the computation significantly surges accordingly. In this paper, we propose a cross-shaped window context interaction module to capture the cross-window relations with high computational efficiency. As illustrated in Fig. 4 (c), the cross-shaped window context interaction module fuses the two feature maps produced by a horizontal average pooling layer and a vertical average pooling layer, thereby capturing the global context. Specifically, the horizontal average pool layer establishes the horizontal relationship between Windows, such as $W i n _ { 1 } = H ( W i n _ { 2 } )$ . For any point $\mathrm { P } _ { 1 } ^ { ( m , n ) }$ in Window 1, its dependency with $\mathrm { P } _ { 2 } ^ { ( m + w , n ) }$ in Window 2 can be modelled as:
+
+$$
+\mathrm {P} _ {1} ^ {(m, n)} = \frac {\sum_ {i = 0} ^ {w - m - 1} \mathrm {P} _ {1} ^ {(m + i , n)} + \sum_ {j = 0} ^ {m} \mathrm {P} _ {2} ^ {(m + w - j , n)}}{w} \tag {2}
+$$
+
+$$
+\mathrm {P} _ {1} ^ {(m + i, n)} = D _ {i} \left(\mathrm {P} _ {1} ^ {(m, n)}\right) \tag {3}
+$$
+
+$$
+\mathrm {P} _ {2} ^ {(m + w - j, n)} = D _ {j} \left(\mathrm {P} _ {2} ^ {(m + w, n)}\right) \tag {4}
+$$
+
+$$
+\mathrm {P} _ {1} ^ {(m, n)} = \frac {\sum_ {i = 0} ^ {w - m - 1} D _ {i} \left(\mathrm {P} _ {1} ^ {(m , n)}\right) + \sum_ {j = 0} ^ {m} D _ {j} \left(\mathrm {P} _ {2} ^ {(m + w , n)}\right)}{w} \tag {5}
+$$
+
+Where $w$ is the window size. $D$ denotes the self-attention computation, which can model dependencies of pixel pairs in a local window. Thus, for any other point $\mathsf { P } _ { 1 } ^ { ( m + i , n ) }$ in the red path of Window 1, its dependency with P(????,????) $\mathsf { P } _ { 1 } ^ { ( m , n ) }$ can be modelled by Eq.(3). For any other point $\mathrm { P } _ { 2 } ^ { ( m + w - j , n ) }$ in the green path of Window 2, its dependency with $\mathrm { P } _ { 2 } ^ { ( m + w , n ) }$ P can be modelled by Eq.(4). Eq.(2) can be rewritten as Eq.(5), i.e. the dependency betwee n P(????,????) $\mathsf { P } _ { 1 } ^ { ( m , n ) }$ an d P(????+????,????) i $\mathrm { P } _ { 2 } ^ { ( m + w , n ) }$ s modelled. Based on this cross-window pixel-wise dependency, the horizontal relationship between Windows 1 and 2 can be established. Similarly, the vertical relationship between Window
+
+1 and 3 can be established in the same way, i.e. $W i n _ { 1 } = V ( W i n _ { 3 } )$ , and for Window 4, $W i n _ { 1 } =$ $V ( H ( W i n _ { 4 } ) ) + H ( V ( W i n _ { 4 } ) )$ . Generalized to an ${ \bf M } \times { \bf M }$ input (M denotes the number of windows), by connecting more intermedia windows like Window 2 and Window 3, the long-range dependency between any two windows can be modelled. Thus, the cross-shaped window context interaction module can model the window-wise long-range dependencies, thereby capturing the global context.
+
+Besides, the global context in the global branch is further aggregated with the local context in the local branch to produce the global-local context. Finally, we employ a depth-wise convolution, a batch normalization operation and a standard $1 \times 1$ convolution to characterize the fine-grained global-local context.
+
+# 3.2.2 Feature refinement head (FRH)
+
+The shallow feature produced by the first Resblock preserves rich spatial details of urban scenes, but lacks semantic content, while the deep global-local feature provides precise semantic information, but with a coarse spatial resolution. Hence, a direct sum operation on these two features, although fast, can reduce segmentation accuracy (Poudel et al., 2018; Poudel et al., 2019; Yu et al., 2018). In this paper, we develop a feature refinement head to shrink the semantic gap between the two features for further accuracy improvement.
+
+As can be seen in Fig. 5, we perform a weighted sum operation on the two features first to take full advantage of the precise semantic information and spatial details. The fused feature is then selected as the input of the FRH, as shown in Fig. 3. Second, we construct two paths to strengthen the channel-wise and spatial-wise feature representation. Specifically, the channel path employs
+
+a global average pooling layer to generate a channel-wise attentional map $\pmb { C } \in \mathbb { R } ^ { 1 \times 1 \times c }$ , where $c$ denotes the channel dimension. The reduce & expand operation contains two $1 \times 1$ convolutional layers, which first reduces the channel dimension $c$ by a factor of 4 and then expands it to the original. The spatial path utilizes a depth-wise convolution to produce a spatial-wise attentional map $\pmb { S } \in \mathbb { R } ^ { h \times w \times 1 }$ , where $h$ and $w$ represent the spatial resolution of the feature map. The attentional features generated by the two paths are further fused using a sum operation. Finally, a post-processing $1 \times 1$ convolutional layer and an upsampling operation are applied to produce the final segmentation map. Notably, a residual connection is introduced to prevent network degradation.
+
+![](images/2c002c3e08e9bfb8911b565710de5fe27a1e3ee6b864818285094d1aee387cf7.jpg)  
+Fig. 5. The feature refinement head.
+
+# 3.3 Loss function
+
+In the training phase, we employ not only the primary feature refinement head but also build an extra auxiliary head to optimize the global-local Transformer blocks, as shown in Fig. 3. This multi-head segmentation architecture has been demonstrated to be effective in previous research (Yu et al., 2020; Zhu et al., 2019). Based on the multi-head design, we apply a principal loss and an auxiliary loss to train the entire network. The principal loss $\mathcal { L } _ { p }$ is a combination of a dice loss $\mathcal { L } _ { d i c e }$ and a cross-entropy loss $\mathcal { L } _ { c e }$ , which can be formulated as:
+
+$$
+\mathcal {L} _ {c e} = - \frac {1}{N} \sum_ {n = 1} ^ {N} \sum_ {k = 1} ^ {K} y _ {k} ^ {(n)} \log \hat {y} _ {k} ^ {(n)} \tag {6}
+$$
+
+$$
+\mathcal {L} _ {d i c e} = 1 - \frac {2}{N} \sum_ {n = 1} ^ {N} \sum_ {k = 1} ^ {K} \frac {\hat {y} _ {k} ^ {(n)} y _ {k} ^ {(n)}}{\hat {y} _ {k} ^ {(n)} + y _ {k} ^ {(n)}} \tag {7}
+$$
+
+$$
+\mathcal {L} _ {p} = \mathcal {L} _ {c e} + \mathcal {L} _ {d i c e} \tag {8}
+$$
+
+where $N$ and $K$ denote the number of samples and the number of categories, respectively. $y ^ { ( n ) }$ and ${ \hat { y } } ^ { ( n ) }$ represent the one-hot encoding of the true semantic labels and the corresponding softmax output of the network, $\mathsf { n } \in [ 1 , \cdots , \mathsf { N } ]$ . $\widehat { y } _ { k } ^ { ( n ) }$ is the confidence of sample $n$ belonging to the category $k$ . We select the cross-entropy loss as the auxiliary loss $\mathcal { L } _ { a u x }$ and deploy it on the auxiliary head. The auxiliary head takes the fused feature of the three global-local Transformer blocks as the input and constructs a $3 \times 3$ convolution layer with batch normalization and ReLU, a $1 \times 1$ convolution layer and an upsampling operation to generate the output. For a better combination with the principle loss, the auxiliary is further multiplied by a factor α. Thus, the overall loss $\mathcal { L }$ can be formulated as:
+
+$$
+\mathcal {L} = \mathcal {L} _ {p} + \alpha \times \mathcal {L} _ {a u x} \tag {9}
+$$
+
+where $\alpha$ is set to 0.4 by default.
+
+# 4.EXPERIMENTS
+
+# 4.1 Experimental settings
+
+# 4.1.1 Datasets
+
+UAVid: As a fine-resolution Unmanned Aerial Vehicle (UAV) semantic segmentation dataset, the UAVid dataset focuses on urban street scenes with two spatial resolutions $3 8 4 0 \times 2 1 6 0$ and $4 0 9 6 \times 2 1 6 0 $ and eight classes (Lyu et al., 2020). Segmentation of UAVid is challenging due to the fine spatial resolution of images, heterogeneous spatial variation, vague categories and generally complex scenes. To be specific, there are 42 sequences with a total of 420 images in the dataset, where 200 images are used for training, 70 images for validation and the officially provided 150 images for testing. In our experiments, each image was padded and cropped into eight $1 0 2 4 \times 1 0 2 4 { \mathrm { p x } }$ patches.
+
+Vaihingen: The Vaihingen dataset consists of 33 very fine spatial resolution TOP image tiles at an average size of $2 4 9 4 \times 2 0 6 4$ pixels. Each TOP image tile has three multispectral bands (near infrared, red, green) as well as a digital surface model (DSM) and normalized digital surface model (NDSM) with a 9 cm ground sampling distance (GSD). The dataset involves five foreground classes (impervious surface, building, low vegetation, tree, car) and one background class (clutter). In our experiments, only the TOP image tiles were used without the DSM and NDSM. And we utilized ID: 2, 4, 6, 8, 10, 12, 14, 16, 20, 22, 24, 27, 29, 31, 33, 35, 38 for testing,
+
+ID: 30 for validation, and the remaining 15 images for training. The image tiles were cropped into $1 0 2 4 \times 1 0 2 4 { \mathrm { p } } \mathrm { { z } }$ x patches.
+
+Potsdam: The Potsdam dataset contains 38 very fine spatial resolution TOP image tiles (GSD 5 cm) at a size of $6 0 0 0 \times 6 0 0 0$ pixels and involves the same category information as the Vaihingen dataset. Four multispectral bands (red, green, blue, and near infrared), as well as the DSM and NDSM, are provided in the dataset. We utilized ID: 2_13, 2_14, 3_13, 3_14, 4_13, 4_14, 4_15, 5_13, 5_14, 5_15, 6_13, 6_14, 6_15, 7_13 for testing, ID: 2_10 for validation, and the remaining 22 images (except image 7_10 with error annotations) for training. Similarly, only three bands (red, green, blue) were utilized and the original image tiles were cropped into $1 0 2 4 \times 1 0 2 4 ~ \mathrm { p }$ x patches in the experiments.
+
+LoveDA: The LoveDA dataset contains 5987 fine-resolution optical remote sensing images (GSD 0.3 m) at a size of $1 0 2 4 \times 1 0 2 4$ pixels and includes 7 landcover categories, i.e. building, road, water, barren, forest, agriculture and background (Wang et al., 2021a). Specifically, 2522 images are used for training, 1669 images for validation and the officially provided 1796 images for testing. The dataset encompasses two scenes (urban and rural) which are collected from three cities (Nanjing, Changzhou and Wuhan) in China. Therefore, considerable challenges are brought due to the multi-scale objects, complex background and inconsistent class distributions.
+
+# 4.1.2 Implementation Details
+
+All models in the experiments were implemented with the PyTorch framework on a single NVIDIA GTX 3090 GPU. For fast convergence, we deployed the AdamW optimizer to train all models in the experiments. The base learning rate was set to 6e-4. The cosine strategy was
+
+employed to adjust the learning rate.
+
+For the UAVid dataset, random vertical flip, random horizontal flip and random brightness were used to the input in the size of $1 0 2 4 \times 1 0 2 4$ for data augmentation in the training period, while the training epoch was set as 40 and the batch size was 8. In the test procedure, the test-time augmentation (TTA) strategies like vertical flip and horizontal flip were used.
+
+For the Vaihinge, Potsdam and LoveDA datasets, the images were randomly cropped into $5 1 2 \times 5 1 2$ patches. For training, the augmentation techniques like random scale ([0.5, 0.75, 1.0, 1.25, 1.5]), random vertical flip, random horizontal flip and random rotate were adopted during the training process, while the training epoch was set as 100 and the batch size was 16. During the test phase, multi-scale and random flip augmentations were used.
+
+# 4.1.3 Evaluation metrics
+
+The evaluation metrics used in our experiments included two major categories. The first one was to evaluate the accuracy of the network including the overall accuracy (OA), mean F1 score (F1) and mean intersection over union (mIoU). The second one was to evaluate the scale of the network, including the floating point operation count (Flops) to evaluate the complexity, the frames per second (FPS) to evaluate the speed, the memory footprint (MB) and the number of model parameters (M) to evaluate the memory requirement.
+
+# 4.1.4 Models for comparison
+
+We selected a comprehensive set of benchmark methods for quantitative comparison including
+
+(i) CNN-based lightweight networks developed for efficient semantic segmentation:
+
+context aggregation network (CANet) (Yang et al., 2021a), bilateral segmentation network (BiSeNet) (Yu et al., 2018), ShelfNet (Zhuang et al., 2019), SwiftNet (Oršić and Šegvić, 2021), Fast-SCNN (Poudel et al., 2019), DABNet (Li et al., 2019), ERFNet (Romera et al., 2017) and ABCNet (Li et al., 2021c).   
+(ii) CNN-based attentional networks: dual attention network (DANet) (Fu et al., 2019), fast attention network (FANet) (Hu et al., 2020), local attention network (LANet) (Ding et al., 2021), criss-cross network (CCNet) (Huang et al., 2020), multi-stage attention residual UNet (MAResU-Net) (Li et al., 2021a) and multi-attention network (MANet) (Li et al., 2021b),   
+(iii) CNN-based networks for semantic segmentation of remote sensing images: DST_5 (Sherrah, 2016), V-FuseNet (Audebert et al., 2018), CASIA2 (Liu et al., 2018), DLR_9 (Marmanis et al., 2018), RoteEqNet (Marcos et al., 2018), UFMG_4 (Nogueira et al., 2019), HUSTW5 (Sun et al., 2019), TreeUNet (Yue et al., 2019), ResUNet-a (Diakogiannis et al., 2020), S-RA-FCN (Mou et al., 2020), DDCM-Net (Liu et al., 2020), EaNet (Zheng et al., 2020a), HMANet (Niu et al., 2021) and AFNet (Yang et al., 2021b),   
+(iv) hybrid Transformer-based networks with a Transformer-based encoder and a CNNbased decoder: TransUNet (Chen et al., 2021b), SwinUperNet (Liu et al., 2021), DC-Swin (Wang et al., 2022), STranFuse (Gao et al., 2021), SwinB-CNN+BD (Zhang et al., 2022), SwinTF-FPN (Panboonyuen et al., 2021), BANet (Wang et al., 2021b), CoaT (Xu et al., 2021), BoTNet (Srinivas et al., 2021) and ResT (Zhang and Yang,
+
+2021),
+
+(v) fully Transformer-based networks with a Transformer-based encoder and a Transformer-based decoder: SwinUNet (Cao et al., 2021), SegFormer (Xie et al., 2021) and Segmenter (Strudel et al., 2021).
+
+# 4.2 Ablation study
+
+# 4.2.1 Each component of UNetFormer
+
+To evaluate the performance of each component of the proposed UNetFormer separately, we conducted a series of ablation experiments on the UAVid, Vaihingen and Potsdam datasets. For a fair comparison, the test time augmentation strategies and auxiliary loss were not used in all ablation studies. The results are illustrated in TABLE 1.
+
+TABLE 1. Ablation study of each component of the UNetFormer.   
+
+<table><tr><td>Dataset</td><td>Method</td><td>mIoU</td></tr><tr><td rowspan="4">UAVid</td><td>Baseline</td><td>65.4</td></tr><tr><td>Baseline+GLTB-SUM</td><td>67.8</td></tr><tr><td>Baseline+GLTB</td><td>68.8</td></tr><tr><td>Baseline+GLTB+FRH</td><td>70.0</td></tr><tr><td rowspan="4">Vaihingen</td><td>Baseline</td><td>77.1</td></tr><tr><td>Baseline+GLTB-SUM</td><td>79.4</td></tr><tr><td>Baseline+GLTB</td><td>80.6</td></tr><tr><td>Baseline+GLTB+FRH</td><td>81.6</td></tr><tr><td rowspan="4">Potsdam</td><td>Baseline</td><td>82.5</td></tr><tr><td>Baseline+GLTB-SUM</td><td>83.8</td></tr><tr><td>Baseline+GLTB</td><td>84.9</td></tr><tr><td>Baseline+GLTB+FRH</td><td>85.5</td></tr></table>
+
+Baseline: The baseline was constructed by the U-Net with a ResNet18 backbone, which only
+
+models the local contextual information in the decoder.
+
+The global-local Transformer block (GLTB): Three global-local Transformer blocks were incorporated into the baseline to build the Baseline+GLTB. Meanwhile, to illustrate the contribution of the cross-shaped window context interaction module in the GLTB, we remove it and apply a direct sum operation on the window context and local context, thereby constructing a simple variant Baseline+GLTB-SUM. As shown in TABLE 1, the deployment of GLTB provides a significant increase of mIoU by $3 . 4 \%$ on the UAVid validation set, where the contribution of the cross-shaped window context interaction module to increase accuracy is $1 . 0 \%$ . Meanwhile, Baseline+GLTB achieves an increase of greater than $2 . 4 \%$ in mIoU on the Vaihingen and Potsdam test sets, where the increase provided by the cross-shaped window context interaction module is $1 . 2 \%$ and $1 . 1 \%$ , respectively. To sum up, the results not only demonstrate the effectiveness of GLTB but also indicate the necessity of applying the cross-shaped window context interaction module.
+
+The feature refinement module (FRH): We inserted the feature refinement head into Baseline+GLTB to generate the entire UNetFormer (indicated as Baseline+GLTB+FRH). As shown in TABLE 1, with the employment of FRH, the mIoU is boosted by $1 . 0 \%$ at least, demonstrating the validity of the proposed feature refinement module.
+
+# 4.2.2 Efficient global-local attention
+
+To demonstrate the advantages of the proposed efficient global-local attention, we replaced it with other advanced attention mechanisms to reconstruct the variants of UNetformer for ablation studies. Benefiting from the dual-branch structure and the captured global-local context,
+
+the deployment of our global-local attention achieves the highest mIoU $( 7 0 . 0 \% )$ on the UAVid validation set, as listed in TABLE 2. Besides, the proposed global-local attention also demonstrates superiority in terms of complexity, memory requirement, parameters and inference speed. Especially, our method is more accurate and faster than the efficient attention mechanisms in Transformers, i.e. the shifted window attention and the efficient multi-head self-attention.
+
+TABLE 2. Ablation studies of different attention mechanisms on the UAVid dataset. We report the speed with an input size of $1 0 2 4 \times 1 0 2 4$ on a single NVIDIA GTX 3090 GPU. The   
+best values in the column are in bold.   
+
+<table><tr><td>Attention mechanism</td><td>Complexity(G)</td><td>Memory(MB)</td><td>Parameters(M)</td><td>Speed(FPS)</td><td>mIoU</td></tr><tr><td>Dual attention (Fu et al., 2019)</td><td>68.9</td><td>2416.4</td><td>12.6</td><td>53.8</td><td>67.3</td></tr><tr><td>Criss-cross attention (Huang et al., 2020)</td><td>67.2</td><td>1318.4</td><td>12.4</td><td>79.9</td><td>68.3</td></tr><tr><td>Linear attention (Li et al., 2021b)</td><td>67.8</td><td>1339.5</td><td>12.5</td><td>91.5</td><td>69.0</td></tr><tr><td>Patch attention (Ding et al., 2021)</td><td>66.8</td><td>1320.5</td><td>12.3</td><td>95.7</td><td>68.9</td></tr><tr><td>Efficient multi-head self-attention (Zhang and Yang, 2021)</td><td>67.5</td><td>2444.2</td><td>12.5</td><td>63.6</td><td>67.9</td></tr><tr><td>Shifted window attention (Liu et al., 2021)</td><td>72.7</td><td>1652.0</td><td>13.1</td><td>67.0</td><td>68.5</td></tr><tr><td>Efficient global-local attention (ours)</td><td>46.9</td><td>1003.8</td><td>11.7</td><td>115.6</td><td>70.0</td></tr></table>
+
+# 4.2.3 Network stability
+
+To evaluate the network stability, we trained the UNetFormer with different input sizes, including square inputs like $5 1 2 \times 5 1 2$ , $1 0 2 4 \times 1 0 2 4$ and $2 0 4 8 \times 2 0 4 8$ as well as rectangular inputs like $5 1 2 \times 1 0 2 4$ and $1 0 2 4 \times 2 0 4 8$ . From the experimental results in TABLE 3, the UNetFormer demonstrates stability when performing different input sizes, while the deviation of the mIoU is less than $0 . 7 \%$ . The middle input size of $1 0 2 4 \times 1 0 2 4$ obtains the best mIoU on the UAVid validation set. Furthermore, the square inputs yield relatively higher scores than the rectangular inputs, and too large input size like $2 0 4 8 \times 2 0 4 8$ can reduce the IoU of very small object “human”.
+
+TABLE 3 Ablation studies of different input sizes on the UAVid dataset.   
+
+<table><tr><td>Input size</td><td>Clutter</td><td>Building</td><td>Road</td><td>Tree</td><td>Vegetation</td><td>MovingCar</td><td>StaticCar</td><td>Human</td><td>mIoU</td></tr><tr><td>512×512</td><td>63.1</td><td>90.7</td><td>76.4</td><td>77.4</td><td>68.1</td><td>70.3</td><td>65.9</td><td>46.2</td><td>69.8</td></tr><tr><td>512×1024</td><td>61.9</td><td>91.0</td><td>74.9</td><td>76.9</td><td>69.1</td><td>70.4</td><td>65.6</td><td>44.3</td><td>69.3</td></tr><tr><td>1024×1024</td><td>63.6</td><td>91.2</td><td>76.4</td><td>77.7</td><td>68.2</td><td>71.6</td><td>66.1</td><td>44.8</td><td>70.0</td></tr><tr><td>1024×2048</td><td>63.0</td><td>91.2</td><td>76.2</td><td>77.5</td><td>68.7</td><td>69.8</td><td>65.2</td><td>44.6</td><td>69.5</td></tr><tr><td>2048×2048</td><td>63.4</td><td>91.2</td><td>76.0</td><td>77.9</td><td>70.1</td><td>70.4</td><td>65.7</td><td>42.5</td><td>69.7</td></tr></table>
+
+# 4.2.4 Encoder choice
+
+Current Transformer-based segmentation networks commonly apply the Transformer as the encoder. This choice, although has been justified for accurate semantic information, reduces the execution speed of the network significantly, which is not suitable for real-time applications. To demonstrate it, we replace our ResNet18 encoder with lightweight Transformers, i.e. ViT-Tiny (Dosovitskiy et al., 2020), Swin-Tiny (Liu et al., 2021) and CoaT-Mini (Xu et al., 2021), for ablation studies (TABLE 4). The results reveal that introducing lightweight Transformers as the encoder provides a limited improvement of accuracy (within $0 . 6 \%$ in mIoU) but reduces the inference speed of the UNetFormer seriously. Thus, for real-time urban scene segmentation, the application of a lightweight CNN-based encoder like ResNet18 is the currently best scheme.
+
+TABLE 4 Ablation studies of different encoders on the UAVid dataset. The complexity and speed are measured by a $1 0 2 4 \times 1 0 2 4$ input on a single NVIDIA GTX 3090 GPU.   
+
+<table><tr><td>Method</td><td>Encoder</td><td>Complexity(G)</td><td>Parameters(M)</td><td>Speed(FPS)</td><td>mIoU</td></tr><tr><td rowspan="4">UNetFormer</td><td>ViT-Tiny (Dosovitskiy et al., 2020)</td><td>35.31</td><td>8.6</td><td>30.2</td><td>69.1</td></tr><tr><td>Swin-Tiny (Liu et al., 2021)</td><td>104.4</td><td>28.0</td><td>28.8</td><td>70.6</td></tr><tr><td>CoaT-Mini (Xu et al., 2021)</td><td>159.7</td><td>10.6</td><td>10.6</td><td>70.5</td></tr><tr><td>ResNet18</td><td>46.9</td><td>11.7</td><td>115.6</td><td>70.0</td></tr></table>
+
+# 4.2.5 Encoder-decoder combination
+
+To illustrate the superiority of our hybrid structure for efficient semantic segmentation, we selected the UNet, SwinUNet and TransUNet for ablation experiments on the UAVid dataset. Since the SwinUNet requires huge GPU memory, the input size was all set as $5 1 2 \times 5 1 2$ for training. The results from TABLE 5 reveal that the proposed UNetFormer exceeds the compared networks significantly in terms of complexity and speed while providing a competitive accuracy on the UAVid validation set. Specifically, in comparison with the UNet constructed by the pure CNN structure, the UNetFormer achieves an increase of $4 . 3 \%$ in mIoU. Compared to the pure Transformer network SwinUNet, the UNetFormer saves $80 \%$ of the computational complexity. Although the TransUNet constructed by a Transformer-based encoder and a CNN-based decoder surpasses ours by $0 . 5 \%$ in mIoU, it is 7 times slower and has much more parameters due to its heavy and complicated Transformer-based encoder. For real-time urban application scenarios, the high execution speed and lightweight model volume are much more important than the slight accuracy reduction. Thus, in comparison with other combinations, the advantage of our hybrid structure, i.e. CNN-based encoder and Transformer-based decoder, is significant.
+
+TABLE 5 Ablation studies of different encoder-decoder combinations on the UAVid dataset.
+
+The complexity and speed are measured by a $5 1 2 { \times } 5 1 2$ input on a single NVIDIA GTX 3090
+
+GPU.   
+
+<table><tr><td>Method</td><td>Backbone</td><td>Encoder</td><td>Decoder</td><td>Complexity(G)</td><td>Memory(MB)</td><td>Parameters(M)</td><td>Speed(FPS)</td><td>mIoU</td></tr><tr><td>UNet (Ronneberger et al., 2015)</td><td>-</td><td>CNN</td><td>CNN</td><td>184.6</td><td>1622.0</td><td>31.0</td><td>50.9</td><td>65.5</td></tr><tr><td>SwinUNet (Cao et al., 2021)</td><td>Swin-Tiny</td><td>Transformer</td><td>Transformer</td><td>237.4</td><td>2001.5</td><td>41.4</td><td>46.9</td><td>68.3</td></tr><tr><td>TransUNet (Chen et al., 2021b)</td><td>ViT-R50</td><td>Transformer</td><td>CNN</td><td>233.7</td><td>1245.7</td><td>90.7</td><td>43.2</td><td>70.3</td></tr><tr><td>UNetFormer</td><td>ResNet18</td><td>CNN</td><td>Transformer</td><td>11.7</td><td>250.9</td><td>11.7</td><td>322.4</td><td>69.8</td></tr></table>
+
+# 4.3 Experiment results
+
+# 4.3.1 Comparison of network efficiency
+
+Complexity and speed are critical for evaluating a network, especially in real-time urban applications. We compared our UNetFormer with efficient segmentation networks based on the mIoU, GPU memory footprint, complexity, parameters and speed on the official UAVid test set. The comparison results are listed in Table 6. In comparison with the fastest and most shallow model Fast-SCNN, the proposed UNetFormer outperforms it by a large margin of $2 1 . 0 \%$ in mIoU. In comparison with the state-of-the-art CNN-based models of the same volume, our UNetFormer achieves a competitive inference speed of 115.6 FPS, while surpassing other networks by more than $4 . 0 \%$ in mIoU. Notably, our method exceeds the advanced hybrid Transformer network CoaT by $2 . 0 \%$ in mIoU while being 10 times faster. Meanwhile, the proposed method outperforms the pure Transformer network Segmenter by $9 . 1 \%$ in mIoU while being 7 times faster. The outstanding trade-off between accuracy and speed demonstrates the efficiency of our hybrid structure and the effectiveness of the proposed GLTB and FRH.
+
+TABLE 6. Quantitative comparison results on the UAVid test set with state-of-the-art
+
+lightweight networks. The complexity and speed are measured by a $1 0 2 4 \times 1 0 2 4$ input on a
+
+single NVIDIA GTX 3090 GPU.   
+
+<table><tr><td>Method</td><td>Backbone</td><td>Memory(MB)</td><td>Parameters(M)</td><td>Complexity(G)</td><td>Speed</td><td>mIoU</td></tr><tr><td>Fast-SCNN (Poudel et al., 2019)</td><td>-</td><td>619.4</td><td>1.1</td><td>3.4</td><td>222.7</td><td>45.9</td></tr><tr><td>Segmenter (Strudel et al., 2021)</td><td>ViT-Tiny</td><td>828.6</td><td>6.7</td><td>26.8</td><td>14.7</td><td>58.7</td></tr><tr><td>BiSeNet (Yu et al., 2018)</td><td>ResNet18</td><td>970.6</td><td>12.9</td><td>51.8</td><td>121.9</td><td>61.5</td></tr><tr><td>DANet (Fu et al., 2019)</td><td>ResNet18</td><td>611.1</td><td>12.6</td><td>39.6</td><td>189.4</td><td>60.6</td></tr><tr><td>FANet (Hu et al., 2020)</td><td>ResNet18</td><td>971.9</td><td>13.6</td><td>86.8</td><td>94.9</td><td>-</td></tr><tr><td>ShelfNet (Zhuang et al., 2019)</td><td>ResNet18</td><td>579.0</td><td>14.6</td><td>46.7</td><td>141.4</td><td>47.0</td></tr><tr><td>SwiftNet (Oršić and Šegvic, 2021)</td><td>ResNet18</td><td>835.8</td><td>11.8</td><td>51.6</td><td>138.7</td><td>61.1</td></tr><tr><td>MANet (Li et al., 2021b)</td><td>ResNet18</td><td>1169.2</td><td>12.0</td><td>51.7</td><td>75.6</td><td>62.6</td></tr><tr><td>ABCNet (Li et al., 2021c)</td><td>ResNet18</td><td>1105.1</td><td>14.0</td><td>62.9</td><td>102.2</td><td>63.8</td></tr><tr><td>SegFormer (Xie et al., 2021)</td><td>MiT-B1</td><td>933.2</td><td>13.7</td><td>63.3</td><td>31.3</td><td>66.0</td></tr><tr><td>BoTNet (Srinivas et al., 2021)</td><td>ResNet18</td><td>710.5</td><td>17.6</td><td>49.9</td><td>135.0</td><td>63.2</td></tr><tr><td>CoaT (Xu et al., 2021)</td><td>CoaT-Mini</td><td>3133.8</td><td>11.1</td><td>104.8</td><td>10.6</td><td>65.8</td></tr><tr><td>UNetFormer</td><td>ResNet18</td><td>1003.7</td><td>11.7</td><td>46.9</td><td>115.6</td><td>67.8</td></tr></table>
+
+# 4.3.2 Results on the UAVid dataset
+
+UAVid is a large-scale urban scene segmentation dataset, where the images are captured by unmanned aerial vehicles in different cities and under different lighting conditions. Thus, it is challenging to obtain high scores on this dataset. We trained several advanced efficient segmentation networks and provide a detailed comparison of results on the official UAVid test set. As illustrated in Table 7, our method yields the best mIoU $( 6 7 . 8 \% )$ while maintaining the advantages in the per-class IoU. Specifically, the proposed UNetFormer not only exceeds the efficient CNN-based network ABCNet by $4 . 0 \%$ in mIoU but also outperforms the recent hybrid Transformer-based networks BANet and BoTNet by $3 . 2 \%$ and $4 . 6 \%$ , respectively. Particularly, the “human” class is hard to handle since it is an extremely small object. Nonetheless, the IoU of this class achieved by our UNetFormer is at least $8 . 6 \%$ higher than for other methods. Furthermore, the segmentation results from the UAVid validation set (Fig. 6) and the visualization results from the UAVid test set (Fig. 7) also demonstrate the effectiveness of our UNetFormer.
+
+TABLE 7. Quantitative comparison of results on the UAVid test set with state-of-the-art   
+lightweight models. The best values in the column are in bold.   
+
+<table><tr><td>Method</td><td>Backbone</td><td>Clutter</td><td>Building</td><td>Road</td><td>Tree</td><td>Vegetation</td><td>MovingCar</td><td>StaticCar</td><td>Human</td><td>mIoU</td></tr><tr><td>MSD (Lyu et al., 2020)</td><td>-</td><td>57.0</td><td>79.8</td><td>74.0</td><td>74.5</td><td>55.9</td><td>62.9</td><td>32.1</td><td>19.7</td><td>57.0</td></tr><tr><td>CANet (Yang et al., 2021a)</td><td>-</td><td>66.0</td><td>86.6</td><td>62.1</td><td>79.3</td><td>78.1</td><td>47.8</td><td>68.3</td><td>19.9</td><td>63.5</td></tr><tr><td>DANet (Fu et al., 2019)</td><td>ResNet18</td><td>64.9</td><td>85.9</td><td>77.9</td><td>78.3</td><td>61.5</td><td>59.6</td><td>47.4</td><td>9.1</td><td>60.6</td></tr><tr><td>SwiftNet (Oršić and Šegvic, 2021)</td><td>ResNet18</td><td>64.1</td><td>85.3</td><td>61.5</td><td>78.3</td><td>76.4</td><td>51.1</td><td>62.1</td><td>15.7</td><td>61.1</td></tr><tr><td>BiSeNet (Yu et al., 2018)</td><td>ResNet18</td><td>64.7</td><td>85.7</td><td>61.1</td><td>78.3</td><td>77.3</td><td>48.6</td><td>63.4</td><td>17.5</td><td>61.5</td></tr><tr><td>MANet (Li et al., 2021b)</td><td>ResNet18</td><td>64.5</td><td>85.4</td><td>77.8</td><td>77.0</td><td>60.3</td><td>67.2</td><td>53.6</td><td>14.9</td><td>62.6</td></tr><tr><td>ABCNet (Li et al., 2021c)</td><td>ResNet18</td><td>67.4</td><td>86.4</td><td>81.2</td><td>79.9</td><td>63.1</td><td>69.8</td><td>48.4</td><td>13.9</td><td>63.8</td></tr><tr><td>Segmenter (Strudel et al., 2021)</td><td>ViT-Tiny</td><td>64.2</td><td>84.4</td><td>79.8</td><td>76.1</td><td>57.6</td><td>59.2</td><td>34.5</td><td>14.2</td><td>58.7</td></tr><tr><td>SegFormer (Xie et al., 2021)</td><td>MiT-B1</td><td>66.6</td><td>86.3</td><td>80.1</td><td>79.6</td><td>62.3</td><td>72.5</td><td>52.5</td><td>28.5</td><td>66.0</td></tr><tr><td>BANet (Wang et al., 2021b)</td><td>ResT-Lite</td><td>66.7</td><td>85.4</td><td>80.7</td><td>78.9</td><td>62.1</td><td>69.3</td><td>52.8</td><td>21.0</td><td>64.6</td></tr><tr><td>BoTNet (Srinivas et al., 2021)</td><td>ResNet18</td><td>64.5</td><td>84.9</td><td>78.6</td><td>77.4</td><td>60.5</td><td>65.8</td><td>51.9</td><td>22.4</td><td>63.2</td></tr><tr><td>CoaT (Xu et al., 2021)</td><td>CoaT-Mini</td><td>69.0</td><td>88.5</td><td>80.0</td><td>79.3</td><td>62.0</td><td>70.0</td><td>59.1</td><td>18.9</td><td>65.8</td></tr><tr><td>UNetFormer</td><td>ResNet18</td><td>68.4</td><td>87.4</td><td>81.5</td><td>80.2</td><td>63.5</td><td>73.6</td><td>56.4</td><td>31.0</td><td>67.8</td></tr></table>
+
+![](images/8be165f5e3c2463e5e38392427094621aeb8e12745ae88da2147fa484a3b5bfa.jpg)
+
+![](images/2d2320a4b622868d83f737828e4d3d6f3bf4a13406228de53135b066c33a1b7d.jpg)
+
+![](images/61c17b038d720f2b9acd41ed3e3355b7b638631179e32bb9a21efc3f192d6b30.jpg)
+
+![](images/a17e794b4f2b10face24857e52a611150cae4aea730bf08cabdd91996df44fef.jpg)
+
+![](images/f39ebcf7de32bbe9e53f7667bf51d8e537350f5fb71b3d77fa21bd9cc58b1247.jpg)
+
+![](images/3d39a56c571d8d1767dd0cb8f52bf8de43f4ae08c7f0613c86a566604627ea17.jpg)
+
+![](images/4f68f88d2c0e14c4f9549b9c1e0ea093fad8fc58f502af6d792ef7704f07d86e.jpg)
+
+![](images/85c85eaef78d4590c35d1f66c510f215f945268840c2b2df3f470370663b4e2a.jpg)
+
+![](images/e5b106b6842b48d12a4575e5d7421c87ad121da7d3854946bcef3b3c4cf6b25b.jpg)
+
+![](images/78770e07d87914757996e51bee29e94041e35490e432ef432d10d6f03fa076cd.jpg)
+
+![](images/cefa3769d6f659d4b509c60bcec088bc4031c9be5b12a8c537695963e9a2edf8.jpg)
+
+![](images/f88af03eea3e87903f06fe0475b69da0659373829d523fdd6d01fbac350df233.jpg)
+
+![](images/6cc32908c417ee2014e3a867fbf7c77d821553e53818729debaeaba98eb5014a.jpg)  
+Clutter
+
+![](images/23db13e78ed48cdd21132bf3686c5897039d3de4ab0868c8ad8c791696ed92ae.jpg)  
+Building
+
+![](images/ef60d9416b916883ebfa4e1beb26239c4573a2055fb54f077cf51aca4d775894.jpg)  
+Road
+
+![](images/e70eea60582ae0346459bb1175402f1691e03749c9352ebadc09e82786ecaa25.jpg)  
+Static Car
+
+![](images/86eba4a995787492e4e86e49957f547c8087169ee92036ee6c1ccd04f3c543cc.jpg)  
+Tree
+
+![](images/e9a7c84676a7b83f02017b3ea76eb235e5b6c7c7b0baa144b9682de60479ba8b.jpg)  
+Vegetation
+
+![](images/41e61949d36720adc3e5bd88229fe47c8f21232f25480443171eb22f8e102695.jpg)  
+Human
+
+![](images/30eb8eac6aa3bad28982ed8d4bc588cf16085a6529e9c650191cec04a2b8cdf5.jpg)  
+Moving Car   
+Fig. 6. Segmentation results from the UAVid validation set. The first column represents the input
+
+RGB images. The second column denotes the ground reference. The third column shows the segmentation maps produced by our method.
+
+![](images/951ecd568b55d64d8bcce05d09d3e964076374566e9e43d8cd843feebc2580bf.jpg)
+
+![](images/5b3f1856cd9b7e1c5bf5b9501d4d5c9a0d46e93c336a7bd93853ef5aa50ef8a4.jpg)
+
+![](images/3529753012c5230c610935186a4a3deb70fe46ce879fda2ca02f4e0c3d4eb19f.jpg)
+
+![](images/0ae4840f24ec83603a80a064ebdb0b7e2804e4d66b3f31f14b4444a832480c41.jpg)
+
+![](images/8cbb279b336feb1ec2860c7e66b2792178bc4d44705c451b0b8a468b72ddb2a7.jpg)  
+Clutter
+
+![](images/0118d3fe8762c21427fdb8242ae0a3614773046bdbf4e8f1d198fe18ad3dd1e8.jpg)  
+Building
+
+![](images/d18604c49806a0e0bb3e07e1d25c303ca57885bb435b608a0df5ece3bb41ef2d.jpg)  
+Road
+
+![](images/a08b668f3bbc87bcdfaa2d4e3945a18fa2039f24bdb4a83ea71d8d7f35a15338.jpg)  
+Static Car
+
+![](images/8b71ebd55178a1c83d4420fe0180983adde19655edae3754f60b2c1af27bd88a.jpg)  
+Tree
+
+![](images/3547325f421496dcc11d324fc99cfb8db781fd02cbe7212b0d3a92a0525543ea.jpg)  
+Vegetation
+
+![](images/01e6256ea5c7b8fa78fe710753bc93cab53c58b0c233369b1978f017a5601155.jpg)  
+Human
+
+![](images/68cb4bbb4a874081bd5997b32a9be06943fda7c2bd63ef8b75e61677edf6e9ab.jpg)  
+Moving Car   
+Fig. 7. Enlarged visualization of results from the UAVid test set. The first column represents the
+
+input RGB images. The second column denotes the segmentation results of the baseline. The third column shows the segmentation maps of our method.
+
+# 4.3.3 Results on the Vaihingen and Potsdam dataset
+
+The ISPRS Vaihingen and Potsdam are two widely-used datasets for segmentation tasks. Numerically high accuracies have been achieved by the specially designed models on these two
+
+datasets. In this section, we demonstrate that our UNetFormer can not only surpass lightweight models but also obtain competitive scores in comparison with leading networks.
+
+As illustrated in Table 8, the proposed UNetFormer delivers the best F1, OA and mIoU on the Vaihingen test set, outperforming other CNN-based and Transformer-based lightweight networks by a significant margin. It is worth noting that our method yields an $8 8 . 5 \%$ F1 score on the “car” class, exceeding other networks by more than $1 . 7 \%$ . Moreover, the prediction results of ID 2 and 22 are shown in Fig. 8, while the enlarged visualization of results is illustrated in Fig. 9 (Top), which also demonstrates the effectiveness of our method.
+
+TABLE 8. Quantitative comparison results on the Vaihingen test set with state-of-the-art lightweight networks. The best values in the column are in bold.   
+
+<table><tr><td>Method</td><td>Backbone</td><td>Imp.surf.</td><td>Building</td><td>Lowveg.</td><td>Tree</td><td>Car</td><td>MeanF1</td><td>OA</td><td>mIoU</td></tr><tr><td>DABNet (Li et al., 2019)</td><td>-</td><td>87.8</td><td>88.8</td><td>74.3</td><td>84.9</td><td>60.2</td><td>79.2</td><td>84.3</td><td>70.2</td></tr><tr><td>ERFNet (Romera et al., 2017)</td><td>-</td><td>88.5</td><td>90.2</td><td>76.4</td><td>85.8</td><td>53.6</td><td>78.9</td><td>85.8</td><td>69.1</td></tr><tr><td>BiSeNet (Yu et al., 2018)</td><td>ResNet18</td><td>89.1</td><td>91.3</td><td>80.9</td><td>86.9</td><td>73.1</td><td>84.3</td><td>87.1</td><td>75.8</td></tr><tr><td>PSPNet (Zhao et al., 2017a)</td><td>ResNet18</td><td>89.0</td><td>93.2</td><td>81.5</td><td>87.7</td><td>43.9</td><td>79.0</td><td>87.7</td><td>68.6</td></tr><tr><td>DANet (Fu et al., 2019)</td><td>ResNet18</td><td>90.0</td><td>93.9</td><td>82.2</td><td>87.3</td><td>44.5</td><td>79.6</td><td>88.2</td><td>69.4</td></tr><tr><td>FANet (Hu et al., 2020)</td><td>ResNet18</td><td>90.7</td><td>93.8</td><td>82.6</td><td>88.6</td><td>71.6</td><td>85.4</td><td>88.9</td><td>75.6</td></tr><tr><td>EaNet (Zheng et al., 2020a)</td><td>ResNet18</td><td>91.7</td><td>94.5</td><td>83.1</td><td>89.2</td><td>80.0</td><td>87.7</td><td>89.7</td><td>78.7</td></tr><tr><td>ShelfNet (Zhuang et al., 2019)</td><td>ResNet18</td><td>91.8</td><td>94.6</td><td>83.8</td><td>89.3</td><td>77.9</td><td>87.5</td><td>89.8</td><td>78.3</td></tr><tr><td>MAResU-Net (Li et al., 2021a)</td><td>ResNet18</td><td>92.0</td><td>95.0</td><td>83.7</td><td>89.3</td><td>78.3</td><td>87.7</td><td>90.1</td><td>78.6</td></tr><tr><td>SwiftNet (Oršić and Šegvic, 2021)</td><td>ResNet18</td><td>92.2</td><td>94.8</td><td>84.1</td><td>89.3</td><td>81.2</td><td>88.3</td><td>90.2</td><td>79.6</td></tr><tr><td>ABCNet (Li et al., 2021c)</td><td>ResNet18</td><td>92.7</td><td>95.2</td><td>84.5</td><td>89.7</td><td>85.3</td><td>89.5</td><td>90.7</td><td>81.3</td></tr><tr><td>BoTNet (Srinivas et al., 2021)</td><td>ResNet18</td><td>89.9</td><td>92.1</td><td>81.8</td><td>88.7</td><td>71.3</td><td>84.8</td><td>88.0</td><td>74.3</td></tr><tr><td>BANet (Wang et al., 2021b)</td><td>ResT-Lite</td><td>92.2</td><td>95.2</td><td>83.8</td><td>89.9</td><td>86.8</td><td>89.6</td><td>90.5</td><td>81.4</td></tr><tr><td>Segmenter (Strudel et al., 2021)</td><td>ViT-Tiny</td><td>89.8</td><td>93.0</td><td>81.2</td><td>88.9</td><td>67.6</td><td>84.1</td><td>88.1</td><td>73.6</td></tr><tr><td>UNetFormer</td><td>ResNet18</td><td>92.7</td><td>95.3</td><td>84.9</td><td>90.6</td><td>88.5</td><td>90.4</td><td>91.0</td><td>82.7</td></tr></table>
+
+For a comprehensive evaluation, we further conducted experiments on the Postdam dataset.
+
+As shown in Table 10, our UNetFormer achieves a $9 2 . 8 \%$ mean F1 score and an $8 6 . 8 \%$ mIoU on the Potsdam test set. The results of the UNetFormer not only exceed the excellent convolutional lightweight network ABCNet (Li et al., 2021c) but also outperform recent Transformer-based lightweight networks, such as Segmenter (Strudel et al., 2021) and BANet (Wang et al., 2021b). We also provide segmentation results for ID 3_14 and 2_13 (Fig. 9) and an enlarged visualization of the results (Fig. 10 Bottom) to show the preferential performance of our network.
+
+TABLE 9 Quantitative comparison results on the Potsdam test set with state-of-the-art lightweight networks. The best values in the column are in bold.   
+
+<table><tr><td>Method</td><td>Backbone</td><td>Imp.surf.</td><td>Building</td><td>Lowveg.</td><td>Tree</td><td>Car</td><td>MeanF1</td><td>OA</td><td>mIoU</td></tr><tr><td>ERFNet (Romera et al., 2017)</td><td>-</td><td>88.7</td><td>93.0</td><td>81.1</td><td>75.8</td><td>90.5</td><td>85.8</td><td>84.5</td><td>76.2</td></tr><tr><td>DABNet (Li et al., 2019)</td><td>-</td><td>89.9</td><td>93.2</td><td>83.6</td><td>82.3</td><td>92.6</td><td>88.3</td><td>86.7</td><td>79.6</td></tr><tr><td>BiSeNet (Yu et al., 2018)</td><td>ResNet18</td><td>90.2</td><td>94.6</td><td>85.5</td><td>86.2</td><td>92.7</td><td>89.8</td><td>88.2</td><td>81.7</td></tr><tr><td>EaNet (Zheng et al., 2020a)</td><td>ResNet18</td><td>92.0</td><td>95.7</td><td>84.3</td><td>85.7</td><td>95.1</td><td>90.6</td><td>88.7</td><td>83.4</td></tr><tr><td>MAResU-Net (Li et al., 2021a)</td><td>ResNet18</td><td>91.4</td><td>95.6</td><td>85.8</td><td>86.6</td><td>93.3</td><td>90.5</td><td>89.0</td><td>83.9</td></tr><tr><td>DANet (Fu et al., 2019)</td><td>ResNet18</td><td>91.0</td><td>95.6</td><td>86.1</td><td>87.6</td><td>84.3</td><td>88.9</td><td>89.1</td><td>80.3</td></tr><tr><td>SwiftNet (Oršić and Šegvic, 2021)</td><td>ResNet18</td><td>91.8</td><td>95.9</td><td>85.7</td><td>86.8</td><td>94.5</td><td>91.0</td><td>89.3</td><td>83.8</td></tr><tr><td>FANet (Hu et al., 2020)</td><td>ResNet18</td><td>92.0</td><td>96.1</td><td>86.0</td><td>87.8</td><td>94.5</td><td>91.3</td><td>89.8</td><td>84.2</td></tr><tr><td>ShelfNet (Zhuang et al., 2019)</td><td>ResNet18</td><td>92.5</td><td>95.8</td><td>86.6</td><td>87.1</td><td>94.6</td><td>91.3</td><td>89.9</td><td>84.4</td></tr><tr><td>ABCNet (Li et al., 2021c)</td><td>ResNet18</td><td>93.5</td><td>96.9</td><td>87.9</td><td>89.1</td><td>95.8</td><td>92.7</td><td>91.3</td><td>86.5</td></tr><tr><td>Segmenter (Strudel et al., 2021)</td><td>ViT-Tiny</td><td>91.5</td><td>95.3</td><td>85.4</td><td>85.0</td><td>88.5</td><td>89.2</td><td>88.7</td><td>80.7</td></tr><tr><td>BANet (Wang et al., 2021b)</td><td>ResT-Lite</td><td>93.3</td><td>96.7</td><td>87.4</td><td>89.1</td><td>96.0</td><td>92.5</td><td>91.0</td><td>86.3</td></tr><tr><td>SwinUperNet (Liu et al., 2021)</td><td>Swin-Tiny</td><td>93.2</td><td>96.4</td><td>87.6</td><td>88.6</td><td>95.4</td><td>92.2</td><td>90.9</td><td>85.8</td></tr><tr><td>UNetFormer</td><td>ResNet18</td><td>93.6</td><td>97.2</td><td>87.7</td><td>88.9</td><td>96.5</td><td>92.8</td><td>91.3</td><td>86.8</td></tr></table>
+
+![](images/7c8e313e8c56267d03fbd7fd03c260ec8e3158587828a0edd043ed59791db81c.jpg)
+
+![](images/2ed2bf557752bc85b26301f29f4367b7c223323091e0c2ba07bafd6d561bf526.jpg)
+
+![](images/5d300e567b85a590fd33af3c46901afe6da14a238a711886ca2f6949e64a5e77.jpg)  
+impervious surfaces   
+low vegetation
+
+![](images/55ec6435c70de1f5b74a36232e0593d41296741433953dcc4a778aece51b253b.jpg)
+
+![](images/033923a6ba7a669777c0ede91637969bd22238a4b8240a0921004a6c4ef731de.jpg)
+
+![](images/b83ee666a0ff7e4a72e21bfa9226146bbc70d5f92dae218c1d6715cdf1aa3fd9.jpg)  
+tree
+
+![](images/86df304c4780900a5dd47ac95ac8cec2840081c91706eec9c17f89370e6e0b58.jpg)  
+car
+
+![](images/10e7f14068b5101869d6d883a430cc8338a04ad3112c3f82cb1b5629b3cd1143.jpg)  
+building
+
+![](images/16ecae68e1fcb5b9aec9645976503458424405691357dbd7040173f4198ea0c3.jpg)  
+background   
+Fig. 8. Visualization results of ID 2 and 22 from the Vaihingen test set. The first column denotes
+
+the input RGB images. The second column represents the ground truth. The third column shows the segmentation results of the proposed UNetFormer.
+
+![](images/8062c1fe7589d4bf452c159ce1ae47072a196ddfbe03823299a17e10234ee72e.jpg)
+
+![](images/0d373f4bb37f034dc16a7c2e9b7508284c10d260cc3f48fd57efb280877fdb89.jpg)
+
+![](images/5e6768fcbe22e5b797c16e2991dd977ede2ef24710e608e80a4e815e52bd9fa0.jpg)  
+impervious surfaces
+
+![](images/30cafd3e15592c7627c2463d98d8b311948f45ddc7bd76539b4ce94b9c668697.jpg)  
+low vegetation
+
+![](images/d6ef2ddf08f184456de78ccc7457ad0a9e9f5562c0fa90c1d63dd1ba080cb8a5.jpg)
+
+![](images/eb8a26c9c1c30d863161e08a7f0b8e74b396efa69e03cf7e339a87144a1fa497.jpg)
+
+![](images/4b7e3d62c7770d95929afe313fc5b2589611f0e8ccee8c6bc00bcb671a4b75f6.jpg)  
+tree
+
+![](images/4c2350a31fafc1b803d6d57b4f115b9ced08c1dc51e7f0e636bc54923965f186.jpg)  
+car
+
+![](images/470d9e60f488c0c2bbe7d384c26fb08d3731118a1f405ffc4f69e0ddfd42663f.jpg)
+
+![](images/c0c3d99d4b5246b4fec5594507bcf3ae8a495bd6c938bd03a53254910a3c1234.jpg)
+
+![](images/43ac359f7765699e306a5a9b576d9dcb48f5668ac0722af35ac773e00146d0d6.jpg)  
+building
+
+![](images/72ace940d675247f61478fae42fe7465fc529d5106b481b385d5fdf1203f1c35.jpg)  
+background   
+Fig. 9. Visualization results of ID 3_14 and 2_13 from the Potsdam test set. The first column
+
+denotes the input RGB images. The second column represents the ground truth. The third column shows the segmentation results of the proposed UNetFormer.
+
+![](images/463dbed1aaf27e6b08485af5fd74ed4d5a802a0d2be6e14702a24481c5533a8f.jpg)  
+Image
+
+![](images/5dfb3ef2d2f0100520dfc9568856031d514204d74346b0dccb367398ea7d586d.jpg)  
+Ground Truth
+
+![](images/07ee80f2a18d98449966e52fb5d035dad67866bf37f4fdf021ba6f928472be72.jpg)  
+PSPNet
+
+![](images/1c041fc97c2b9fcb2b4a354e59b7cf91cdf078ba626367e54bcc5f2c7c01d65c.jpg)  
+BiSeNet
+
+![](images/d431941571cddb3c6a03d64457ee6cae962403801a088adf86349b9e82801323.jpg)  
+BoTNet
+
+![](images/1d9e1d9ffb210536870249d5281b3f0da0286f30b5605b9b61aace390feafd1b.jpg)  
+UNetFormer
+
+![](images/90a69565b3b801ec5bbd88fca06a3d117ddda596bfc277c11efc8f097887ec42.jpg)
+
+![](images/db5d468708c7bbe5b8fb989d0b77018cc1712e1329c64b7a55469468b341b795.jpg)  
+Ground Truth
+
+![](images/f36823fa050c334a35ec76042f5dd4cb3fe66b79476deef64a11aaa1a8409903.jpg)  
+DANet
+
+![](images/5a9b4649bfd99e1d131b421ee7cf4c6043c331b997efc55d590bda857dd41311.jpg)  
+SwiftNet
+
+![](images/8daae1772151bae1c1dfeddaa4b073c069423bb6f49d40da40e18e1663760744.jpg)  
+Segmenter
+
+![](images/c0abbf29943dba5eaef1ea13ce9cd53e3a1dc73dbae56cd6722d960379142233.jpg)  
+UNetFormer
+
+![](images/9cf279962704aaf2458adedb968930591ee01f3e34c6d05d74c43604a049d81d.jpg)  
+impervious surfaces
+
+![](images/fafb62ea15c5f452b190cb9b9e21e91e720a00d1cb64886db62d32c5038d0bbc.jpg)  
+low vegetation
+
+![](images/ccd4fecf15f720b7582043acf77ea5460790f38eb02117905656ad85c5ef19a1.jpg)  
+tree
+
+![](images/5bdac08cf38f1510e506221c53905cca357430a7135da53de5db7263e7b3a3fa.jpg)  
+car
+
+![](images/cd86980f9b3caa34d41fc61786df1d4645060641493a08ce00441ea86fffc66d.jpg)  
+building
+
+![](images/41ea0a91124290fa2ea6024033f3af41f79b7c19d74624eab70dfb75106c4f19.jpg)  
+background   
+Fig. 10. Enlarged visualization of results from the Vaihingen (top) and Potsdam (bottom) test set.
+
+# 4.3.4 Results on the LoveDA dataset
+
+We undertook experiments on the LoveDA dataset to further evaluate the performance of the UNetFormer. Benefiting from the captured global-local context, the UNetFormer can handle both urban and rural scenes well in the LoveDA dataset. The comparison results are listed in TABLE 10. Remarkably, the UNetFormer obtains the highest mIoU $( 5 2 . 4 \% )$ with the least complexity and the fastest speed. Visualized comparisons are exhibited in Fig. 11.
+
+TABLE 10. Quantitative comparison results on the LoveDA test set with other networks. The complexity and speed are measured by a $1 0 2 4 \times 1 0 2 4$ input on a single NVIDIA GTX 3090   
+GPU. The best values in the column are in bold.   
+
+<table><tr><td>Method</td><td>Backbone</td><td>Background</td><td>Building</td><td>Road</td><td>Water.</td><td>Barren</td><td>Forest</td><td>Agriculture</td><td>mIoU</td><td>Complexity</td><td>Speed</td></tr><tr><td>PSPNet (Zhao et al., 2017a)</td><td>ResNet50</td><td>44.4</td><td>52.1</td><td>53.5</td><td>76.5</td><td>9.7</td><td>44.1</td><td>57.9</td><td>48.3</td><td>105.7</td><td>52.2</td></tr><tr><td>DeepLabV3+ (Chen et al., 2018a)</td><td>ResNet50</td><td>43.0</td><td>50.9</td><td>52.0</td><td>74.4</td><td>10.4</td><td>44.2</td><td>58.5</td><td>47.6</td><td>95.8</td><td>53.7</td></tr><tr><td>SemanticFPN (Kirillov et al., 2019)</td><td>ResNet50</td><td>42.9</td><td>51.5</td><td>53.4</td><td>74.7</td><td>11.2</td><td>44.6</td><td>58.7</td><td>48.2</td><td>103.3</td><td>52.7</td></tr><tr><td>FarSeg (Zheng et al., 2020b)</td><td>ResNet50</td><td>43.1</td><td>51.5</td><td>53.9</td><td>76.6</td><td>9.8</td><td>43.3</td><td>58.9</td><td>48.2</td><td>-</td><td>47.8</td></tr><tr><td>FactSeg (Ma et al., 2021)</td><td>ResNet50</td><td>42.6</td><td>53.6</td><td>52.8</td><td>76.9</td><td>16.2</td><td>42.9</td><td>57.5</td><td>48.9</td><td>-</td><td>46.7</td></tr><tr><td>BANet (Wang et al., 2021b)</td><td>ResT-Lite</td><td>43.7</td><td>51.5</td><td>51.1</td><td>76.9</td><td>16.6</td><td>44.9</td><td>62.5</td><td>49.6</td><td>52.6</td><td>11.5</td></tr><tr><td>TransUNet (Chen et al., 2021b)</td><td>ViT-R50</td><td>43.0</td><td>56.1</td><td>53.7</td><td>78.0</td><td>9.3</td><td>44.9</td><td>56.9</td><td>48.9</td><td>803.4</td><td>13.4</td></tr><tr><td>Segmenter (Strudel et al., 2021)</td><td>ViT-Tiny</td><td>38.0</td><td>50.7</td><td>48.7</td><td>77.4</td><td>13.3</td><td>43.5</td><td>58.2</td><td>47.1</td><td>26.8</td><td>14.7</td></tr><tr><td>SwinUperNet (Liu et al., 2021)</td><td>Swin-Tiny</td><td>43.3</td><td>54.3</td><td>54.3</td><td>78.7</td><td>14.9</td><td>45.3</td><td>59.6</td><td>50.0</td><td>349.1</td><td>19.5</td></tr><tr><td>DC-Swin (Wang et al., 2022)</td><td>Swin-Tiny</td><td>41.3</td><td>54.5</td><td>56.2</td><td>78.1</td><td>14.5</td><td>47.2</td><td>62.4</td><td>50.6</td><td>183.8</td><td>23.6</td></tr><tr><td>UNetFormer</td><td>ResNet18</td><td>44.7</td><td>58.8</td><td>54.9</td><td>79.6</td><td>20.1</td><td>46.0</td><td>62.5</td><td>52.4</td><td>46.9</td><td>115.3</td></tr></table>
+
+![](images/3ae7cb6417b6a71462aa76ea388a5585124c429d5478e580ddbefd7c4f6f7525.jpg)  
+Fig. 11. Visualization comparisons on the LoveDA validation set.
+
+# 5. Discussion
+
+# 5.1 Global-local context
+
+The advantage of the dual-branch structure of the proposed efficient global-local attention is that it can extract sufficient global contextual information while preserving fine-grained local information. To demonstrate this, we visualise the feature maps from the efficient global-local attention in Fig. 12. As can be seen, the local context extracted by the local branch preserves the abundant local features but lacks spatial consistency, while the global context captured by the global branch has a more consistent character but lacks locality. Meanwhile, for the global branch, performing the self-attention operation within a local window also causes jagged edges in the window context. We address this issue by employing a cross-shaped window context interaction module for context aggregation. By this means, the interaction between windows is enhanced, thereby resolving the jaggedness issue. Notably, the extracted global-local context with both locality and spatial consistency is visibly superior to the single global context or local context.
+
+![](images/036945faece502d3202a1ea3e07f8963d7b1ad67e0515f3da257044c3aacbfcc.jpg)  
+Image
+
+![](images/037d3904d710884ddffbaa3f3dda0485541aadd53864c2207a08cc342de3a0ff.jpg)  
+Local Context
+
+![](images/538b05807ad7c27ecc8d0fbf808823656bf24983d0154aa1c8553922151aec07.jpg)  
+WindowContext
+
+![](images/77ab5f2fc83862c5d6a917e81357c9fb5dc9707dd45a7039e6e30932427a935e.jpg)  
+Global Context
+
+![](images/398efe106e4ad616881c54a9a4ac944ee5f5a9f2ac736a47214ed512f9ee6499.jpg)  
+Global-local Context   
+Fig. 12. Visualization of the local context, window context, global context and global-local context in the proposed efficient global-local attention.
+
+# 5.2 Model efficiency
+
+The proposed UNetFormer adopts a hybrid structure with a CNN-based encoder and a Transformer-based decoder to achieve real-time performance. This hybrid design demonstrates superiority compared to other encoder-decoder combinations (TABLE 5). Moreover, the efficient global-local attention module utilizes the cross-shaped window context interaction module to replace the shift window attention for capturing cross-window relationships, which further increases the efficiency (TABLE 2). The superior trade-off between accuracy and efficiency brings advantages, such as the potential for the proposed UNetFormer to process real-time UAV images for environmental perception and monitoring in urban areas.
+
+# 5.3 Transformer-based encoder
+
+As shown in TABLEs 4 and 5, Transformers make strong encoders but greatly reduce the speed. Although Transformer-based encoders are not suitable for real-time applications, demonstrate advantages in pursuing high precision. Thus, we construct a fully Transformer-based network (FT-UNetFormer) to further explore the potential of the proposed Transformer-based decoder. To compare with state-of-the-art models at a similar level, we replace the lightweight ResNet18 encoder with he Swin Transformer (Swin-Base) (Liu et al., 2021). As listed in TABLE 11, the FT-UNetFormer yields the state-of-the-art results ( $) 1 . 3 \%$ F1 score and $8 4 . 1 \%$ mIoU) on the Vaihingen test set and outperforms other networks by at least $0 . 3 \%$ in F1 score. For the Potsdam dataset, our method also achieves competitive results (TABLE 12). These results further demonstrate the effectiveness of the proposed Transformer-based decoder and its potential in a fully Transformer structure.
+
+TABLE 11. Quantitative comparison results on the Vaihingen test set with the state-of-the-art networks.   
+TABLE 12 Quantitative comparison results on the Potsdam test set with state-of-the-art   
+
+<table><tr><td>Method</td><td>Backbone</td><td>Imp.surf.</td><td>Building</td><td>Lowveg.</td><td>Tree</td><td>Car</td><td>MeanF1</td><td>OA</td><td>mIoU</td></tr><tr><td>CASIA2 (Liu et al., 2018)</td><td>ResNet101</td><td>93.2</td><td>96.0</td><td>84.7</td><td>89.9</td><td>86.7</td><td>90.1</td><td>91.1</td><td>-</td></tr><tr><td>V-FuseNet (Audebert et al., 2018)</td><td>FuseNet</td><td>91.0</td><td>94.4</td><td>84.5</td><td>89.9</td><td>86.3</td><td>89.2</td><td>90.0</td><td>-</td></tr><tr><td>DLR_9 (Marmanis et al., 2018)</td><td>SegNet+VGG+FCN</td><td>92.4</td><td>95.2</td><td>83.9</td><td>89.9</td><td>81.2</td><td>88.5</td><td>90.3</td><td>-</td></tr><tr><td>RoteEqNet (Marcos et al., 2018)</td><td>-</td><td>89.5</td><td>94.8</td><td>77.5</td><td>86.5</td><td>72.6</td><td>84.2</td><td>87.5</td><td>-</td></tr><tr><td>UFMG_4 (Nogueira et al., 2019)</td><td>-</td><td>91.1</td><td>94.5</td><td>82.9</td><td>88.0</td><td>81.3</td><td>87.7</td><td>89.4</td><td>-</td></tr><tr><td>HUSTW5 (Sun et al., 2019)</td><td>SegNet</td><td>93.3</td><td>96.1</td><td>86.4</td><td>90.8</td><td>74.6</td><td>88.2</td><td>91.6</td><td>-</td></tr><tr><td>TreeUNet (Yue et al., 2019)</td><td>-</td><td>92.5</td><td>94.9</td><td>83.6</td><td>89.6</td><td>85.9</td><td>89.3</td><td>90.4</td><td>-</td></tr><tr><td>EaNet (Zheng et al., 2020a)</td><td>ResNet101</td><td>93.4</td><td>96.2</td><td>85.6</td><td>90.5</td><td>88.3</td><td>90.8</td><td>91.2</td><td>-</td></tr><tr><td>DDCM-Net (Liu et al., 2020)</td><td>ResNet50</td><td>92.7</td><td>95.3</td><td>83.3</td><td>89.4</td><td>88.3</td><td>89.8</td><td>90.4</td><td>-</td></tr><tr><td>MANet (Li et al., 2021b)</td><td>ResNe50</td><td>93.0</td><td>95.5</td><td>84.6</td><td>90.0</td><td>88.9</td><td>90.4</td><td>91.0</td><td>82.7</td></tr><tr><td>AFNet (Yang et al., 2021b)</td><td>ResNet50+18</td><td>93.1</td><td>96.5</td><td>85.8</td><td>90.6</td><td>88.8</td><td>91.0</td><td>91.7</td><td>-</td></tr><tr><td>HMANet (Niu et al., 2021)</td><td>ResNet101</td><td>93.5</td><td>95.9</td><td>85.4</td><td>90.4</td><td>89.6</td><td>91.0</td><td>91.4</td><td>83.5</td></tr><tr><td>STransFuse (Gao et al., 2021)</td><td>-</td><td>88.3</td><td>91.46</td><td>79.0</td><td>85.5</td><td>77.1</td><td>78.7</td><td>86.1</td><td>66.7</td></tr><tr><td>BoTNet (Srinivas et al., 2021)</td><td>ResNet50</td><td>92.2</td><td>95.3</td><td>83.9</td><td>90.0</td><td>85.5</td><td>89.4</td><td>90.5</td><td>81.1</td></tr><tr><td>SwinUperNet (Liu et al., 2021)</td><td>Swin-Small</td><td>92.8</td><td>95.6</td><td>85.1</td><td>90.6</td><td>85.1</td><td>89.8</td><td>91.0</td><td>81.8</td></tr><tr><td>SwinB-CNN+BD (Zhang et al., 2022)</td><td>Swin-Base</td><td>95.3</td><td>86.9</td><td>83.6</td><td>92.2</td><td>89.6</td><td>89.5</td><td>90.4</td><td>-</td></tr><tr><td>DC-Swin (Wang et al., 2022)</td><td>Swin-Small</td><td>93.6</td><td>96.2</td><td>85.8</td><td>90.4</td><td>87.6</td><td>90.7</td><td>91.6</td><td>83.2</td></tr><tr><td>FT-UNetFormer</td><td>Swin-Base</td><td>93.5</td><td>96.0</td><td>85.6</td><td>90.8</td><td>90.4</td><td>91.3</td><td>91.6</td><td>84.1</td></tr></table>
+
+networks.   
+
+<table><tr><td>Method</td><td>Backbone</td><td>Imp.surf.</td><td>Building</td><td>Low. veg.</td><td>Tree</td><td>Car</td><td>MeanF1</td><td>OA</td><td>mIoU</td></tr><tr><td>DST_5 (Sherrah, 2016)</td><td>FCN</td><td>92.5</td><td>96.4</td><td>86.7</td><td>88.0</td><td>94.7</td><td>91.7</td><td>90.3</td><td>-</td></tr><tr><td>V-FuseNet (Audebert et al., 2018)</td><td>FuseNet</td><td>92.7</td><td>96.3</td><td>87.3</td><td>88.5</td><td>95.4</td><td>92.0</td><td>90.6</td><td>-</td></tr><tr><td>SWJ_2</td><td>ResNet101</td><td>94.4</td><td>97.4</td><td>87.8</td><td>87.6</td><td>94.7</td><td>92.4</td><td>91.7</td><td>-</td></tr><tr><td>AMA_1</td><td>-</td><td>93.4</td><td>96.8</td><td>87.7</td><td>88.8</td><td>96.0</td><td>92.5</td><td>91.2</td><td>-</td></tr><tr><td>UFMG_4 (Nogueira et al., 2019)</td><td>-</td><td>90.8</td><td>95.6</td><td>84.4</td><td>84.3</td><td>92.4</td><td>89.5</td><td>87.9</td><td>-</td></tr><tr><td>S-RA-FCN (Mou et al., 2020)</td><td>VGG16</td><td>91.3</td><td>94.7</td><td>86.8</td><td>83.5</td><td>94.5</td><td>90.2</td><td>88.6</td><td>82.4</td></tr><tr><td>HUSTW4 (Sun et al., 2019)</td><td>ResegNets</td><td>93.6</td><td>97.6</td><td>88.5</td><td>88.8</td><td>94.6</td><td>92.6</td><td>91.6</td><td>-</td></tr><tr><td>TreeUNet (Yue et al., 2019)</td><td>-</td><td>93.1</td><td>97.3</td><td>86.8</td><td>87.1</td><td>95.8</td><td>92.0</td><td>90.7</td><td>-</td></tr><tr><td>ResUNet-a (Diakogiannis et al., 2020)</td><td>-</td><td>93.5</td><td>97.2</td><td>88.2</td><td>89.2</td><td>96.4</td><td>92.9</td><td>91.5</td><td>-</td></tr><tr><td>DDCM-Net (Liu et al., 2020)</td><td>ResNet50</td><td>92.9</td><td>96.9</td><td>87.7</td><td>89.4</td><td>94.9</td><td>92.3</td><td>90.8</td><td>-</td></tr><tr><td>LANet (Ding et al., 2021)</td><td>ResNet50</td><td>93.1</td><td>97.2</td><td>87.3</td><td>88.0</td><td>94.2</td><td>92.0</td><td>90.8</td><td>-</td></tr><tr><td>AFNet (Yang et al., 2021b)</td><td>ResNet50+18</td><td>94.1</td><td>97.6</td><td>88.7</td><td>89.7</td><td>97.1</td><td>93.4</td><td>92.1</td><td>-</td></tr><tr><td>HMANet (Niu et al., 2021)</td><td>ResNet101</td><td>93.9</td><td>97.6</td><td>88.7</td><td>89.1</td><td>96.8</td><td>93.2</td><td>92.2</td><td>87.3</td></tr><tr><td>STransFuse (Gao et al., 2021)</td><td>-</td><td>89.8</td><td>93.9</td><td>82.9</td><td>83.6</td><td>88.5</td><td>82.1</td><td>86.7</td><td>71.5</td></tr><tr><td>SwinB-CNN+BD (Zhang et al., 2022)</td><td>Swin-Base</td><td>92.2</td><td>95.3</td><td>83.6</td><td>89.2</td><td>86.9</td><td>89.4</td><td>90.4</td><td>-</td></tr><tr><td>SwinTF-FPN (Panboonyuen et al., 2021)</td><td>Swin-Small</td><td>93.3</td><td>96.8</td><td>87.8</td><td>88.8</td><td>95.0</td><td>92.3</td><td>91.1</td><td>85.9</td></tr><tr><td>ResT (Zhang and Yang, 2021)</td><td>ResT-Base</td><td>92.7</td><td>96.1</td><td>87.5</td><td>88.6</td><td>94.8</td><td>91.9</td><td>90.6</td><td>85.2</td></tr><tr><td>FT-UNetFormer</td><td>Swin-Base</td><td>93.9</td><td>97.2</td><td>88.8</td><td>89.8</td><td>96.6</td><td>93.3</td><td>92.0</td><td>87.5</td></tr></table>
+
+# 6. Conclusion
+
+In this paper, we proposed a novel Transformer-based decoder and constructed a UNet-like Transformer (UNetFormer) for efficient semantic segmentation of remotely sensed urban scene images. Since global and local contexts are both crucial for urban scene segmentation, we designed a global-local Transformer block (GLTB) to construct the decoder and developed a feature refinement head (FRH) to optimize the extracted global-local context. For efficient segmentation, the proposed Transformer-based decoder was combined with a lightweight CNNbased encoder. A comprehensive set of benchmark experiments and ablation studies on the ISPRS Vaihingen and Potsdam datasets and the UAVid dataset as well as the LoveDA dataset demonstrated the effectiveness and efficiency of the proposed method for real-time urban applications. Furthermore, the proposed Transformer-based decoder also works well in a fully Transformer structure and obtains state-of-the-art performance on the Vaihingen dataset. In future research, we will continue to explore the potential and feasibility of the Transformer for geospatial vision tasks.
+
+# Declaration of Competing Interest
+
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+# References
+
+Audebert, N., Le Saux, B., Lefèvre, S., 2018. Beyond RGB: Very high resolution urban remote sensing with multimodal deep networks. ISPRS Journal of Photogrammetry and Remote Sensing 140, 20-32.   
+Badrinarayanan, V., Kendall, A., Cipolla, R., 2017. Segnet: A deep convolutional encoder-decoder architecture for image segmentation. IEEE transactions on pattern analysis and machine intelligence 39, 2481-2495.   
+Bazi, Y., Bashmal, L., Rahhal, M.M.A., Dayil, R.A., Ajlan, N.A., 2021. Vision transformers for remote sensing image classification. Remote Sensing 13, 516.   
+Cao, H., Wang, Y., Chen, J., Jiang, D., Zhang, X., Tian, Q., Wang, M., 2021. Swin-unet: Unet-like pure transformer for medical image segmentation. arXiv preprint arXiv:2105.05537.   
+Chen, H., Qi, Z., Shi, Z., 2021a. Remote sensing image change detection with transformers. IEEE Transactions on Geoscience and Remote Sensing.   
+Chen, J., Lu, Y., Yu, Q., Luo, X., Adeli, E., Wang, Y., Lu, L., Yuille, A.L., Zhou, Y., 2021b. Transunet: Transformers make strong encoders for medical image segmentation. arXiv preprint arXiv:2102.04306.   
+Chen, K., Zou, Z., Shi, Z., 2021c. Building Extraction from Remote Sensing Images with Sparse Token Transformers. Remote Sensing 13, 4441.   
+Chen, L.-C., Papandreou, G., Kokkinos, I., Murphy, K., Yuille, A.L., 2014. Semantic image segmentation with deep convolutional nets and fully connected crfs. arXiv preprint arXiv:1412.7062.   
+Chen, L.-C., Zhu, Y., Papandreou, G., Schroff, F., Adam, H., 2018a. Encoder-decoder with atrous separable convolution for semantic image segmentation, Proceedings of the European conference on computer vision (ECCV), pp. 801-818.   
+Chen, L., Papandreou, G., Kokkinos, I., Murphy, K., Yuille, A.L., 2018b. DeepLab: Semantic Image Segmentation with Deep Convolutional Nets, Atrous Convolution, and Fully Connected CRFs. IEEE Transactions on Pattern Analysis and Machine Intelligence 40, 834-848.   
+Deng, P., Xu, K., Huang, H., 2021. When CNNs meet vision transformer: A joint framework for remote sensing scene classification. IEEE Geoscience and Remote Sensing Letters 19, 1-5.   
+Diakogiannis, F.I., Waldner, F., Caccetta, P., Wu, C., 2020. Resunet-a: a deep learning framework for semantic segmentation of remotely sensed data. ISPRS Journal of Photogrammetry and Remote Sensing 162, 94-114.   
+Ding, L., Tang, H., Bruzzone, L., 2021. LANet: Local Attention Embedding to Improve the Semantic Segmentation of Remote Sensing Images. IEEE Transactions on Geoscience and Remote Sensing 59, 426-435.
+
+Dosovitskiy, A., Beyer, L., Kolesnikov, A., Weissenborn, D., Zhai, X., Unterthiner, T., Dehghani, M., Minderer, M., Heigold, G., Gelly, S., 2020. An image is worth 16x16 words: Transformers for image recognition at scale. arXiv preprint arXiv:2010.11929.   
+Fu, J., Liu, J., Tian, H., Li, Y., Bao, Y., Fang, Z., Lu, H., 2019. Dual attention network for scene segmentation, Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, pp. 3146-3154.   
+Gao, L., Liu, H., Yang, M., Chen, L., Wan, Y., Xiao, Z., Qian, Y., 2021. STransFuse: Fusing Swin Transformer and Convolutional Neural Network for Remote Sensing Image Semantic Segmentation. IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing 14, 10990-11003.   
+Griffiths, D., Boehm, J., 2019. Improving public data for building segmentation from Convolutional Neural Networks (CNNs) for fused airborne lidar and image data using active contours. ISPRS Journal of Photogrammetry and Remote Sensing 154, 70-83.   
+Guo, Y., Jia, X., Paull, D., 2018. Effective Sequential Classifier Training for SVM-Based Multitemporal Remote Sensing Image Classification. IEEE Transactions on Image Processing 27, 3036-3048.   
+He, K., Zhang, X., Ren, S., Sun, J., 2016. Deep residual learning for image recognition, Proceedings of the IEEE conference on computer vision and pattern recognition, pp. 770-778.   
+He, X., Chen, Y., Lin, Z., 2021. Spatial-spectral transformer for hyperspectral image classification. Remote Sensing 13, 498.   
+Hong, D., Han, Z., Yao, J., Gao, L., Zhang, B., Plaza, A., Chanussot, J., 2021. SpectralFormer: Rethinking hyperspectral image classification with transformers. IEEE Transactions on Geoscience and Remote Sensing.   
+Hu, P., Perazzi, F., Heilbron, F.C., Wang, O., Lin, Z., Saenko, K., Sclaroff, S., 2020. Real-time semantic segmentation with fast attention. IEEE Robotics and Automation Letters 6, 263-270.   
+Huang, Z., Wang, X., Wei, Y., Huang, L., Shi, H., Liu, W., Huang, T.S., 2020. CCNet: Criss-Cross Attention for Semantic Segmentation. IEEE Transactions on Pattern Analysis and Machine Intelligence.   
+Kampffmeyer, M., Salberg, A.-B., Jenssen, R., 2016. Semantic segmentation of small objects and modeling of uncertainty in urban remote sensing images using deep convolutional neural networks, Proceedings of the IEEE conference on computer vision and pattern recognition workshops, pp. 1-9.   
+Kemker, R., Salvaggio, C., Kanan, C., 2018. Algorithms for semantic segmentation of multispectral remote sensing imagery using deep learning. ISPRS journal of photogrammetry and remote sensing 145, 60-77.   
+Kirillov, A., Girshick, R., He, K., Dollár, P., 2019. Panoptic feature pyramid networks, Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, pp. 6399-6408.   
+Kotaridis, I., Lazaridou, M., 2021. Remote sensing image segmentation advances: A metaanalysis. ISPRS Journal of Photogrammetry and Remote Sensing 173, 309-322.   
+Krähenbühl, P., Koltun, V., 2011. Efficient inference in fully connected crfs with gaussian edge potentials. Advances in neural information processing systems 24, 109-117.   
+LeCun, Y., Bengio, Y., Hinton, G.J.n., 2015. Deep learning. Nature 521, 436-444.
+
+Li, G., Yun, I., Kim, J., Kim, J., 2019. Dabnet: Depth-wise asymmetric bottleneck for real-time semantic segmentation. arXiv preprint arXiv:1907.11357.   
+Li, H., Qiu, K., Chen, L., Mei, X., Hong, L., Tao, C., 2020a. SCAttNet: Semantic segmentation network with spatial and channel attention mechanism for high-resolution remote sensing images. IEEE Geoscience and Remote Sensing Letters 18, 905-909.   
+Li, Q., Chen, Y., Zeng, Y., 2022a. Transformer with Transfer CNN for Remote-Sensing-Image Object Detection. Remote Sensing 14, 984.   
+Li, R., Zheng, S., Duan, C., Su, J., Zhang, C., 2021a. Multistage Attention ResU-Net for Semantic Segmentation of Fine-Resolution Remote Sensing Images. IEEE Geoscience and Remote Sensing Letters.   
+Li, R., Zheng, S., Duan, C., Wang, L., Zhang, C., 2022b. Land cover classification from remote sensing images based on multi-scale fully convolutional network. Geo-spatial Information Science, 1-17.   
+Li, R., Zheng, S., Zhang, C., Duan, C., Su, J., Wang, L., Atkinson, P.M., 2021b. Multiattention network for semantic segmentation of fine-resolution remote sensing images. IEEE Transactions on Geoscience and Remote Sensing.   
+Li, R., Zheng, S., Zhang, C., Duan, C., Wang, L., Atkinson, P.M., 2021c. ABCNet: Attentive bilateral contextual network for efficient semantic segmentation of Fine-Resolution remotely sensed imagery. ISPRS Journal of Photogrammetry and Remote Sensing 181, 84-98.   
+Li, Z., Chen, G., Zhang, T., 2020b. A CNN-transformer hybrid approach for crop classification using multitemporal multisensor images. IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing 13, 847-858.   
+Liu, Q., Kampffmeyer, M., Jenssen, R., Salberg, A.-B., 2020. Dense dilated convolutions’ merging network for land cover classification. IEEE Transactions on Geoscience and Remote Sensing 58, 6309-6320.   
+Liu, Y., Fan, B., Wang, L., Bai, J., Xiang, S., Pan, C., 2018. Semantic labeling in very high resolution images via a self-cascaded convolutional neural network. ISPRS journal of photogrammetry and remote sensing 145, 78-95.   
+Liu, Z., Lin, Y., Cao, Y., Hu, H., Wei, Y., Zhang, Z., Lin, S., Guo, B., 2021. Swin transformer: Hierarchical vision transformer using shifted windows, Proceedings of the IEEE/CVF International Conference on Computer Vision, pp. 10012-10022.   
+Long, J., Shelhamer, E., Darrell, T., 2015. Fully convolutional networks for semantic segmentation, Proceedings of the IEEE conference on computer vision and pattern recognition, pp. 3431-3440.   
+Lyu, Y., Vosselman, G., Xia, G.-S., Yilmaz, A., Yang, M.Y., 2020. UAVid: A semantic segmentation dataset for UAV imagery. ISPRS Journal of Photogrammetry and Remote Sensing 165, 108-119.   
+Ma, A., Wang, J., Zhong, Y., Zheng, Z., 2021. Factseg: Foreground activation-driven small object semantic segmentation in large-scale remote sensing imagery. IEEE Transactions on Geoscience and Remote Sensing.   
+Ma, L., Liu, Y., Zhang, X., Ye, Y., Yin, G., Johnson, B.A., 2019. Deep learning in remote sensing applications: A meta-analysis and review. ISPRS Journal of Photogrammetry and Remote Sensing 152, 166-177.
+
+Maggiori, E., Tarabalka, Y., Charpiat, G., Alliez, P., 2016. Convolutional neural networks for large-scale remote-sensing image classification. IEEE Transactions on Geoscience and Remote Sensing 55, 645-657.   
+Marcos, D., Volpi, M., Kellenberger, B., Tuia, D., 2018. Land cover mapping at very high resolution with rotation equivariant CNNs: Towards small yet accurate models. ISPRS Journal of Photogrammetry and Remote Sensing 145, 96-107.   
+Marmanis, D., Schindler, K., Wegner, J.D., Galliani, S., Datcu, M., Stilla, U., 2018. Classification with an edge: Improving semantic image segmentation with boundary detection. ISPRS Journal of Photogrammetry and Remote Sensing 135, 158-172.   
+Mou, L., Hua, Y., Zhu, X.X., 2020. Relation Matters: Relational Context-Aware Fully Convolutional Network for Semantic Segmentation of High-Resolution Aerial Images. IEEE Transactions on Geoscience and Remote Sensing 58, 7557-7569.   
+Niu, R., Sun, X., Tian, Y., Diao, W., Chen, K., Fu, K., 2021. Hybrid multiple attention network for semantic segmentation in aerial images. IEEE Transactions on Geoscience and Remote Sensing 60, 1-18.   
+Nogueira, K., Dalla Mura, M., Chanussot, J., Schwartz, W.R., Dos Santos, J.A., 2019. Dynamic multicontext segmentation of remote sensing images based on convolutional networks. IEEE Transactions on Geoscience and Remote Sensing 57, 7503-7520.   
+Oršić, M., Šegvić, S., 2021. Efficient semantic segmentation with pyramidal fusion. Pattern Recognition 110, 107611.   
+Pal, M., 2005. Random forest classifier for remote sensing classification. International Journal of Remote Sensing 26, 217-222.   
+Panboonyuen, T., Jitkajornwanich, K., Lawawirojwong, S., Srestasathiern, P., Vateekul, P., 2021. Transformer-Based Decoder Designs for Semantic Segmentation on Remotely Sensed Images. Remote Sensing 13, 5100.   
+Picoli, M.C.A., Camara, G., Sanches, I., Simões, R., Carvalho, A., Maciel, A., Coutinho, A., Esquerdo, J., Antunes, J., Begotti, R.A., 2018. Big earth observation time series analysis for monitoring Brazilian agriculture. ISPRS journal of photogrammetry and remote sensing 145, 328- 339.   
+Poudel, R.P., Bonde, U., Liwicki, S., Zach, C., 2018. Contextnet: Exploring context and detail for semantic segmentation in real-time. arXiv preprint arXiv:1805.04554.   
+Poudel, R.P., Liwicki, S., Cipolla, R., 2019. Fast-scnn: Fast semantic segmentation network. arXiv preprint arXiv:1902.04502.   
+Romera, E., Alvarez, J.M., Bergasa, L.M., Arroyo, R., 2017. Erfnet: Efficient residual factorized convnet for real-time semantic segmentation. IEEE Transactions on Intelligent Transportation Systems 19, 263-272.   
+Ronneberger, O., Fischer, P., Brox, T., 2015. U-Net: Convolutional Networks for Biomedical Image Segmentation. Springer International Publishing, Cham, pp. 234-241.   
+Samie, A., Abbas, A., Azeem, M.M., Hamid, S., Iqbal, M.A., Hasan, S.S., Deng, X., 2020. Examining the impacts of future land use/land cover changes on climate in Punjab province, Pakistan: implications for environmental sustainability and economic growth. Environmental Science and Pollution Research 27, 25415-25433.   
+Shamsolmoali, P., Zareapoor, M., Zhou, H., Wang, R., Yang, J., 2020. Road segmentation for
+
+remote sensing images using adversarial spatial pyramid networks. IEEE Transactions on Geoscience and Remote Sensing.   
+Shen, Y., Chen, J., Xiao, L., Pan, D., 2019. Optimizing multiscale segmentation with local spectral heterogeneity measure for high resolution remote sensing images. ISPRS Journal of Photogrammetry and Remote Sensing 157, 13-25.   
+Sherrah, J., 2016. Fully convolutional networks for dense semantic labelling of high-resolution aerial imagery. arXiv preprint arXiv:1606.02585.   
+Srinivas, A., Lin, T.-Y., Parmar, N., Shlens, J., Abbeel, P., Vaswani, A., 2021. Bottleneck transformers for visual recognition, Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, pp. 16519-16529.   
+Strudel, R., Garcia, R., Laptev, I., Schmid, C., 2021. Segmenter: Transformer for semantic segmentation, Proceedings of the IEEE/CVF International Conference on Computer Vision, pp. 7262-7272.   
+Sun, Y., Tian, Y., Xu, Y., 2019. Problems of encoder-decoder frameworks for high-resolution remote sensing image segmentation: Structural stereotype and insufficient learning. Neurocomputing 330, 297-304.   
+Sun, Z., Zhou, W., Ding, C., Xia, M., 2022. Multi-Resolution Transformer Network for Building and Road Segmentation of Remote Sensing Image. ISPRS International Journal of Geo-Information 11, 165.   
+Tan, M., Pang, R., Le, Q.V., 2020. Efficientdet: Scalable and efficient object detection, Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pp. 10781- 10790.   
+Tong, X.-Y., Xia, G.-S., Lu, Q., Shen, H., Li, S., You, S., Zhang, L., 2020. Land-cover classification with high-resolution remote sensing images using transferable deep models. Remote Sensing of Environment 237, 111322.   
+Vakalopoulou, M., Karantzalos, K., Komodakis, N., Paragios, N., 2015. Building detection in very high resolution multispectral data with deep learning features, 2015 IEEE international geoscience and remote sensing symposium (IGARSS). IEEE, pp. 1873-1876.   
+Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A.N., Kaiser, Ł., Polosukhin, I., 2017. Attention is all you need, Advances in neural information processing systems, pp. 5998-6008.   
+Wang, J., Zheng, Z., Ma, A., Lu, X., Zhong, Y., 2021a. LoveDA: A Remote Sensing Land-Cover Dataset for Domain Adaptive Semantic Segmentation. arXiv preprint arXiv:2110.08733.   
+Wang, L., Li, R., Duan, C., Zhang, C., Meng, X., Fang, S., 2022. A Novel Transformer Based Semantic Segmentation Scheme for Fine-Resolution Remote Sensing Images. IEEE Geoscience and Remote Sensing Letters 19, 1-5.   
+Wang, L., Li, R., Wang, D., Duan, C., Wang, T., Meng, X., 2021b. Transformer Meets Convolution: A Bilateral Awareness Network for Semantic Segmentation of Very Fine Resolution Urban Scene Images. Remote Sensing 13, 3065.   
+Wang, X., Girshick, R., Gupta, A., He, K., 2018. Non-local neural networks, Proceedings of the IEEE conference on computer vision and pattern recognition, pp. 7794-7803.   
+Xie, E., Wang, W., Yu, Z., Anandkumar, A., Alvarez, J.M., Luo, P., 2021. SegFormer: Simple and efficient design for semantic segmentation with transformers. Advances in Neural Information
+
+Processing Systems 34.   
+Xing, J., Sieber, R., Caelli, T., 2018. A scale-invariant change detection method for land use/cover change research. ISPRS Journal of Photogrammetry and Remote Sensing 141, 252-264.   
+Xu, W., Xu, Y., Chang, T., Tu, Z., 2021. Co-Scale Conv-Attentional Image Transformers. Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV), 9981-9990. Yang, M.Y., Kumaar, S., Lyu, Y., Nex, F., 2021a. Real-time Semantic Segmentation with Context Aggregation Network. ISPRS Journal of Photogrammetry and Remote Sensing 178, 124-134.   
+Yang, X., Li, S., Chen, Z., Chanussot, J., Jia, X., Zhang, B., Li, B., Chen, P., 2021b. An attentionfused network for semantic segmentation of very-high-resolution remote sensing imagery. ISPRS Journal of Photogrammetry and Remote Sensing 177, 238-262.   
+Yin, H., Pflugmacher, D., Li, A., Li, Z., Hostert, P., 2018. Land use and land cover change in Inner Mongolia-understanding the effects of China's re-vegetation programs. Remote Sensing of Environment 204, 918-930.   
+Yu, C., Gao, C., Wang, J., Yu, G., Shen, C., Sang, N., 2020. Bisenet v2: Bilateral network with guided aggregation for real-time semantic segmentation. arXiv preprint arXiv:2004.02147.   
+Yu, C., Wang, J., Peng, C., Gao, C., Yu, G., Sang, N., 2018. Bisenet: Bilateral segmentation network for real-time semantic segmentation, Proceedings of the European conference on computer vision (ECCV), pp. 325-341.   
+Yuan, Y., Chen, X., Wang, J., 2020. Object-contextual representations for semantic segmentation, Computer Vision–ECCV 2020: 16th European Conference, Glasgow, UK, August 23–28, 2020, Proceedings, Part VI 16. Springer, pp. 173-190.   
+Yue, K., Yang, L., Li, R., Hu, W., Zhang, F., Li, W., 2019. TreeUNet: Adaptive Tree convolutional neural networks for subdecimeter aerial image segmentation. ISPRS Journal of Photogrammetry and Remote Sensing 156, 1-13.   
+Zhang, C., Atkinson, P.M., George, C., Wen, Z., Diazgranados, M., Gerard, F., 2020a. Identifying and mapping individual plants in a highly diverse high-elevation ecosystem using UAV imagery and deep learning. ISPRS Journal of Photogrammetry and Remote Sensing 169, 280-291.   
+Zhang, C., Harrison, P.A., Pan, X., Li, H., Sargent, I., Atkinson, P.M., 2020b. Scale Sequence Joint Deep Learning (SS-JDL) for land use and land cover classification. Remote Sensing of Environment 237, 111593.   
+Zhang, C., Jiang, W.S., Zhang, Y., Wang, W., Zhao, Q., Wang, C.J., 2022. Transformer and CNN Hybrid Deep Neural Network for Semantic Segmentation of Very-high-resolution Remote Sensing Imagery. IEEE Transactions on Geoscience and Remote Sensing.   
+Zhang, Q., Yang, Y., 2021. ResT: An Efficient Transformer for Visual Recognition. arXiv preprint arXiv:2105.13677.   
+Zhao, H., Shi, J., Qi, X., Wang, X., Jia, J., 2017a. Pyramid scene parsing network, Proceedings of the IEEE conference on computer vision and pattern recognition, pp. 2881-2890.   
+Zhao, W., Du, S., 2016. Learning multiscale and deep representations for classifying remotely sensed imagery. ISPRS Journal of Photogrammetry and Remote Sensing 113, 155-165.   
+Zhao, W., Du, S., Wang, Q., Emery, W.J., 2017b. Contextually guided very-high-resolution imagery classification with semantic segments. ISPRS Journal of Photogrammetry and Remote Sensing 132, 48-60.   
+Zheng, S., Lu, J., Zhao, H., Zhu, X., Luo, Z., Wang, Y., Fu, Y., Feng, J., Xiang, T., Torr, P.H., 2021.
+
+Rethinking semantic segmentation from a sequence-to-sequence perspective with transformers, Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, pp. 6881-6890.   
+Zheng, X., Huan, L., Xia, G.-S., Gong, J., 2020a. Parsing very high resolution urban scene images by learning deep ConvNets with edge-aware loss. ISPRS Journal of Photogrammetry and Remote Sensing 170, 15-28.   
+Zheng, Z., Zhong, Y., Wang, J., Ma, A., 2020b. Foreground-aware relation network for geospatial object segmentation in high spatial resolution remote sensing imagery, Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pp. 4096-4105.   
+Zhong, Z., Li, Y., Ma, L., Li, J., Zheng, W.-S., 2021. Spectral-spatial transformer network for hyperspectral image classification: A factorized architecture search framework. IEEE Transactions on Geoscience and Remote Sensing.   
+Zhou, Z., Siddiquee, M.M.R., Tajbakhsh, N., Liang, J., 2018. Unet++: A nested u-net architecture for medical image segmentation, Deep Learning in Medical Image Analysis and Multimodal Learning for Clinical Decision Support. Springer, pp. 3-11.   
+Zhu, X., Su, W., Lu, L., Li, B., Wang, X., Dai, J., 2020. Deformable DETR: Deformable Transformers for End-to-End Object Detection. arXiv preprint arXiv:2010.04159.   
+Zhu, X.X., Tuia, D., Mou, L., Xia, G.-S., Zhang, L., Xu, F., Fraundorfer, F., 2017. Deep learning in remote sensing: A comprehensive review and list of resources. IEEE Geoscience and Remote Sensing Magazine 5, 8-36.   
+Zhu, Z., Xu, M., Bai, S., Huang, T., Bai, X., 2019. Asymmetric non-local neural networks for semantic segmentation, Proceedings of the IEEE/CVF International Conference on Computer Vision, pp. 593-602.   
+Zhuang, J., Yang, J., Gu, L., Dvornek, N., 2019. Shelfnet for fast semantic segmentation, Proceedings of the IEEE/CVF International Conference on Computer Vision Workshops, pp. 0-0.

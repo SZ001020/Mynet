@@ -1,0 +1,2510 @@
+[
+    [
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "Auto-Prompting SAM for Weakly Supervised Landslide Extraction "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                130,
+                71,
+                867,
+                136
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Jian Wang, Xiaokang Zhang , Senior Member, IEEE, Xianping "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\mathrm { M a } ^ { \\textregistered }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", Graduate Student Member, IEEE, Weikang "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\mathrm { Y u } ^ { \\textregistered }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", Graduate Student Member, IEEE, and Pedram Ghamisi , Senior Member, IEEE "
+                    }
+                ]
+            },
+            "bbox": [
+                109,
+                145,
+                885,
+                181
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Abstract— Weakly supervised landslide extraction aims to identify landslide regions from remote sensing data using models trained with weak labels, particularly image-level labels. However, it is often challenged by the imprecise boundaries of the extracted objects due to the lack of pixel-wise supervision and the properties of landslide objects. To tackle these issues, we propose a simple, yet effective method by auto-prompting the Segment Anything Model (SAM), that is, APSAM. Instead of depending on high-quality class activation maps (CAMs) for pseudo-labeling or fine-tuning SAM, our method directly yields fine-grained segmentation masks from SAM inference through prompt engineering. Specifically, it adaptively generates hybrid prompts from the CAMs obtained by an object localization network. To provide sufficient information for SAM prompting, an adaptive prompt generation (APG) algorithm is designed to fully leverage the visual patterns of CAMs, enabling the efficient generation of pseudo-masks for landslide extraction. These informative prompts can identify the extent of landslide areas (box prompts) and denote the centers of landslide objects (point prompts), guiding SAM in landslide segmentation. Experimental results on high-resolution aerial and satellite datasets demonstrate the effectiveness of our method, achieving improvements of at least "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "3 . 0 \\%"
+                    },
+                    {
+                        "type": "text",
+                        "content": "in "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "{ \\pmb F } { \\pmb 1 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "-score and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "3 . 6 9 \\%"
+                    },
+                    {
+                        "type": "text",
+                        "content": "in IoU compared to other state-of-the-art methods. The source codes and datasets will be available at https://github.com/zxk688 "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                223,
+                491,
+                541
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Index Terms— Landslide extraction, object localization, prompt, segment anything model (SAM), weak supervision. "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                546,
+                488,
+                574
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "I. INTRODUCTION "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                215,
+                584,
+                351,
+                595
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "L ANDSLIDES, one of the most common natural hazardsworldwide, cause significant economic damage and result  ANDSLIDES,one of the most common natural hazards in numerous human casualties each year. Accurate recording of landslide characteristics, such as size, location, and spatial extent, is crucial for hazard and risk assessment. Landslide extraction from high-resolution remote sensing imagery has "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                602,
+                490,
+                694
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Received 1 April 2025; accepted 4 May 2025. Date of publication 7 May 2025; date of current version 20 May 2025. This work was supported in part by the National Natural Science Foundation of China under Grant 42371374. (Corresponding author: Xiaokang Zhang.) "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                703,
+                488,
+                748
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Jian Wang and Xiaokang Zhang are with the School of Information Science and Engineering, Wuhan University of Science and Technology, Wuhan 430081, China (e-mail: natezhangxk@gmail.com). "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                750,
+                488,
+                782
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Xianping Ma is with the School of Science and Engineering, The Chinese University of Hong Kong, Shenzhen 518172, China (e-mail: xianpingma@link.cuhk.edu.cn). "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                782,
+                488,
+                816
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Weikang Yu is with the Chair of Data Science in Earth Observation, Technical University of Munich (TUM), 80333 Munich, Germany, and also with the Helmholtz-Zentrum Dresden-Rossendorf, Freiberg, 09599 Dresden, Germany (e-mail: w.yu@hzdr.de). "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                816,
+                488,
+                862
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Pedram Ghamisi is with the Helmholtz-Zentrum Dresden-Rossendorf, Freiberg, 09599 Dresden, Germany, and also with the Lancaster Environment Centre, Lancaster University, LA1 4YR Lancaster, U.K. (e-mail: p.ghamisi@hzdr.de). "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                862,
+                488,
+                906
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Digital Object Identifier 10.1109/LGRS.2025.3567600 "
+                    }
+                ]
+            },
+            "bbox": [
+                84,
+                906,
+                380,
+                919
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "gained increasing attention with advancements in remote sensing technology [1]. Recently, deep learning techniques have demonstrated their effectiveness in pixel-wise landslide extraction from high-resolution imagery [2]. However, the high performance of landslide extraction models relies heavily on large volumes of training data. The manual annotation process incurs substantial costs, and both unlabeled data and image-level labeled data are relatively easy to acquire [3]. Therefore, recent studies have investigated weakly supervised learning to address this issue, which utilizes image-level labels for object extraction. However, such supervision only indicates the presence of a specific object category without providing information about the object’s spectral or spatial characteristics. Existing weakly supervised methods have leveraged class activation maps (CAMs) to generate pseudo-masks [4]. They focus on enhancing CAM quality by capturing more complete regions through local–global semantic contexts [5] or pixel affinity relationships [6]. Moreover, they rely on multistage training with multiple networks and require postprocessing techniques, such as dense random fields, to refine pseudo-labels [7]. As a result, they struggle to maintain flexibility and stability when handling remote sensing images with complex scenes, and the generated pseudo-labels still suffer from spatial fragmentation and poor boundary delineation for landslide extraction tasks. "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                223,
+                921,
+                601
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Recently, the segment anything model (SAM) [8] has been introduced into weakly supervised learning to leverage the instance segmentation capability of SAM [9], [10]. Since SAM is pretrained in a class-agnostic manner, its zero-shot segmentation performance in remote sensing heavily relies on manual prompts as guidance [11], which are unavailable. Compared to fine-tuning SAM encoder or introducing learnable prompt embeddings in fully supervised learning [12], [13], the challenges in weakly supervised learning include the lack of fine-grained supervision to guide or fine-tune SAM, as well as the ambiguity of automatically generated prompts, which often fail to produce satisfactory results. Therefore, SAM has primarily been used as a postprocessing tool or a feature extractor for pseudo-label modeling after CAM-based methods were exploited to generate initial pseudo-labels [9], [10]. However, these methods mainly focus on segmenting objects with well-defined edges, such as buildings and urban scenes. Due to the complex background interference and weak object edges in landslide-related images, SAM’s capabilities of segmentation and boundary refinement significantly degrade. "
+                    }
+                ]
+            },
+            "bbox": [
+                503,
+                602,
+                921,
+                920
+            ]
+        },
+        {
+            "type": "page_header",
+            "content": {
+                "page_header_content": [
+                    {
+                        "type": "text",
+                        "content": "IEEE GEOSCIENCE AND REMOTE SENSING LETTERS, VOL. 22, 2025 "
+                    }
+                ]
+            },
+            "bbox": [
+                76,
+                35,
+                442,
+                46
+            ]
+        },
+        {
+            "type": "page_header",
+            "content": {
+                "page_header_content": [
+                    {
+                        "type": "text",
+                        "content": "6008705 "
+                    }
+                ]
+            },
+            "bbox": [
+                875,
+                36,
+                919,
+                46
+            ]
+        },
+        {
+            "type": "page_footer",
+            "content": {
+                "page_footer_content": [
+                    {
+                        "type": "text",
+                        "content": "1558-0571 © 2025 IEEE. All rights reserved, including rights for text and data mining, and training of artificial intelligence "
+                    }
+                ]
+            },
+            "bbox": [
+                161,
+                928,
+                834,
+                939
+            ]
+        },
+        {
+            "type": "page_footer",
+            "content": {
+                "page_footer_content": [
+                    {
+                        "type": "text",
+                        "content": "and similar technologies. Personal use is permitted, but republication/redistribution requires IEEE permission. "
+                    }
+                ]
+            },
+            "bbox": [
+                202,
+                940,
+                792,
+                950
+            ]
+        },
+        {
+            "type": "page_footer",
+            "content": {
+                "page_footer_content": [
+                    {
+                        "type": "text",
+                        "content": "See https://www.ieee.org/publications/rights/index.html for more information. "
+                    }
+                ]
+            },
+            "bbox": [
+                290,
+                952,
+                704,
+                962
+            ]
+        },
+        {
+            "type": "page_footer",
+            "content": {
+                "page_footer_content": [
+                    {
+                        "type": "text",
+                        "content": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on March 14,2026 at 11:32:16 UTC from IEEE Xplore. Restrictions apply. "
+                    }
+                ]
+            },
+            "bbox": [
+                53,
+                963,
+                937,
+                974
+            ]
+        }
+    ],
+    [
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/7f56b4b76e1ac78776af454d1f9b005e7e7c20e4b13631c46a9c585495f95a3f.jpg"
+                },
+                "image_caption": [
+                    {
+                        "type": "text",
+                        "content": "Step1: Object Localization "
+                    },
+                    {
+                        "type": "text",
+                        "content": " Input Image "
+                    }
+                ],
+                "image_footnote": []
+            },
+            "bbox": [
+                83,
+                85,
+                158,
+                143
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/83185810e7215c35c4d5e2f94e2b57361d75e1ce9ba9270fdd90b5f2441ae63a.jpg"
+                },
+                "image_caption": [
+                    {
+                        "type": "text",
+                        "content": "1Label "
+                    }
+                ],
+                "image_footnote": []
+            },
+            "bbox": [
+                161,
+                95,
+                228,
+                143
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/8e935211ff65b79953713e137eeed21a8515fdb22d3876dd4e2416ce14eccd8d.jpg"
+                },
+                "image_caption": [],
+                "image_footnote": []
+            },
+            "bbox": [
+                230,
+                85,
+                308,
+                143
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/eb53fd1d4a7a962dbec583ec477ec4aff8cdcc4522be1bd1a73cf282a49f79e0.jpg"
+                },
+                "image_caption": [
+                    {
+                        "type": "text",
+                        "content": "Step2: Adaptive Prompts Generation "
+                    }
+                ],
+                "image_footnote": []
+            },
+            "bbox": [
+                308,
+                85,
+                398,
+                143
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/cca09dbfd224604aaaf7611cbaba582b7cdcd7d1e189045afe253ff87c46c909.jpg"
+                },
+                "image_caption": [
+                    {
+                        "type": "text",
+                        "content": "Box and Point  Prompts "
+                    }
+                ],
+                "image_footnote": []
+            },
+            "bbox": [
+                401,
+                85,
+                477,
+                143
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/592c7460b07cb5ba1736660ac7eaafa3a4611e3954653fe00a64b5c3cadc87aa.jpg"
+                },
+                "image_caption": [],
+                "image_footnote": []
+            },
+            "bbox": [
+                83,
+                166,
+                406,
+                266
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/a79d31d89de490c8ee80a60feed7fbc43418b74df03f3d490d6a9afaaa33f8f9.jpg"
+                },
+                "image_caption": [
+                    {
+                        "type": "text",
+                        "content": "Fig. 1. Overview of the proposed APSAM for landslide extraction. "
+                    }
+                ],
+                "image_footnote": []
+            },
+            "bbox": [
+                410,
+                167,
+                486,
+                265
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "To address the abovementioned issues, APSAM, a weakly supervised landslide extraction method by auto-prompting SAM, is proposed. Instead of adapting SAM for feature extraction or using manual prompts [12], we utilized the object localization capability of CAM-based methods with image-level supervision, which can guide SAM in producing fine-grained segmentation masks. Specifically, it automatically explores hybrid prompts from an object localization network. These prompts can identify the extent of landslide areas (box prompts) and represent landslide objects (point prompts), guiding SAM in landslide segmentation. To provide sufficient information for SAM, an adaptive prompt generation (APG) algorithm is designed to exploit the visual patterns of CAMs. Compared to previous methods, APSAM is less sensitive to CAMs, as it generates prompts by capturing spatial structures and distributions of landslide objects, rather than directly obtaining pseudo-masks through hard thresholding of the CAM. Moreover, it effectively mitigates the impact of CAM’s boundary ambiguity by leveraging SAM’s boundary-aware and prompt-driven segmentation capability. As a result, reliable pseudo-masks for landslide extraction can be obtained by leveraging these automatically generated prompts. "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                321,
+                491,
+                656
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "II. METHODOLOGY "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                210,
+                667,
+                354,
+                681
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "This section provides a detailed description of APSAM, as illustrated in Fig. 1. It consists of three stages. First, an object-localization network is utilized to generate CAMs. Then, an APG algorithm is applied to automatically create informative point and box prompts. After that, the pretrained SAM is employed to extract landslide pseudo-masks based on the generated prompts. "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                686,
+                490,
+                792
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "A. Object Localization "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                73,
+                809,
+                230,
+                823
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "To coarsely locate the landslides and obtain initial seed regions, we train an object localization network [4] using image-level supervision. Specifically, an image classification network is employed with a ResNet50 backbone, followed by a global average pooling (GAP) layer and a classifier to generate image-level predictions. Given the training data "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\{ \\pmb { I } \\pmb { M } _ { i } , \\pmb { L } _ { i } \\} _ { i = 1 } ^ { N }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "with "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "N"
+                    },
+                    {
+                        "type": "text",
+                        "content": "samples, where I M is the input image and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "L \\in \\{ 0 , 1 \\}"
+                    },
+                    {
+                        "type": "text",
+                        "content": "represents the image-level label (0 and 1 mean the background "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                827,
+                491,
+                949
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "and landslide, respectively). The network is trained using a binary cross-entropy loss between the predicted logits and labels. After that, class activations C AM can be obtained by performing inference on the trained network as follows: "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                70,
+                919,
+                131
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "\\boldsymbol {C A M} _ {i, j} (x, y) = \\frac {\\theta_ {j} ^ {\\mathrm {T}} \\boldsymbol {F} _ {i} (x , y)}{\\max  _ {x , y} \\theta_ {j} ^ {\\mathrm {T}} \\boldsymbol {F} _ {i} (x , y)} \\tag {1}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/517410dbadb42631f39a1b4156bb976a060a27eace697c66e1c394df51d5ecbb.jpg"
+                }
+            },
+            "bbox": [
+                588,
+                133,
+                919,
+                171
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "where "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "( x , y )"
+                    },
+                    {
+                        "type": "text",
+                        "content": "indexes the spatial location in the input image, "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\theta _ { j }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "denotes the classification weights of the "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "j"
+                    },
+                    {
+                        "type": "text",
+                        "content": "th category, and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "F _ { i }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "represents the feature map embedded by the backbone. Notably, although the activation map can focus on the most discriminative parts of the feature map, it typically only provides coarse object localization without precise boundaries of objects. "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                174,
+                919,
+                280
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "B. Adaptive Prompt Generation "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                504,
+                294,
+                720,
+                308
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "We propose automatically generating point- and box-level prompts from CAMs to mitigate errors caused by uneven and coarse activations. The implementation of the proposed APG algorithm is illustrated as follows. "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                311,
+                919,
+                371
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "1) Binarization: First, the binarization on the generated heatmap is performed to extract the regions of interest. For each pixel, if its grayscale value exceeds the threshold "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "T \\in"
+                            },
+                            {
+                                "type": "text",
+                                "content": "[0, 255], that pixel is marked as foreground in the binary image. Otherwise, it is marked as background. Let "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "H ( x , y )"
+                            },
+                            {
+                                "type": "text",
+                                "content": "represent the grayscale value of the pixel "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "( x , y )"
+                            },
+                            {
+                                "type": "text",
+                                "content": "in the heatmap "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "C A M \\in \\mathbb { R } ^ { H \\times W }"
+                            },
+                            {
+                                "type": "text",
+                                "content": ". The binarization can be expressed as follows: if "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "H ( x , y )"
+                            },
+                            {
+                                "type": "text",
+                                "content": "is greater than the threshold "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "T"
+                            },
+                            {
+                                "type": "text",
+                                "content": ", then the binary image "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "\\pmb { { \\cal B } } ( x , y )"
+                            },
+                            {
+                                "type": "text",
+                                "content": "takes the value 1; otherwise, "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "\\pmb { { \\cal B } } ( x , y )"
+                            },
+                            {
+                                "type": "text",
+                                "content": "takes the value 0. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "2) Counters Extraction: CAMs can be approximated as a smooth continuous surface, where high-activated regions correspond to elevated parts [4]. By setting a threshold, which is similar to a contour line slicing through this surface, the resulting contours form closed boundaries. Once the specific binary regions are obtained, the contours in the binary image can be detected. After that, a list of contours "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "C = \\{ c _ { 1 } , c _ { 2 } , \\ldots , c _ { K } \\}"
+                            },
+                            {
+                                "type": "text",
+                                "content": "along with hierarchy information can be obtained, where "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "K"
+                            },
+                            {
+                                "type": "text",
+                                "content": "is the number of contours and "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "c _ { k }"
+                            },
+                            {
+                                "type": "text",
+                                "content": "denotes the kth contour in the contour set "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "c"
+                            },
+                            {
+                                "type": "text",
+                                "content": ". Then, the minimum bounding rectangle can be generated for each detected closed contour. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "3) Prompts Generation: After that, the bounding box coordinates "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "\\pmb { b } _ { k } = ( x _ { 0 } , \\ y _ { 0 } , \\ w , \\ h )"
+                            },
+                            {
+                                "type": "text",
+                                "content": "of "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "c _ { k }"
+                            },
+                            {
+                                "type": "text",
+                                "content": "can be obtained, by drawing a rectangle around each detected contour, where "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "( x _ { 0 } , \\ y _ { 0 } )"
+                            },
+                            {
+                                "type": "text",
+                                "content": "is the top-left corner of the box, and "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "w"
+                            },
+                            {
+                                "type": "text",
+                                "content": "and "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "h"
+                            },
+                            {
+                                "type": "text",
+                                "content": "are its width and height, respectively. Then, feature moments are used to calculate various characteristics "
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                372,
+                921,
+                779
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "m _ {p, q} = \\sum_ {x} \\sum_ {y} x ^ {p} y ^ {q} c _ {k} (x, y) \\tag {2}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/56142b8450af21d0233f0827af55fe0dd61a372e0d5946a3e1fe757d2b3201a4.jpg"
+                }
+            },
+            "bbox": [
+                612,
+                782,
+                919,
+                814
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "where "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "m"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is the moments, which include multiple moment values. On this basis, we compute the centroid of each contour as the point prompt "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "{ \\pmb p } _ { k }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "using "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                816,
+                919,
+                863
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "\\boldsymbol {p} _ {k} = \\left\\{ \\begin{array}{l l} \\left(\\frac {m _ {1 , 0}}{m _ {0 , 0}}, \\frac {m _ {0 , 1}}{m _ {0 , 0}}\\right), & \\text {i f} m _ {0, 0} > 0 \\\\ \\text {u n d e f i n e d}, & \\text {o t h e r w i s e} \\end{array} \\right. \\tag {3}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/0aed48f10c4a08a8c424877c807a1916e60e91e6d36ebc9a5ae66d9836c5c2dd.jpg"
+                }
+            },
+            "bbox": [
+                576,
+                864,
+                919,
+                915
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "where "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "m _ { 1 , 0 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "m _ { 0 , 1 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "denote the first moment of the contour, representing the accumulated value of "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "x"
+                    },
+                    {
+                        "type": "text",
+                        "content": "and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "y"
+                    },
+                    {
+                        "type": "text",
+                        "content": "separately, "
+                    }
+                ]
+            },
+            "bbox": [
+                503,
+                919,
+                919,
+                949
+            ]
+        },
+        {
+            "type": "page_number",
+            "content": {
+                "page_number_content": [
+                    {
+                        "type": "text",
+                        "content": "6008705 "
+                    }
+                ]
+            },
+            "bbox": [
+                76,
+                36,
+                119,
+                45
+            ]
+        },
+        {
+            "type": "page_header",
+            "content": {
+                "page_header_content": [
+                    {
+                        "type": "text",
+                        "content": "IEEE GEOSCIENCE AND REMOTE SENSING LETTERS, VOL. 22, 2025 "
+                    }
+                ]
+            },
+            "bbox": [
+                555,
+                35,
+                921,
+                46
+            ]
+        },
+        {
+            "type": "page_footer",
+            "content": {
+                "page_footer_content": [
+                    {
+                        "type": "text",
+                        "content": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on March 14,2026 at 11:32:16 UTC from IEEE Xplore. Restrictions apply. "
+                    }
+                ]
+            },
+            "bbox": [
+                53,
+                962,
+                937,
+                974
+            ]
+        }
+    ],
+    [
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "m _ { 0 , 0 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "denotes the zero-order moment of the contour, representing the area of the contour. Finally, the generated point and box prompts with "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "K"
+                    },
+                    {
+                        "type": "text",
+                        "content": "contours for SAM are given by "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "{ \\pmb P } _ { i } ~ = ~ \\{ { \\pmb p } _ { 1 } ^ { i }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "p _ { 2 } ^ { i } , \\ldots , p _ { K } \\}"
+                    },
+                    {
+                        "type": "text",
+                        "content": "and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "{ \\pmb B } _ { i } ~ = ~ \\{ { \\pmb b } _ { 1 } ^ { i }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "b _ { 2 } ^ { i } , \\ldots , \\bar { b } _ { K } ^ { i } \\}"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", respectively. "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                70,
+                491,
+                148
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "C. Pseudo-Labeling With SAM "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                73,
+                161,
+                287,
+                176
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "SAM incorporates a Vision Transformer-based image encoder, a lightweight mask decoder, and a versatile prompt encoder that can accept inputs such as points, bounding boxes, masks, and text [8]. The variety of prompt methods allows users to focus on different scenes and objects, providing SAM with strong flexibility for diverse applications. Following SAM, "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\mathbf { \\nabla } _ { P _ { i } }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is encoded by combining its positional encoding with a learned embedding that distinguishes foreground from background. Similarly, "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\pmb { B } _ { i }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is represented through two components. The first is the positional encoding of its topleft corner, augmented with a learned embedding specific to this position, while the second is the positional encoding of its bottom-right corner, paired with a learned embedding corresponding to that location. Finally, SAM’s image encoder and prompt encoder separately generate image features and sparse prompt embeddings, which are then input into SAM’s mask decoder to produce accurate pseudo-labels. The process can be represented as follows: "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                181,
+                491,
+                452
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "\\hat {S} _ {i} = \\mathcal {D} _ {\\text {m a s k}} \\left(\\mathcal {E} _ {\\text {i m g}} \\left(I _ {i}\\right), \\mathcal {E} _ {\\text {p r o m p t}} \\left(\\left[ P _ {i}, B _ {i} \\right]\\right)\\right) \\tag {4}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/cb82e957d4bfc4c54d702e3464684c3f3f14a7413c487b11ee4ad82b43d8522d.jpg"
+                }
+            },
+            "bbox": [
+                147,
+                459,
+                488,
+                479
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "where "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "{ \\pmb { \\mathcal { E } } } _ { \\mathrm { i m g } }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "denotes SAM’s image encoder and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\mathcal { D } _ { \\mathrm { m a s k } }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "represents SAM’s mask decoder. Moreover, "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\hat { S } _ { i }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is the pseudo-label generated by SAM. "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                484,
+                491,
+                532
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "III. EXPERIMENTAL RESULTS "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                174,
+                544,
+                390,
+                556
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "A. Data Description "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                73,
+                563,
+                217,
+                578
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Two high-resolution datasets, Hong Kong and Turkey, are used to evaluate the proposed method [2]. The Hong Kong dataset contains images captured in 2014, with a spatial resolution of "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "0 . 5 \\mathrm { m }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", consisting of aerial images. The TurKey dataset contains images captured in 2017, with a spatial resolution of "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "0 . 5 9 \\mathrm { m }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", consisting of Google Earth images, covering landslides caused by heavy rain in parts of Turkey. Both datasets have their images cropped to a size of "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "2 5 6 ~ \\times ~ 2 5 6"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", with a "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "40 \\%"
+                    },
+                    {
+                        "type": "text",
+                        "content": "overlap between adjacent images. The Hong Kong dataset uses 630 images for training with image-level labels and tests with pixel-level labels. The TurKey dataset uses 1590 images for training with image-level labels and tests with pixel-level labels. "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                582,
+                491,
+                777
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "B. Experimental Setup "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                73,
+                794,
+                232,
+                809
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "In the object localization section, original CAM [4] is employed to generate heatmaps. Furthermore, the SGD optimizer is chosen with a weight decay of 0.0001 and a momentum of 0.9 to train the network. The learning rate was initially set to 0.1 with a step-wise decay scheduler applied. In the prompts generation section, the threshold "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "T"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is set to 120. The third step utilizes SAM’s powerful prompt segmentation capabilities to generate pseudo-labels. Here, we use the huge version of SAM. Finally, to ensure fairness in the "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                813,
+                491,
+                949
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/28c22ee118bef0403c8cb0c90499847e3164e1a2ea7b440d0a9f3f6605058c62.jpg"
+                },
+                "image_caption": [
+                    {
+                        "type": "text",
+                        "content": "Fig. 2. Landslide extraction results on the Hong Kong dataset. (a) Original image. (b) Ground truth. The results were obtained by (c) CDA, (d) CPN, (e) CSE, (f) FlipCAM, (g) S2C, (h) LGAGNet, and (i) our method. The image size is "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "2 5 6 \\times 2 5 6"
+                    },
+                    {
+                        "type": "text",
+                        "content": "pixels. "
+                    }
+                ],
+                "image_footnote": []
+            },
+            "bbox": [
+                509,
+                66,
+                918,
+                335
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "experiment, pseudo-labels generated by various methods are trained on ResUNet to obtain the final results. The proposed approach was compared with several state-of-the-art weakly supervised methods, such as context decoupling augmentation (CDA) [14], complementary patch network (CPN) [15], class-specific erasing method (CSE) [16], feature-level flipping CAM (FilpCAM) [17], from-SAM-to-CAMs (S2C) [18], and local–global anchor guidance network (LGAGNet) [5]. For quantitative evaluation, five commonly used metrics were employed: overall accuracy (OA), precision, recall, "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "F 1"
+                    },
+                    {
+                        "type": "text",
+                        "content": "-score, and IoU. "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                417,
+                921,
+                583
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "C. Results "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                504,
+                598,
+                578,
+                611
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "As shown in Fig. 2, the extraction results of various irregular-shaped landslides in the Hong Kong dataset are presented. It can be observed that due to the different learning abilities of various weakly supervised methods for landslides of different shapes, some methods struggle to detect and generate reliable landslide regions, such as CDA and CPN, where large areas of undetected regions exist in some areas. In comparison to other methods, our method achieves more precise boundaries and performs well even in cases of hollow areas, which are difficult to predict. From Table I, we can see that while CDA and LGAGNet excel in precision and recall, they fall short in "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "F 1 -"
+                    },
+                    {
+                        "type": "text",
+                        "content": "-score and IoU, especially CDA, which has a relatively low IoU. This means that although these methods result in fewer misclassified landslide regions, they perform poorly in overall segmentation accuracy and the overlap of target regions. Our network can better preserve detailed information on the landslide objects and achieves the highest OA, "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "F 1"
+                    },
+                    {
+                        "type": "text",
+                        "content": "-score, and IoU values. "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                616,
+                921,
+                887
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "As shown in Fig. 3, the extraction results of various irregularly shaped landslides from the Turkey dataset are presented. It can be observed that due to the varying learning capabilities of different weakly supervised methods for different "
+                    }
+                ]
+            },
+            "bbox": [
+                503,
+                888,
+                921,
+                949
+            ]
+        },
+        {
+            "type": "page_header",
+            "content": {
+                "page_header_content": [
+                    {
+                        "type": "text",
+                        "content": "WANG et al.: AUTO-PROMPTING SAM FOR WEAKLY SUPERVISED LANDSLIDE EXTRACTION "
+                    }
+                ]
+            },
+            "bbox": [
+                76,
+                35,
+                573,
+                46
+            ]
+        },
+        {
+            "type": "page_header",
+            "content": {
+                "page_header_content": [
+                    {
+                        "type": "text",
+                        "content": "6008705 "
+                    }
+                ]
+            },
+            "bbox": [
+                877,
+                36,
+                919,
+                46
+            ]
+        },
+        {
+            "type": "page_footer",
+            "content": {
+                "page_footer_content": [
+                    {
+                        "type": "text",
+                        "content": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on March 14,2026 at 11:32:16 UTC from IEEE Xplore. Restrictions apply. "
+                    }
+                ]
+            },
+            "bbox": [
+                53,
+                960,
+                937,
+                974
+            ]
+        }
+    ],
+    [
+        {
+            "type": "table",
+            "content": {
+                "image_source": {
+                    "path": "images/f6c384b835bff161231b6e781718e1c12bca3d7a206c8892eb88db4a5b8255c1.jpg"
+                },
+                "table_caption": [
+                    {
+                        "type": "text",
+                        "content": "TABLE I QUANTITATIVE COMPARISON "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "( \\% )"
+                    },
+                    {
+                        "type": "text",
+                        "content": "OF DIFFERENT METHODS FOR WEAKLY SUPERVISED LANDSLIDE EXTRACTION "
+                    }
+                ],
+                "table_footnote": [],
+                "html": "<table><tr><td>Dataset</td><td>Method</td><td>OA</td><td>Precision</td><td>Recall</td><td>F1</td><td>IoU</td></tr><tr><td rowspan=\"7\">Hong Kong</td><td>CDA [14]</td><td>97.89</td><td>80.51</td><td>64.78</td><td>71.79</td><td>56.00</td></tr><tr><td>CPN [15]</td><td>97.92</td><td>76.82</td><td>71.55</td><td>74.09</td><td>58.85</td></tr><tr><td>CSE [16]</td><td>97.77</td><td>69.89</td><td>81.21</td><td>75.13</td><td>60.16</td></tr><tr><td>FlipCAM [17]</td><td>96.46</td><td>55.36</td><td>75.65</td><td>63.93</td><td>46.99</td></tr><tr><td>S2C [18]</td><td>95.85</td><td>50.00</td><td>68.74</td><td>57.89</td><td>40.73</td></tr><tr><td>LGAGNet [5]</td><td>98.02</td><td>71.37</td><td>87.52</td><td>78.62</td><td>64.78</td></tr><tr><td>Ours</td><td>98.24</td><td>77.90</td><td>80.42</td><td>79.14</td><td>65.48</td></tr><tr><td rowspan=\"7\">Turkey</td><td>CDA [14]</td><td>97.72</td><td>76.04</td><td>48.35</td><td>59.12</td><td>41.96</td></tr><tr><td>CPN [15]</td><td>97.87</td><td>73.54</td><td>58.57</td><td>65.21</td><td>48.38</td></tr><tr><td>CSE [16]</td><td>97.75</td><td>73.04</td><td>53.89</td><td>62.02</td><td>44.95</td></tr><tr><td>FlipCAM [17]</td><td>97.87</td><td>76.28</td><td>54.53</td><td>63.59</td><td>46.62</td></tr><tr><td>S2C [18]</td><td>98.09</td><td>75.08</td><td>65.91</td><td>70.20</td><td>54.08</td></tr><tr><td>LGAGNet [5]</td><td>98.18</td><td>78.25</td><td>64.48</td><td>70.70</td><td>54.68</td></tr><tr><td>Ours</td><td>98.20</td><td>73.31</td><td>74.12</td><td>73.71</td><td>58.37</td></tr></table>",
+                "table_type": "complex_table",
+                "table_nest_level": 1
+            },
+            "bbox": [
+                80,
+                114,
+                486,
+                291
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/21e2671c9477a843aebc9b2198c3047af4411352a4ef624b59c87e97c18eef42.jpg"
+                },
+                "image_caption": [
+                    {
+                        "type": "text",
+                        "content": "Fig. 3. Landslide extraction results on the Turkey dataset. (a) Original image. (b) Ground truth. The results were obtained by (c) CDA, (d) CPN, (e) CSE, (f) FlipCAM, (g) S2C, (h) LGAGNet, and (i) our method. The image size is "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "2 5 6 \\times 2 5 6"
+                    },
+                    {
+                        "type": "text",
+                        "content": "pixels. "
+                    }
+                ],
+                "image_footnote": []
+            },
+            "bbox": [
+                78,
+                301,
+                488,
+                575
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "shaped landslides, some methods, such as CDA, CPN, and CSE, exhibit significant areas of missed detections in certain regions. In contrast, our method achieves more accurate and consistent boundaries with fewer misclassifications. As indicated in Table I, although LGAGNet demonstrates competitive performance in overall precision, reaching "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "7 8 . 2 5 \\%"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", indicating its precision in landslide detection, our method achieves a higher recall, resulting in fewer missed detections. Compared to other methods, our network achieves the highest values for OA, recall, "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "F 1"
+                    },
+                    {
+                        "type": "text",
+                        "content": "-score, and IoU, with scores of "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "9 8 . 2 0 \\%"
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "7 4 . 1 2 \\%"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "7 3 . 7 1 \\%"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "5 8 . 3 1 \\%"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", respectively. The IoU has a significant gain of "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "3 . 6 9 \\% - 1 6 . 4 1 \\%"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", proving that our method not only accurately detects landslides but also better preserves detailed information and effectively handles complex shapes. "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                659,
+                490,
+                869
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "D. Analysis "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                73,
+                883,
+                158,
+                898
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "To comprehensively evaluate the proposed APSAM, we conducted ablation experiments on the Hong Kong dataset as shown in Table II. The results indicate that the combination "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                902,
+                490,
+                949
+            ]
+        },
+        {
+            "type": "table",
+            "content": {
+                "image_source": {
+                    "path": "images/5c248e290e4d8bfe6d09eda2a54414b0c2815e9e0501e6e103339a3bea8c259e.jpg"
+                },
+                "table_caption": [
+                    {
+                        "type": "text",
+                        "content": "TABLE IIABLATION STUDIES ON THE HONG KONG DATASET"
+                    }
+                ],
+                "table_footnote": [],
+                "html": "<table><tr><td rowspan=\"2\">No.</td><td rowspan=\"2\">Variants</td><td colspan=\"5\">Metrics (%)</td></tr><tr><td>OA</td><td>Precision</td><td>Recall</td><td>F1</td><td>IoU</td></tr><tr><td>#01</td><td>APSAM</td><td>98.24</td><td>77.90</td><td>80.42</td><td>79.14</td><td>65.48</td></tr><tr><td colspan=\"7\">Prompts</td></tr><tr><td>#02</td><td>w/o Points</td><td>98.03</td><td>73.01</td><td>83.54</td><td>77.92</td><td>63.83</td></tr><tr><td>#03</td><td>w/o Boxes</td><td>97.71</td><td>70.02</td><td>78.41</td><td>73.98</td><td>58.71</td></tr><tr><td colspan=\"7\">Alternative Thresholding</td></tr><tr><td>#04</td><td>Otsu</td><td>98.20</td><td>73.31</td><td>74.12</td><td>73.71</td><td>58.37</td></tr><tr><td colspan=\"7\">Re-Training Network</td></tr><tr><td>#05</td><td>SegFormer</td><td>98.26</td><td>78.23</td><td>80.74</td><td>79.47</td><td>65.93</td></tr></table>",
+                "table_type": "complex_table",
+                "table_nest_level": 1
+            },
+            "bbox": [
+                514,
+                103,
+                906,
+                275
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/4df951f358e43128f9697de99c443e266d9e287cefef56972811e2a60657a9f0.jpg"
+                },
+                "image_caption": [
+                    {
+                        "type": "text",
+                        "content": "Fig. 4. Parameter analysis of the threshold "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "T"
+                    },
+                    {
+                        "type": "text",
+                        "content": "on the Hong Kong dataset. "
+                    }
+                ],
+                "image_footnote": []
+            },
+            "bbox": [
+                566,
+                292,
+                849,
+                417
+            ]
+        },
+        {
+            "type": "table",
+            "content": {
+                "image_source": {
+                    "path": "images/54ea61ec8b5c153ef7bf1f5bf650b1b7974023ed0c88fd256d8750634af7b798.jpg"
+                },
+                "table_caption": [
+                    {
+                        "type": "text",
+                        "content": "TABLE III COMPARISON OF COMPUTATIONAL COSTS IN PSEUDO-LABELING "
+                    }
+                ],
+                "table_footnote": [],
+                "html": "<table><tr><td>Method</td><td>Backbone</td><td>Para. ↓</td><td>Infer. Time ↓</td><td>Memory ↓</td><td>IoU (%) ↑</td></tr><tr><td>LGAGNet</td><td>ResNet50</td><td>561.33 M</td><td>492.73 ms</td><td>5039 MiB</td><td>64.78</td></tr><tr><td>APSAM</td><td>SAM-Huge</td><td>641.09 M</td><td>80.86 ms</td><td>8355 MiB</td><td>65.48</td></tr><tr><td>APSAM</td><td>SAM2-Tiny</td><td>38.96 M</td><td>35.38 ms</td><td>1079 MiB</td><td>65.96</td></tr><tr><td>APSAM</td><td>SAM2-Large</td><td>224.45 M</td><td>56.22 ms</td><td>2175 MiB</td><td>66.36</td></tr></table>",
+                "table_type": "simple_table",
+                "table_nest_level": 1
+            },
+            "bbox": [
+                506,
+                498,
+                919,
+                558
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "of point and box prompts achieves the most balanced performance in the landslide extraction task with the highest OA and IoU, demonstrating the effectiveness of both point and box prompts. When only using box prompts, the recall slightly increases to "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "8 3 . 5 4 \\%"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", indicating that box-based prompts can more completely locate target areas. In contrast, using only points as prompts leads to a more significant degradation in performance. Furthermore, we compared a fixed parameter "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "T"
+                    },
+                    {
+                        "type": "text",
+                        "content": "with the automatic threshold selection using the Otsu algorithm for image binarization. While the performance of Otsu is acceptable, better performance is achieved with manually set thresholds in the range of 50–160, where the IoU values remain stable and exceed "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "60 \\%"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", as shown in Fig. 4. In the re-training process with pseudo-labels, SegFormer, a more advanced semantic segmentation network, slightly outperforms the adopted ResUNet-50 across all evaluation metrics. This also demonstrates that our approach is not dependent on a specific backbone or network. "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                601,
+                919,
+                872
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "As shown in Table III, compared with previous methods, such as LGAGNet, which use a ResNet50 backbone to generate pseudo-labels, APSAM with a SAM-Huge backbone shows higher parameter counts and GPU memory usage. However, using SAM2 significantly reduces computational "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                875,
+                921,
+                949
+            ]
+        },
+        {
+            "type": "page_number",
+            "content": {
+                "page_number_content": [
+                    {
+                        "type": "text",
+                        "content": "6008705 "
+                    }
+                ]
+            },
+            "bbox": [
+                76,
+                36,
+                119,
+                45
+            ]
+        },
+        {
+            "type": "page_header",
+            "content": {
+                "page_header_content": [
+                    {
+                        "type": "text",
+                        "content": "IEEE GEOSCIENCE AND REMOTE SENSING LETTERS, VOL. 22, 2025 "
+                    }
+                ]
+            },
+            "bbox": [
+                555,
+                35,
+                919,
+                46
+            ]
+        },
+        {
+            "type": "page_footer",
+            "content": {
+                "page_footer_content": [
+                    {
+                        "type": "text",
+                        "content": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on March 14,2026 at 11:32:16 UTC from IEEE Xplore. Restrictions apply. "
+                    }
+                ]
+            },
+            "bbox": [
+                53,
+                962,
+                937,
+                974
+            ]
+        }
+    ],
+    [
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/89363e071e91175cfc721665c226d0804bb565aa2bab923b651b146dfd589149.jpg"
+                },
+                "image_caption": [],
+                "image_footnote": []
+            },
+            "bbox": [
+                81,
+                66,
+                145,
+                119
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/2e05de0b777adae2d7b6ad3770b472c00704c648fd631bab7396c139cd80b9f2.jpg"
+                },
+                "image_caption": [],
+                "image_footnote": []
+            },
+            "bbox": [
+                148,
+                66,
+                214,
+                119
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/e3b391880a9051af10429ce9d24eb1644762bccb7945839b11099547a96b8bdf.jpg"
+                },
+                "image_caption": [],
+                "image_footnote": []
+            },
+            "bbox": [
+                215,
+                66,
+                281,
+                119
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/3520010a5b5d0d5d6e78093a52f9e421e2e5b1eecf14ec402832f3db9bc3c58a.jpg"
+                },
+                "image_caption": [],
+                "image_footnote": []
+            },
+            "bbox": [
+                282,
+                66,
+                416,
+                119
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/2b39a35367f8beb286744193a30668c9a79f55b94ae086a7507653201b3cdf3f.jpg"
+                },
+                "image_caption": [],
+                "image_footnote": []
+            },
+            "bbox": [
+                418,
+                66,
+                488,
+                119
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/ca2a0da4eae7ff762dd8b2c6f40586d5d30cc61e4eab860e74c0554110c789ee.jpg"
+                },
+                "image_caption": [],
+                "image_footnote": []
+            },
+            "bbox": [
+                80,
+                121,
+                145,
+                172
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/07cb1a51ad0d4a2d0264e6437c1bac0acf23623675741d0f5f637ca64c5d1be9.jpg"
+                },
+                "image_caption": [],
+                "image_footnote": []
+            },
+            "bbox": [
+                148,
+                121,
+                214,
+                172
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/394cc305fba789a2296a64761dd04060ae3845883e8b20ae924c272b225288cd.jpg"
+                },
+                "image_caption": [],
+                "image_footnote": []
+            },
+            "bbox": [
+                215,
+                121,
+                281,
+                172
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/55f6125251c92e7f72651761cd512c59d845de27d7d11d9dbe0a331ea8451543.jpg"
+                },
+                "image_caption": [],
+                "image_footnote": []
+            },
+            "bbox": [
+                282,
+                121,
+                416,
+                172
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/8cd2e09f9feab4c9191c52da8b4eb7f5af45b01f8adbd58e4c8a58361eb25b58.jpg"
+                },
+                "image_caption": [],
+                "image_footnote": []
+            },
+            "bbox": [
+                418,
+                121,
+                488,
+                172
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/0f586eb92ee60915c9acafba4cf137235580176b47d056039814481846fce2d7.jpg"
+                },
+                "image_caption": [],
+                "image_footnote": []
+            },
+            "bbox": [
+                80,
+                172,
+                145,
+                224
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/6d86514744cc93cdeab09a685d6237d7dd355600cb981639dcd5ee26139f351e.jpg"
+                },
+                "image_caption": [],
+                "image_footnote": []
+            },
+            "bbox": [
+                148,
+                172,
+                214,
+                224
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/5516ed82e7d335202aee093d4c5d71ec870767f158d5561b4a16ea8ee4957c19.jpg"
+                },
+                "image_caption": [],
+                "image_footnote": []
+            },
+            "bbox": [
+                215,
+                172,
+                281,
+                224
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/2fb40708a95214414a6c2a89c5a19117a636c10b6f5d1301b29db6b83bbc4667.jpg"
+                },
+                "image_caption": [],
+                "image_footnote": []
+            },
+            "bbox": [
+                282,
+                172,
+                416,
+                224
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/25a79023f4bc7f2b079c64d0eff75cdcd3ec53b8cfaf0b1c71d31e80591a5cf5.jpg"
+                },
+                "image_caption": [
+                    {
+                        "type": "text",
+                        "content": "(b) "
+                    },
+                    {
+                        "type": "text",
+                        "content": "Fig. 5. Comparison of prompting results from SAM and APSAM. (a) Original image. (b) Ground truth. (c) Automatic grid prompts generated by SAM. (d) Overlay of masks produced by SAM, with each mask randomly assigned a color to highlight variations. (e) Adaptive prompts of APSAM by CAM. (f) Results of APSAM. "
+                    }
+                ],
+                "image_footnote": []
+            },
+            "bbox": [
+                418,
+                172,
+                488,
+                224
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "costs and model complexity. Notably, all SAM backbones achieve lower inference times than LGAGNet because it requires additional structure-aware object locating modules and global anchor aggregation operations to enhance feature representation. In comparison, the pseudo-labeling by the SAM series utilizes lightweight prompt encoders and enables one-step segmentation outputs. More importantly, our APSAM can fully exploit the SAM’s segmentation capability, resulting in better segmentation performance. "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                320,
+                491,
+                455
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "From visual comparison shown in Fig. 5, it is evident that SAM can automatically create a grid of point prompts over the image for full-image segmentation; however, it is hindered by complex backgrounds and nonlandslide areas, making it unable to accurately locate and segment the landslide regions. In contrast, APSAM generates more accurate point and box prompts through CAMs, resulting in better segmentation of the landslide region. For low-activated regions or blurred activations, such as some regions of the first and second rows in Fig. 5(e), APSAM still generates hybrid prompts that cover and highlight the essential parts of object contours, making it less sensitive to the quality of CAMs. "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                455,
+                490,
+                636
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "IV. CONCLUSION "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                218,
+                656,
+                346,
+                667
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "This study presents a novel weakly supervised landslide extraction network based on the SAM, named APSAM. Instead of focusing on generating precise CAMs for pixelwise pseudo-labeling, our approach attempts to leverage an APG algorithm to obtain accurate prompts from CAMs. APSAM effectively addresses challenges posed by irregular shapes, fragmented boundaries, and uncertain localization of landslide objects by exploiting robust and hybrid prompts and unleashing SAM’s strong prompt-driven segmentation capability Experiments on two high-resolution remote sensing datasets show that APSAM outperforms other state-of-the-art weakly supervised methods. Future work will focus on end-toend training by combining the localization network with SAM. Specifically, SAM can aid the localization network in learning "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                674,
+                490,
+                885
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "spatial patterns more effectively, while the activations from the localization network can be utilized to prompt SAM. "
+                    }
+                ]
+            },
+            "bbox": [
+                503,
+                70,
+                919,
+                101
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "REFERENCES "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                665,
+                116,
+                759,
+                128
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "reference_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[1] O. Ghorbanzadeh, Y. Xu, P. Ghamisi, M. Kopp, and D. Kreil, “Landslide4Sense: Reference benchmark data and deep learning models for landslide detection,” IEEE Trans. Geosci. Remote Sens., vol. 60, pp. 1–17, 2022. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[2] X. Zhang, W. Yu, M.-O. Pun, and W. Shi, “Cross-domain landslide mapping from large-scale remote sensing images using prototype-guided domain-aware progressive representation learning,” ISPRS J. Photogramm. Remote Sens., vol. 197, pp. 1–17, Mar. 2023. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[3] J. Yue et al., “Optical remote sensing image understanding with weak supervision: Concepts, methods, and perspectives,” IEEE Geosci. Remote Sens. Mag., vol. 10, no. 2, pp. 250–269, Jun. 2022. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[4] B. Zhou, A. Khosla, A. Lapedriza, A. Oliva, and A. Torralba, “Learning deep features for discriminative localization,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR), Jun. 2016, pp. 2921–2929. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[5] X. Zhang, W. Yu, X. Ma, and X. Kang, “Weakly supervised Local–Global anchor guidance network for landslide extraction with image-level annotations,” IEEE Geosci. Remote Sens. Lett., vol. 20, pp. 1–5, 2023. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[6] W. Qiao, L. Shen, J. Wang, X. Yang, and Z. Li, “A weakly supervised semantic segmentation approach for damaged building extraction from postearthquake high-resolution remote-sensing images,” IEEE Geosci. Remote Sens. Lett., vol. 20, pp. 1–5, 2023. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[7] Q. Chen, L. Yang, J. Lai, and X. Xie, “Self-supervised image-specific prototype exploration for weakly supervised semantic segmentation,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR), Jun. 2022, pp. 4288–4298. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[8] A. Kirillov et al., “Segment anything,” in Proc. IEEE/CVF Int. Conf. Comput. Vis., Oct. 2023, pp. 4015–4026. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[9] J. Sun, W. He, and H. Zhang, “G2LDIE: Global-to-Local dynamic information enhancement framework for weakly supervised building extraction from remote sensing images,” IEEE Trans. Geosci. Remote Sens., vol. 62, pp. 1–14, 2024. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[10] L. Wang, M. Zhang, and W. Shi, “CS-WSCDNet: Class activation mapping and segment anything model-based framework for weakly supervised change detection,” IEEE Trans. Geosci. Remote Sens., vol. 61, pp. 1–12, 2023. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[11] X. Ma, Q. Wu, X. Zhao, X. Zhang, M.-O. Pun, and B. Huang, “SAMassisted remote sensing imagery semantic segmentation with object and boundary constraints,” IEEE Trans. Geosci. Remote Sens., vol. 62, pp. 1–16, 2024. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[12] K. Chen et al., “RSPrompter: Learning to prompt for remote sensing instance segmentation based on visual foundation model,” IEEE Trans. Geosci. Remote Sens., vol. 62, 2024, Art. no. 4701117. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[13] L. Ding, K. Zhu, D. Peng, H. Tang, K. Yang, and L. Bruzzone, “Adapting segment anything model for change detection in VHR remote sensing images,” IEEE Trans. Geosci. Remote Sens., vol. 62, pp. 1–11, 2024. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[14] Y. Su, R. Sun, G. Lin, and Q. Wu, “Context decoupling augmentation for weakly supervised semantic segmentation,” in Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV), Oct. 2021, pp. 6984–6994. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[15] F. Zhang, C. Gu, C. Zhang, and Y. Dai, “Complementary patch for weakly supervised semantic segmentation,” in Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV), Oct. 2021, pp. 7242–7251. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[16] H. Kweon, S.-H. Yoon, H. Kim, D. Park, and K.-J. Yoon, “Unlocking the potential of ordinary classifier: Class-specific adversarial erasing framework for weakly supervised semantic segmentation,” in Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV), Oct. 2021, pp. 6994–7003. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[17] X. Zhang, Q. Su, P. Xiao, W. Wang, Z. Li, and G. He, “FlipCAM: A feature-level flipping augmentation method for weakly supervised building extraction from high-resolution remote sensing imagery,” IEEE Trans. Geosci. Remote Sens., vol. 62, pp. 1–17, 2024. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[18] H. Kweon and K.-J. Yoon, “From SAM to CAMs: Exploring segment anything model for weakly supervised semantic segmentation,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR), Jun. 2024, pp. 19499–19509. "
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                506,
+                136,
+                919,
+                886
+            ]
+        },
+        {
+            "type": "page_header",
+            "content": {
+                "page_header_content": [
+                    {
+                        "type": "text",
+                        "content": "WANG et al.: AUTO-PROMPTING SAM FOR WEAKLY SUPERVISED LANDSLIDE EXTRACTION "
+                    }
+                ]
+            },
+            "bbox": [
+                76,
+                35,
+                571,
+                46
+            ]
+        },
+        {
+            "type": "page_header",
+            "content": {
+                "page_header_content": [
+                    {
+                        "type": "text",
+                        "content": "6008705 "
+                    }
+                ]
+            },
+            "bbox": [
+                877,
+                36,
+                919,
+                46
+            ]
+        },
+        {
+            "type": "page_footer",
+            "content": {
+                "page_footer_content": [
+                    {
+                        "type": "text",
+                        "content": "Authorized licensed use limited to: BEIJING UNIVERSITY OF POST AND TELECOM. Downloaded on March 14,2026 at 11:32:16 UTC from IEEE Xplore. Restrictions apply. "
+                    }
+                ]
+            },
+            "bbox": [
+                53,
+                962,
+                937,
+                974
+            ]
+        }
+    ]
+]
