@@ -5,35 +5,40 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 MFNET_DIR="$ROOT_DIR/MFNet"
 
-export SSRS_DATA_ROOT="${SSRS_DATA_ROOT:-$ROOT_DIR/autodl-tmp/dataset}"
-export SSRS_DATASET="${SSRS_DATASET:-Vaihingen}"
-export SSRS_SEED="${SSRS_SEED:-42}"
-export SSRS_WINDOW_SIZE="${SSRS_WINDOW_SIZE:-256}"
-export SSRS_BATCH_SIZE="${SSRS_BATCH_SIZE:-10}"
-export SSRS_BASE_LR="${SSRS_BASE_LR:-0.01}"
-export SSRS_EVAL_STRIDE="${SSRS_EVAL_STRIDE:-32}"
-export SSRS_PERF_MODE="${SSRS_PERF_MODE:-1}"
-export SSRS_NUM_WORKERS="${SSRS_NUM_WORKERS:-16}"
-export SSRS_PIN_MEMORY="${SSRS_PIN_MEMORY:-1}"
-export SSRS_PERSISTENT_WORKERS="${SSRS_PERSISTENT_WORKERS:-1}"
-export SSRS_PREFETCH_FACTOR="${SSRS_PREFETCH_FACTOR:-4}"
-export SSRS_MFNET_USE_AMP="${SSRS_MFNET_USE_AMP:-1}"
-export SSRS_MFNET_MICRO_BS="${SSRS_MFNET_MICRO_BS:-2}"
+export SSRS_DATA_ROOT="${SSRS_DATA_ROOT:-$ROOT_DIR/autodl-tmp/dataset}"           # 数据集根目录
+export SSRS_DATASET="${SSRS_DATASET:-Vaihingen}"                                    # 数据集名称（Vaihingen 或 Potsdam）
+export SSRS_SEED="${SSRS_SEED:-42}"                                                # 随机种子，控制可复现
+export SSRS_WINDOW_SIZE="${SSRS_WINDOW_SIZE:-256}"                                  # 训练裁剪窗口大小
+export SSRS_BATCH_SIZE="${SSRS_BATCH_SIZE:-12}"                                     # 训练批大小
+export SSRS_BASE_LR="${SSRS_BASE_LR:-0.01}"                                         # 初始学习率
+export SSRS_EVAL_STRIDE="${SSRS_EVAL_STRIDE:-32}"                                   # 滑窗评估步长
+export SSRS_PERF_MODE="${SSRS_PERF_MODE:-1}"                                        # 性能模式开关（1 开启 cudnn/tf32 优化）
+export SSRS_NUM_WORKERS="${SSRS_NUM_WORKERS:-16}"                                   # DataLoader 进程数
+export SSRS_PIN_MEMORY="${SSRS_PIN_MEMORY:-1}"                                      # DataLoader 是否开启 pin_memory
+export SSRS_PERSISTENT_WORKERS="${SSRS_PERSISTENT_WORKERS:-1}"                      # DataLoader worker 是否常驻
+export SSRS_PREFETCH_FACTOR="${SSRS_PREFETCH_FACTOR:-4}"                            # 每个 worker 预取 batch 数
+export SSRS_MFNET_USE_AMP="${SSRS_MFNET_USE_AMP:-1}"                                # 是否启用混合精度训练
+export SSRS_MFNET_MICRO_BS="${SSRS_MFNET_MICRO_BS:-2}"                              # 梯度累积的微批大小
 
 # Debug/quick-run controls can be overridden externally.
-export SSRS_EPOCH_STEPS="${SSRS_EPOCH_STEPS:-1000}"
-export SSRS_EPOCHS="${SSRS_EPOCHS:-50}"
-export SSRS_SAVE_EPOCH="${SSRS_SAVE_EPOCH:-1}"
-export SSRS_SAVE_BEST="${SSRS_SAVE_BEST:-1}"
-export SSRS_SAVE_LAST="${SSRS_SAVE_LAST:-1}"
-export SSRS_SAVE_INTERVAL="${SSRS_SAVE_INTERVAL:-0}"
-export SSRS_EVAL_NUM_TILES="${SSRS_EVAL_NUM_TILES:-0}"
+export SSRS_EPOCH_STEPS="${SSRS_EPOCH_STEPS:-1000}"                                 # 每个 epoch 的采样步数
+export SSRS_EPOCHS="${SSRS_EPOCHS:-50}"                                             # 总训练轮数
+export SSRS_SAVE_EPOCH="${SSRS_SAVE_EPOCH:-1}"                                      # 每隔多少个 epoch 做一次验证
+export SSRS_SAVE_BEST="${SSRS_SAVE_BEST:-1}"                                        # 是否保存最佳模型
+export SSRS_SAVE_LAST="${SSRS_SAVE_LAST:-1}"                                        # 是否保存最后一轮模型
+export SSRS_SAVE_INTERVAL="${SSRS_SAVE_INTERVAL:-0}"                                # 间隔保存模型（0 表示关闭）
+export SSRS_EVAL_NUM_TILES="${SSRS_EVAL_NUM_TILES:-0}"                              # 验证 tile 数（0 表示全量）
 
-export SSRS_LAMBDA_BDY="${SSRS_LAMBDA_BDY:-0.1}"
-export SSRS_LAMBDA_OBJ="${SSRS_LAMBDA_OBJ:-1.0}"
+export SSRS_LAMBDA_BDY="${SSRS_LAMBDA_BDY:-0.1}"                                    # 边界损失权重
+export SSRS_LAMBDA_OBJ="${SSRS_LAMBDA_OBJ:-1.0}"                                    # 对象一致性损失权重
+export SSRS_STRUCTURE_WARMUP_EPOCHS="${SSRS_STRUCTURE_WARMUP_EPOCHS:-10}"           # 结构损失 warmup 轮数（线性升权重）
+export SSRS_STRUCTURE_CONF_THRESH="${SSRS_STRUCTURE_CONF_THRESH:-0.6}"               # 结构监督置信门控阈值
+export SSRS_PRIOR_QUALITY_CHECK="${SSRS_PRIOR_QUALITY_CHECK:-1}"                     # 训练前是否执行先验质量检查
+export SSRS_PRIOR_QUALITY_STRICT="${SSRS_PRIOR_QUALITY_STRICT:-0}"                   # 先验异常是否直接报错终止（1 严格）
+export SSRS_PRIOR_CHECK_SAMPLES="${SSRS_PRIOR_CHECK_SAMPLES:-0}"                     # 先验检查抽样 tile 数（0 为全量训练 tiles）
 
-export OMP_NUM_THREADS="${OMP_NUM_THREADS:-16}"
-export MKL_NUM_THREADS="${MKL_NUM_THREADS:-16}"
+export OMP_NUM_THREADS="${OMP_NUM_THREADS:-16}"                                      # OpenMP 线程数
+export MKL_NUM_THREADS="${MKL_NUM_THREADS:-16}"                                      # MKL 线程数
 if [[ "$OMP_NUM_THREADS" -le 0 ]]; then
   export OMP_NUM_THREADS=16
 fi
@@ -56,6 +61,9 @@ echo "[Week2] Output root:    $WEEK2_ROOT"
 echo "[Week2] EPOCHS/STEPS:   $SSRS_EPOCHS/$SSRS_EPOCH_STEPS"
 echo "[Week2] BATCH/WINDOW:   $SSRS_BATCH_SIZE/$SSRS_WINDOW_SIZE"
 echo "[Week2] Lambda bdy/obj: $SSRS_LAMBDA_BDY/$SSRS_LAMBDA_OBJ"
+echo "[Week2] Warmup epochs:  $SSRS_STRUCTURE_WARMUP_EPOCHS"
+echo "[Week2] Conf thresh:    $SSRS_STRUCTURE_CONF_THRESH"
+echo "[Week2] Prior check:    $SSRS_PRIOR_QUALITY_CHECK (strict=$SSRS_PRIOR_QUALITY_STRICT, samples=$SSRS_PRIOR_CHECK_SAMPLES)"
 
 echo "[Week2][Check] Running readiness checks..."
 if [[ ! -d "$SSRS_DATA_ROOT" ]]; then

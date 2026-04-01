@@ -53,6 +53,7 @@ CSV_STANDARD_FIELDS = [
     "model", "dataset", "seed", "epoch", "iter", "train_loss",
     "train_loss_ce", "train_loss_boundary", "train_loss_object", "loss_mode",
     "lambda_bdy", "lambda_obj", "structure_supervision",
+    "warmup_scale", "conf_threshold", "conf_kept_ratio",
     "val_metric", "best_val_metric", "lr", "batch_size", "window_size", "stride",
     "total_acc", "mean_f1", "kappa", "mean_miou",
     "roads_f1", "buildings_f1", "low_veg_f1", "trees_f1", "cars_f1", "clutter_f1",
@@ -231,6 +232,87 @@ def test(net, test_ids, all=False, stride=WINDOW_SIZE[0], batch_size=BATCH_SIZE,
         return accuracy
 
 
+def run_prior_quality_check():
+    if os.environ.get("SSRS_PRIOR_QUALITY_CHECK", "1") != "1":
+        return
+    if os.environ.get("SSRS_USE_STRUCTURE_LOSS", "1") != "1":
+        return
+
+    sample_limit = int(os.environ.get("SSRS_PRIOR_CHECK_SAMPLES", "0"))
+    strict_mode = os.environ.get("SSRS_PRIOR_QUALITY_STRICT", "0") == "1"
+
+    ids = train_ids[:sample_limit] if sample_limit > 0 else train_ids
+    if len(ids) == 0 or not BOUNDARY_FOLDER or not OBJECT_FOLDER:
+        print("[PriorCheck] Skip: no train ids or no prior templates configured.")
+        return
+
+    missing_boundary = []
+    missing_object = []
+    bdy_ratios = []
+    obj_ratios = []
+    obj_counts = []
+
+    for tile_id in ids:
+        bdy_path = BOUNDARY_FOLDER.format(tile_id)
+        obj_path = OBJECT_FOLDER.format(tile_id)
+
+        if not os.path.isfile(bdy_path):
+            missing_boundary.append(bdy_path)
+        if not os.path.isfile(obj_path):
+            missing_object.append(obj_path)
+        if (not os.path.isfile(bdy_path)) or (not os.path.isfile(obj_path)):
+            continue
+
+        bdy = np.asarray(io.imread(bdy_path))
+        if bdy.ndim == 3:
+            bdy = bdy[:, :, 0]
+        bdy_bin = (bdy > 0).astype(np.uint8)
+
+        obj = np.asarray(io.imread(obj_path))
+        if obj.ndim == 3:
+            obj = obj[:, :, 0]
+        obj = obj.astype(np.int64)
+
+        bdy_ratios.append(float(np.mean(bdy_bin)))
+        obj_ratios.append(float(np.mean(obj > 0)))
+        obj_counts.append(int(len(np.unique(obj[obj > 0]))))
+
+    print("[PriorCheck] tiles={} missing_bdy={} missing_obj={}".format(len(ids), len(missing_boundary), len(missing_object)))
+    if missing_boundary:
+        print("[PriorCheck] missing boundary examples: {}".format(missing_boundary[:3]))
+    if missing_object:
+        print("[PriorCheck] missing object examples: {}".format(missing_object[:3]))
+
+    if bdy_ratios:
+        bdy_mean = float(np.mean(bdy_ratios))
+        bdy_min = float(np.min(bdy_ratios))
+        bdy_max = float(np.max(bdy_ratios))
+        obj_mean = float(np.mean(obj_ratios))
+        obj_min = float(np.min(obj_ratios))
+        obj_max = float(np.max(obj_ratios))
+        obj_cnt_mean = float(np.mean(obj_counts))
+
+        print("[PriorCheck] boundary positive ratio mean/min/max = {:.6f}/{:.6f}/{:.6f}".format(bdy_mean, bdy_min, bdy_max))
+        print("[PriorCheck] object positive ratio   mean/min/max = {:.6f}/{:.6f}/{:.6f}".format(obj_mean, obj_min, obj_max))
+        print("[PriorCheck] object instances per tile mean = {:.2f}".format(obj_cnt_mean))
+
+        suspicious = []
+        if bdy_mean < 0.003:
+            suspicious.append("boundary ratio too low")
+        if obj_mean < 0.02:
+            suspicious.append("object ratio too low")
+        if obj_cnt_mean < 5:
+            suspicious.append("object instance count too low")
+
+        if suspicious:
+            msg = "[PriorCheck][WARN] Potential low-quality priors: {}".format(", ".join(suspicious))
+            if strict_mode:
+                raise RuntimeError(msg)
+            print(msg)
+    elif strict_mode:
+        raise RuntimeError("[PriorCheck] No valid prior files found under strict mode.")
+
+
 def train(net, optimizer, epochs, scheduler=None, weights=WEIGHTS, save_epoch=1):
     losses = np.zeros(1000000)
     mean_losses = np.zeros(100000000)
@@ -242,6 +324,8 @@ def train(net, optimizer, epochs, scheduler=None, weights=WEIGHTS, save_epoch=1)
     lambda_bdy = float(os.environ.get("SSRS_LAMBDA_BDY", "0.1"))
     lambda_obj = float(os.environ.get("SSRS_LAMBDA_OBJ", "1.0"))
     use_structure = os.environ.get("SSRS_USE_STRUCTURE_LOSS", "1") == "1"
+    warmup_epochs = int(os.environ.get("SSRS_STRUCTURE_WARMUP_EPOCHS", "10"))
+    conf_threshold = float(os.environ.get("SSRS_STRUCTURE_CONF_THRESH", "0.6"))
     scaler = amp.GradScaler("cuda", enabled=use_amp)
     criterion_b = BoundaryLoss()
     criterion_o = ObjectLoss()
@@ -262,9 +346,19 @@ def train(net, optimizer, epochs, scheduler=None, weights=WEIGHTS, save_epoch=1)
     best_ckpt_path = os.path.join(save_dir, '{}_best.pth'.format(MODEL))
     last_ckpt_path = os.path.join(save_dir, '{}_last.pth'.format(MODEL))
 
+    run_prior_quality_check()
+
     for e in range(1, epochs + 1):
+        if warmup_epochs > 0:
+            warmup_scale = min(1.0, float(max(0, e - 1)) / float(warmup_epochs))
+        else:
+            warmup_scale = 1.0
+        lambda_bdy_eff = lambda_bdy * warmup_scale
+        lambda_obj_eff = lambda_obj * warmup_scale
+
         net.train()
         start_time = time.time()
+        conf_kept_ratio_epoch = []
         for batch_idx, (data, dsm, boundary, object_map, target) in enumerate(train_loader):
             optimizer.zero_grad()
 
@@ -290,24 +384,39 @@ def train(net, optimizer, epochs, scheduler=None, weights=WEIGHTS, save_epoch=1)
                     output = net(data_chunk, dsm_chunk, mode='Train')
                     loss_ce = loss_calc(output, target_chunk, weights)
 
+                    if use_structure and conf_threshold > 0.0:
+                        conf_map = torch.softmax(output.detach(), dim=1).amax(dim=1)
+                        conf_mask = (conf_map >= conf_threshold).float()
+                    else:
+                        conf_mask = torch.ones_like(boundary_chunk, dtype=output.dtype)
+
+                    conf_kept_ratio_epoch.append(float(conf_mask.mean().item()))
+
+                    boundary_gated = boundary_chunk.float() * conf_mask
+                    object_gated = torch.where(
+                        conf_mask > 0.5,
+                        object_chunk,
+                        torch.zeros_like(object_chunk),
+                    )
+
                     if use_structure and loss_mode in ("SEG+BDY", "SEG+BDY+OBJ"):
-                        loss_boundary = criterion_b(output, boundary_chunk)
+                        loss_boundary = criterion_b(output, boundary_gated)
                     else:
                         loss_boundary = output.new_zeros(())
 
                     if use_structure and loss_mode in ("SEG+OBJ", "SEG+BDY+OBJ"):
-                        loss_object = criterion_o(output, object_chunk)
+                        loss_object = criterion_o(output, object_gated)
                     else:
                         loss_object = output.new_zeros(())
 
                     if loss_mode == "SEG":
                         loss_full = loss_ce
                     elif loss_mode == "SEG+BDY":
-                        loss_full = loss_ce + lambda_bdy * loss_boundary
+                        loss_full = loss_ce + lambda_bdy_eff * loss_boundary
                     elif loss_mode == "SEG+OBJ":
-                        loss_full = loss_ce + lambda_obj * loss_object
+                        loss_full = loss_ce + lambda_obj_eff * loss_object
                     else:
-                        loss_full = loss_ce + lambda_bdy * loss_boundary + lambda_obj * loss_object
+                        loss_full = loss_ce + lambda_bdy_eff * loss_boundary + lambda_obj_eff * loss_object
 
                     loss = loss_full / num_chunks
 
@@ -368,9 +477,12 @@ def train(net, optimizer, epochs, scheduler=None, weights=WEIGHTS, save_epoch=1)
                 "train_loss_boundary": float(batch_loss_boundary),
                 "train_loss_object": float(batch_loss_object),
                 "loss_mode": loss_mode,
-                "lambda_bdy": float(lambda_bdy),
-                "lambda_obj": float(lambda_obj),
+                "lambda_bdy": float(lambda_bdy_eff),
+                "lambda_obj": float(lambda_obj_eff),
                 "structure_supervision": int(use_structure),
+                "warmup_scale": float(warmup_scale),
+                "conf_threshold": float(conf_threshold),
+                "conf_kept_ratio": float(np.mean(conf_kept_ratio_epoch)) if conf_kept_ratio_epoch else 1.0,
                 "val_metric": float(MIoU),
                 "best_val_metric": float(max(MIoU_best, MIoU)),
                 "lr": float(current_lr),
