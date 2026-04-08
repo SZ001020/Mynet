@@ -76,6 +76,9 @@ def append_csv_logger(csv_path, row_dict):
 
 init_csv_logger(CSV_LOG_PATH)
 
+print("[MFNet/train.py] This script is for supervised same-domain training.")
+print("[MFNet/train.py] For week-3 weak-cross-domain prototype, use MFNet/train_uda_struct_v1.py.")
+
 os.makedirs('./resultsv', exist_ok=True)
 os.makedirs('./resultsp', exist_ok=True)
 os.makedirs('./resultsh', exist_ok=True)

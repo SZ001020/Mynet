@@ -539,7 +539,7 @@ class UNetFormer(nn.Module):
         self.decoder = Decoder(encoder_channels, decode_channels, dropout, window_size, num_classes)
         # self.decoder = Decoder_single(encoder_channels, decode_channels, dropout, window_size, num_classes)
 
-    def forward(self, x, y, mode='Train'):
+    def forward(self, x, y, mode='Train', return_feat=False, feat_levels=('high',)):
         h, w = x.size()[-2:]
         y = torch.unsqueeze(y, dim=1).repeat(1,3,1,1)
         deepx, deepy = self.image_encoder(x, y) # 256*16*16
@@ -569,4 +569,12 @@ class UNetFormer(nn.Module):
         # res4 = deepx + deepy
         # x = self.decoder(res4, h, w)
         
+        if return_feat:
+            feat_dict = {}
+            if 'mid' in feat_levels:
+                feat_dict['mid'] = res3
+            if 'high' in feat_levels:
+                feat_dict['high'] = res4
+            return x, feat_dict
+
         return x

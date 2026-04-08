@@ -1,0 +1,30 @@
+experiment_name: week3_weak_cross
+mode: uda-high  # source-only | uda-high
+
+source_dataset: Vaihingen
+target_dataset: Potsdam
+data_root: ../autodl-tmp/dataset
+
+train:
+  seed: 42
+  epochs: 20
+  epoch_steps: 400
+  batch_size: 12
+  window_size: 256
+  eval_stride: 32
+  num_workers: 8
+  use_amp: true
+
+optimizer:
+  seg_lr: 0.01
+  adv_lr: 0.001
+  weight_decay: 0.0005
+
+loss:
+  lambda_adv: 0.001
+  grl_lambda: 1.0
+
+output:
+  log_dir: ../runs/week3_weak_cross
+  save_best: true
+  save_last: true
