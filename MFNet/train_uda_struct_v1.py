@@ -67,6 +67,83 @@ def cross_entropy_2d(input_, target, weight=None):
     return F.cross_entropy(output, target, weight=weight, reduction="mean")
 
 
+def object_process(object_map):
+    ids = np.unique(object_map)
+    new_id = 1
+    for instance_id in ids:
+        if instance_id == 0:
+            continue
+        object_map = np.where(object_map == instance_id, new_id, object_map)
+        new_id += 1
+    return object_map
+
+
+class ObjectLoss(torch.nn.Module):
+    def __init__(self, max_object=50):
+        super().__init__()
+        self.max_object = max_object
+
+    def forward(self, pred, gt):
+        device = pred.device
+        num_object = int(torch.max(gt).item()) + 1
+        num_object = min(num_object, self.max_object)
+        total_object_loss = pred.new_zeros(())
+
+        for object_index in range(1, num_object):
+            mask = torch.where(gt == object_index, 1.0, 0.0).unsqueeze(1).to(device)
+            num_point = mask.sum(2).sum(2).unsqueeze(2).unsqueeze(2)
+            if torch.all(num_point == 0):
+                continue
+            avg_pool = mask / (num_point + 1.0)
+
+            object_feature = pred.mul(avg_pool)
+            avg_feature = object_feature.sum(2).sum(2).unsqueeze(2).unsqueeze(2).repeat(1, 1, gt.shape[1], gt.shape[2])
+            avg_feature = avg_feature.mul(mask)
+
+            object_loss = torch.nn.functional.mse_loss(num_point * object_feature, avg_feature, reduction="mean")
+            total_object_loss = total_object_loss + object_loss
+
+        return total_object_loss
+
+
+class BoundaryLoss(torch.nn.Module):
+    def __init__(self, theta0=3, theta=5):
+        super().__init__()
+        self.theta0 = theta0
+        self.theta = theta
+
+    def forward(self, pred, gt):
+        n, _, _, _ = pred.shape
+
+        pred_prob = torch.softmax(pred, dim=1)
+        confidence = pred_prob.max(dim=1).values
+        pred_boundary_prob = 1.0 - confidence
+        gt = gt.float()
+
+        gt_b = F.max_pool2d(1 - gt, kernel_size=self.theta0, stride=1, padding=(self.theta0 - 1) // 2)
+        gt_b -= 1 - gt
+
+        pred_b = F.max_pool2d(pred_boundary_prob, kernel_size=self.theta0, stride=1, padding=(self.theta0 - 1) // 2)
+        pred_b = torch.clamp(pred_b - pred_boundary_prob, min=0.0)
+
+        gt_b_ext = F.max_pool2d(gt_b, kernel_size=self.theta, stride=1, padding=(self.theta - 1) // 2)
+        pred_b_ext = F.max_pool2d(pred_b, kernel_size=self.theta, stride=1, padding=(self.theta - 1) // 2)
+
+        gt_b = gt_b.view(n, -1)
+        pred_b = pred_b.view(n, -1)
+        gt_b_ext = gt_b_ext.view(n, -1)
+        pred_b_ext = pred_b_ext.view(n, -1)
+
+        valid = (gt_b.sum(dim=1) > 0) | (pred_b.sum(dim=1) > 0)
+        if not torch.any(valid):
+            return pred.new_zeros(())
+
+        p_score = torch.sum(pred_b * gt_b_ext, dim=1) / (torch.sum(pred_b, dim=1) + 1e-7)
+        r_score = torch.sum(pred_b_ext * gt_b, dim=1) / (torch.sum(gt_b, dim=1) + 1e-7)
+        bf1 = 2 * p_score * r_score / (p_score + r_score + 1e-7)
+        return torch.mean((1 - bf1)[valid])
+
+
 ISPRS_PALETTE = {
     (255, 255, 255): 0,
     (0, 0, 255): 1,
@@ -80,6 +157,8 @@ ISPRS_PALETTE = {
 
 def get_protocol(dataset: str, data_root: str):
     root = os.path.join(data_root, dataset)
+    bdy_env = os.environ.get("SSRS_BOUNDARY_TEMPLATE", "")
+    obj_env = os.environ.get("SSRS_OBJECT_TEMPLATE", "")
     if dataset == "Vaihingen":
         train_ids = ["1", "3", "23", "26", "7", "11", "13", "28", "17", "32", "34", "37"]
         test_ids = ["5", "21", "15", "30"]
@@ -87,6 +166,8 @@ def get_protocol(dataset: str, data_root: str):
         dsm_t = os.path.join(root, "dsm", "dsm_09cm_matching_area{}.tif")
         label_t = os.path.join(root, "gts_for_participants", "top_mosaic_09cm_area{}.tif")
         eroded_t = os.path.join(root, "gts_eroded_for_participants", "top_mosaic_09cm_area{}_noBoundary.tif")
+        boundary_t = bdy_env or os.path.join(root, "sam_boundary_merge", "ISPRS_merge_{}.tif")
+        object_t = obj_env or os.path.join(root, "V_merge", "V_merge_{}.tif")
         stride = 32
     elif dataset == "Potsdam":
         train_ids = ["6_10", "7_10", "2_12", "3_11", "2_10", "7_8", "5_10", "3_12", "5_12", "7_11", "7_9", "6_9", "7_7", "4_12", "6_8", "6_12", "6_7", "4_11"]
@@ -95,6 +176,8 @@ def get_protocol(dataset: str, data_root: str):
         dsm_t = os.path.join(root, "1_DSM_normalisation", "dsm_potsdam_{}_normalized_lastools.jpg")
         label_t = os.path.join(root, "5_Labels_for_participants", "top_potsdam_{}_label.tif")
         eroded_t = os.path.join(root, "5_Labels_for_participants_no_Boundary", "top_potsdam_{}_label_noBoundary.tif")
+        boundary_t = bdy_env or os.path.join(root, "sam_boundary_merge", "ISPRS_merge_{}.tif")
+        object_t = obj_env or os.path.join(root, "P_merge", "P_merge_{}.tif")
         stride = 128
     else:
         raise ValueError(f"Unsupported dataset: {dataset}")
@@ -106,41 +189,58 @@ def get_protocol(dataset: str, data_root: str):
         "dsm_t": dsm_t,
         "label_t": label_t,
         "eroded_t": eroded_t,
+        "boundary_t": boundary_t,
+        "object_t": object_t,
         "stride": stride,
     }
 
 
 class SourceDataset(torch.utils.data.Dataset):
-    def __init__(self, proto: Dict, window_size: Tuple[int, int], epoch_steps: int, cache=True):
+    def __init__(self, proto: Dict, window_size: Tuple[int, int], epoch_steps: int, cache=True, structure_supervision=False, require_structure_priors=False):
         self.ids = proto["train_ids"]
         self.data_t = proto["data_t"]
         self.dsm_t = proto["dsm_t"]
         self.label_t = proto["label_t"]
+        self.boundary_t = proto.get("boundary_t", "")
+        self.object_t = proto.get("object_t", "")
         self.window_size = window_size
         self.epoch_steps = epoch_steps
         self.cache = cache
+        self.structure_supervision = structure_supervision
+        self.require_structure_priors = require_structure_priors
         self.data_cache = {}
         self.dsm_cache = {}
         self.label_cache = {}
+        self.boundary_cache = {}
+        self.object_cache = {}
 
         for tile_id in self.ids:
             for p in [self.data_t.format(tile_id), self.dsm_t.format(tile_id), self.label_t.format(tile_id)]:
                 if not os.path.isfile(p):
                     raise FileNotFoundError(p)
+            if self.structure_supervision and self.require_structure_priors:
+                if self.boundary_t and (not os.path.isfile(self.boundary_t.format(tile_id))):
+                    raise FileNotFoundError(self.boundary_t.format(tile_id))
+                if self.object_t and (not os.path.isfile(self.object_t.format(tile_id))):
+                    raise FileNotFoundError(self.object_t.format(tile_id))
 
     def __len__(self):
         return self.epoch_steps
 
-    def _augment(self, img, dsm, label):
+    def _augment(self, img, dsm, boundary, object_map, label):
         if random.random() < 0.5:
             img = img[:, ::-1, :]
             dsm = dsm[::-1, :]
+            boundary = boundary[::-1, :]
+            object_map = object_map[::-1, :]
             label = label[::-1, :]
         if random.random() < 0.5:
             img = img[:, :, ::-1]
             dsm = dsm[:, ::-1]
+            boundary = boundary[:, ::-1]
+            object_map = object_map[:, ::-1]
             label = label[:, ::-1]
-        return np.copy(img), np.copy(dsm), np.copy(label)
+        return np.copy(img), np.copy(dsm), np.copy(boundary), np.copy(object_map), np.copy(label)
 
     def __getitem__(self, idx):
         tile_id = random.choice(self.ids)
@@ -148,6 +248,8 @@ class SourceDataset(torch.utils.data.Dataset):
             data = self.data_cache[tile_id]
             dsm = self.dsm_cache[tile_id]
             label = self.label_cache[tile_id]
+            boundary = self.boundary_cache[tile_id]
+            object_map = self.object_cache[tile_id]
         else:
             img = io.imread(self.data_t.format(tile_id))
             if img.ndim == 3 and img.shape[2] > 3:
@@ -161,10 +263,27 @@ class SourceDataset(torch.utils.data.Dataset):
             label_rgb = np.asarray(io.imread(self.label_t.format(tile_id)))
             label = convert_from_color(label_rgb, ISPRS_PALETTE).astype("int64")
 
+            if self.structure_supervision and self.boundary_t and os.path.isfile(self.boundary_t.format(tile_id)):
+                boundary = np.asarray(io.imread(self.boundary_t.format(tile_id)), dtype="float32")
+                if boundary.ndim == 3:
+                    boundary = boundary[:, :, 0]
+                boundary = (boundary > 0).astype("int64")
+            else:
+                boundary = np.zeros(label.shape, dtype="int64")
+
+            if self.structure_supervision and self.object_t and os.path.isfile(self.object_t.format(tile_id)):
+                object_map = np.asarray(io.imread(self.object_t.format(tile_id)), dtype="int64")
+                if object_map.ndim == 3:
+                    object_map = object_map[:, :, 0]
+            else:
+                object_map = np.zeros(label.shape, dtype="int64")
+
             if self.cache:
                 self.data_cache[tile_id] = data
                 self.dsm_cache[tile_id] = dsm
                 self.label_cache[tile_id] = label
+                self.boundary_cache[tile_id] = boundary
+                self.object_cache[tile_id] = object_map
 
         h, w = data.shape[-2:]
         wh, ww = self.window_size
@@ -174,10 +293,19 @@ class SourceDataset(torch.utils.data.Dataset):
 
         data_p = data[:, x1:x2, y1:y2]
         dsm_p = dsm[x1:x2, y1:y2]
+        boundary_p = boundary[x1:x2, y1:y2]
+        object_p = object_map[x1:x2, y1:y2]
         label_p = label[x1:x2, y1:y2]
-        data_p, dsm_p, label_p = self._augment(data_p, dsm_p, label_p)
+        data_p, dsm_p, boundary_p, object_p, label_p = self._augment(data_p, dsm_p, boundary_p, object_p, label_p)
+        object_p = object_process(object_p)
 
-        return torch.from_numpy(data_p), torch.from_numpy(dsm_p), torch.from_numpy(label_p)
+        return (
+            torch.from_numpy(data_p),
+            torch.from_numpy(dsm_p),
+            torch.from_numpy(boundary_p),
+            torch.from_numpy(object_p),
+            torch.from_numpy(label_p),
+        )
 
 
 class TargetDataset(torch.utils.data.Dataset):
@@ -335,9 +463,21 @@ def main():
     adv_lambda = float(os.environ.get("SSRS_LAMBDA_ADV", "0.001"))
     adv_lr = float(os.environ.get("SSRS_ADV_LR", str(base_lr)))
     grl_lambda = float(os.environ.get("SSRS_GRL_LAMBDA", "1.0"))
+    loss_mode = os.environ.get("SSRS_LOSS_MODE", "SEG")
+    use_structure_env = os.environ.get("SSRS_USE_STRUCTURE_LOSS", "0") == "1"
+    lambda_bdy = float(os.environ.get("SSRS_LAMBDA_BDY", "0.1"))
+    lambda_obj = float(os.environ.get("SSRS_LAMBDA_OBJ", "1.0"))
+    warmup_epochs = int(os.environ.get("SSRS_STRUCTURE_WARMUP_EPOCHS", "10"))
+    conf_threshold = float(os.environ.get("SSRS_STRUCTURE_CONF_THRESH", "0.6"))
+    require_structure_priors = os.environ.get("SSRS_REQUIRE_STRUCTURE_PRIORS", "0") == "1"
     eval_stride = int(os.environ.get("SSRS_EVAL_STRIDE", "32"))
     eval_every = max(1, int(os.environ.get("SSRS_EVAL_EVERY", "1")))
     eval_max_tiles = int(os.environ.get("SSRS_EVAL_MAX_TILES", "0"))
+
+    valid_loss_modes = {"SEG", "SEG+BDY", "SEG+OBJ", "SEG+BDY+OBJ"}
+    if loss_mode not in valid_loss_modes:
+        raise ValueError(f"Unsupported SSRS_LOSS_MODE='{loss_mode}', expected one of {sorted(valid_loss_modes)}")
+    use_structure = use_structure_env and (loss_mode != "SEG")
 
     log_dir = os.environ.get("SSRS_LOG_DIR", "./runs/week3_weak_cross")
     os.makedirs(log_dir, exist_ok=True)
@@ -359,13 +499,24 @@ def main():
     print(f"[Week3] mode={mode}, source={source_dataset}, target={target_dataset}")
     print(f"[Week3] epochs={epochs}, steps={epoch_steps}, batch={batch_size}, lr={base_lr}, lambda_adv={adv_lambda}")
     print(
+        f"[Week3] loss_mode={loss_mode}, structure={int(use_structure)}, "
+        f"lambda_bdy={lambda_bdy}, lambda_obj={lambda_obj}, conf_thresh={conf_threshold}"
+    )
+    print(
         f"[Week3] workers={num_workers}, pin_memory={pin_memory}, "
         f"persistent_workers={persistent_workers}, prefetch_factor={prefetch_factor}, drop_last={drop_last}"
     )
     print(f"[Week3] data_cache={data_cache} (warning: with workers>0, cache=True may consume large host RAM)")
     print(f"[Week3] eval_every={eval_every}, eval_stride={eval_stride}, eval_max_tiles={eval_max_tiles} (0=all)")
 
-    src_set = SourceDataset(src_proto, window_size=window_size, epoch_steps=batch_size * epoch_steps, cache=data_cache)
+    src_set = SourceDataset(
+        src_proto,
+        window_size=window_size,
+        epoch_steps=batch_size * epoch_steps,
+        cache=data_cache,
+        structure_supervision=use_structure,
+        require_structure_priors=require_structure_priors,
+    )
     tgt_set = TargetDataset(tgt_proto, window_size=window_size, epoch_steps=batch_size * epoch_steps, cache=data_cache)
 
     loader_kwargs = {
@@ -394,12 +545,16 @@ def main():
 
     scaler = amp.GradScaler("cuda", enabled=os.environ.get("SSRS_MFNET_USE_AMP", "1") == "1")
     class_weights = torch.ones(6, device=device)
+    criterion_b = BoundaryLoss()
+    criterion_o = ObjectLoss()
 
     with open(csv_path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow([
             "epoch", "iter", "mode", "source", "target", "train_seg_loss", "train_adv_feat_loss",
-            "train_adv_disc_loss", "lambda_adv", "target_mean_miou", "target_mean_f1", "target_total_acc", "lr", "timestamp"
+            "train_adv_disc_loss", "train_bdy_loss", "train_obj_loss", "loss_mode",
+            "lambda_adv", "lambda_bdy", "lambda_obj", "structure_supervision", "conf_threshold", "conf_kept_ratio",
+            "target_mean_miou", "target_mean_f1", "target_total_acc", "lr", "timestamp"
         ])
 
     iter_idx = 0
@@ -414,8 +569,18 @@ def main():
         losses_seg = []
         losses_adv_feat = []
         losses_adv_disc = []
+        losses_bdy = []
+        losses_obj = []
+        conf_kept_ratios = []
 
-        for src_data, src_dsm, src_label in tqdm(src_loader, desc=f"Epoch {epoch}", leave=False):
+        if warmup_epochs > 0:
+            warmup_scale = min(1.0, float(max(0, epoch - 1)) / float(warmup_epochs))
+        else:
+            warmup_scale = 1.0
+        lambda_bdy_eff = lambda_bdy * warmup_scale
+        lambda_obj_eff = lambda_obj * warmup_scale
+
+        for src_data, src_dsm, src_boundary, src_object, src_label in tqdm(src_loader, desc=f"Epoch {epoch}", leave=False):
             try:
                 tgt_data, tgt_dsm = next(tgt_iter)
             except StopIteration:
@@ -424,6 +589,8 @@ def main():
 
             src_data = Variable(src_data.to(device, non_blocking=True))
             src_dsm = Variable(src_dsm.to(device, non_blocking=True))
+            src_boundary = Variable(src_boundary.to(device, non_blocking=True))
+            src_object = Variable(src_object.to(device, non_blocking=True))
             src_label = Variable(src_label.to(device, non_blocking=True))
             tgt_data = Variable(tgt_data.to(device, non_blocking=True))
             tgt_dsm = Variable(tgt_dsm.to(device, non_blocking=True))
@@ -432,6 +599,26 @@ def main():
             with amp.autocast("cuda", enabled=scaler.is_enabled()):
                 src_logits, src_feats = net(src_data, src_dsm, mode="Train", return_feat=True, feat_levels=("high",))
                 loss_seg = cross_entropy_2d(src_logits, src_label, weight=class_weights)
+
+                if use_structure and conf_threshold > 0.0:
+                    conf_map = torch.softmax(src_logits.detach(), dim=1).amax(dim=1)
+                    conf_mask = (conf_map >= conf_threshold).float()
+                else:
+                    conf_mask = torch.ones_like(src_boundary, dtype=src_logits.dtype)
+                conf_kept_ratios.append(float(conf_mask.mean().item()))
+
+                boundary_gated = src_boundary.float() * conf_mask
+                object_gated = torch.where(conf_mask > 0.5, src_object, torch.zeros_like(src_object))
+
+                if use_structure and loss_mode in {"SEG+BDY", "SEG+BDY+OBJ"}:
+                    loss_bdy = criterion_b(src_logits, boundary_gated)
+                else:
+                    loss_bdy = src_logits.new_zeros(())
+
+                if use_structure and loss_mode in {"SEG+OBJ", "SEG+BDY+OBJ"}:
+                    loss_obj = criterion_o(src_logits, object_gated)
+                else:
+                    loss_obj = src_logits.new_zeros(())
 
                 loss_adv_feat = src_logits.new_zeros(())
                 if mode == "uda-high":
@@ -442,7 +629,7 @@ def main():
                         disc.domain_loss(src_dom_logits, 0.0) + disc.domain_loss(tgt_dom_logits, 1.0)
                     )
 
-                total_loss = loss_seg + adv_lambda * loss_adv_feat
+                total_loss = loss_seg + adv_lambda * loss_adv_feat + lambda_bdy_eff * loss_bdy + lambda_obj_eff * loss_obj
 
             if scaler.is_enabled():
                 scaler.scale(total_loss).backward()
@@ -471,6 +658,8 @@ def main():
             losses_seg.append(float(loss_seg.item()))
             losses_adv_feat.append(float(loss_adv_feat.item()))
             losses_adv_disc.append(float(loss_adv_disc.item()))
+            losses_bdy.append(float(loss_bdy.item()))
+            losses_obj.append(float(loss_obj.item()))
 
         do_eval = (epoch % eval_every == 0) or (epoch == epochs)
         if do_eval:
@@ -494,6 +683,9 @@ def main():
         mean_seg = float(np.mean(losses_seg)) if losses_seg else 0.0
         mean_adv_feat = float(np.mean(losses_adv_feat)) if losses_adv_feat else 0.0
         mean_adv_disc = float(np.mean(losses_adv_disc)) if losses_adv_disc else 0.0
+        mean_bdy = float(np.mean(losses_bdy)) if losses_bdy else 0.0
+        mean_obj = float(np.mean(losses_obj)) if losses_obj else 0.0
+        conf_kept_ratio = float(np.mean(conf_kept_ratios)) if conf_kept_ratios else 1.0
         lr_now = float(optimizer_seg.param_groups[0]["lr"])
 
         with open(csv_path, "a", newline="") as f:
@@ -507,7 +699,15 @@ def main():
                 mean_seg,
                 mean_adv_feat,
                 mean_adv_disc,
+                mean_bdy,
+                mean_obj,
+                loss_mode,
                 adv_lambda,
+                lambda_bdy_eff,
+                lambda_obj_eff,
+                int(use_structure),
+                conf_threshold,
+                conf_kept_ratio,
                 target_metrics["mean_miou"],
                 target_metrics["mean_f1"],
                 target_metrics["total_acc"],
@@ -517,12 +717,12 @@ def main():
 
         if do_eval:
             print(
-                f"[Week3][Epoch {epoch}] seg={mean_seg:.4f} adv_f={mean_adv_feat:.4f} "
+                f"[Week3][Epoch {epoch}] seg={mean_seg:.4f} bdy={mean_bdy:.4f} obj={mean_obj:.4f} adv_f={mean_adv_feat:.4f} "
                 f"adv_d={mean_adv_disc:.4f} target_mIoU={target_metrics['mean_miou']:.4f}"
             )
         else:
             print(
-                f"[Week3][Epoch {epoch}] seg={mean_seg:.4f} adv_f={mean_adv_feat:.4f} "
+                f"[Week3][Epoch {epoch}] seg={mean_seg:.4f} bdy={mean_bdy:.4f} obj={mean_obj:.4f} adv_f={mean_adv_feat:.4f} "
                 f"adv_d={mean_adv_disc:.4f} target_mIoU=SKIP"
             )
 
