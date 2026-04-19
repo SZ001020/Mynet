@@ -5,6 +5,7 @@
 - 在主线稳定后，再条件性扩展到 multi-level 对齐和 prompt-guided 伪标签精炼。
 - 主线实验以 ISPRS Vaihingen/Potsdam 为核心，LoveDA 仅作为可选压力测试。
 - 保持与现有代码兼容，采用最小侵入式改造。
+- 执行转向（第 6 周起）：同域机制闭环优先，跨域新增实验后置。
 
 ## 2. 实现原则
 
@@ -22,6 +23,11 @@
 
 4. 阶段 D
    实现条件增强 E2：prompt-guided 伪标签精炼，仅在阶段 B 或 C 稳定后接入。
+
+第 6 周起执行优先级补充：
+1. 先完成 same-domain 的多 seed 机制证据与组件去留判断。
+2. 再将通过门槛的组件回灌到 weak-cross-domain。
+3. 未通过门槛的组件不进入跨域主线。
 
 ### 2.2 代码目标必须服务文档主线
 代码实现不应默认把所有扩展都打开。正式默认配置建议只启用：
@@ -177,6 +183,11 @@ multi-level 和 prompt 分支都应由配置显式开启。
 2. UDA 稳定后，再尝试 adv_levels = [mid, high]。
 3. 只有当 fixed-threshold 伪标签已经可用时，才启用 lambda_prompt > 0。
 
+第 6 周起执行补充：
+1. 同域先执行结构与模态机制验证（协议 A）。
+2. 仅将同域中证据充分的配置迁移到协议 B。
+3. 跨域阶段不再做大规模盲目网格，只做门槛通过配置复验。
+
 ## 7. 主线训练协议
 
 ### 协议 A：Same-domain
@@ -184,11 +195,13 @@ multi-level 和 prompt 分支都应由配置显式开启。
 - 启用 L_seg_src + L_bdy + L_obj。
 - 若做 prompt feasibility check，可启用 L_prompt，但不建议作为主线默认项。
 - 不启用 L_adv。
+- 第 6 周起优先执行该协议以完成机制闭环和多 seed 稳态统计。
 
 ### 协议 B：Weak-cross-domain
 - source 为 Vaihingen，target 为 Potsdam，或反向。
 - 启用 L_seg_src + L_adv + L_bdy + L_obj。
 - 若 prompt 分支通过阶段门槛，再加 L_prompt。
+- 第 6 周之后仅回灌协议 A 中通过门槛的模块与配置。
 
 ### 协议 C：Optional stress
 - 可选 LoveDA，仅用于压力测试与泛化展示。
@@ -244,6 +257,10 @@ multi-level 和 prompt 分支都应由配置显式开启。
 - 能保存最优 checkpoint 与可视化预测图。
 - 相比 MFNet 纯监督基线，weak-cross-domain target mIoU 有正向提升。
 - 能输出至少 1 张组件消融表或对应图像证据。
+
+第 6 周起验收顺序：
+1. 先验收 same-domain 多 seed 机制证据。
+2. 再验收 weak-cross-domain 的迁移增益与稳定性。
 
 ### 10.2 条件增强验收
 - multi-level 对齐只有在对比 single-level 后确有收益时才保留。

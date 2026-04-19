@@ -49,6 +49,7 @@ def parse_args():
     p.add_argument("--batch-size", type=int, default=8)
     p.add_argument("--stride", type=int, default=128)
     p.add_argument("--panel-width", type=int, default=720, help="width of each sub-panel after resize")
+    p.add_argument("--png-compress-level", type=int, default=9, help="PNG compress level (0-9)")
     p.add_argument("--output-dir", default=None, help="output directory")
     return p.parse_args()
 
@@ -293,7 +294,12 @@ def main():
         ])
 
         out_path = os.path.join(out_dir, f"preview_tile_{tile_id}.png")
-        Image.fromarray(panel).save(out_path, format="PNG", optimize=True, compress_level=9)
+        Image.fromarray(panel).save(
+            out_path,
+            format="PNG",
+            optimize=True,
+            compress_level=max(0, min(9, int(args.png_compress_level))),
+        )
         print(f"[Saved] {out_path}")
 
     print(f"[Done] output_dir={out_dir}")

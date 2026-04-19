@@ -21,6 +21,8 @@ def parse_args():
     parser.add_argument("--stride", type=int, default=32, help="Sliding window stride")
     parser.add_argument("--num-zooms", type=int, default=2, help="Number of local zoom crops per tile")
     parser.add_argument("--zoom-size", type=int, default=384, help="Square crop size for local boundary zoom")
+    parser.add_argument("--max-panel-width", type=int, default=3200, help="Max width for montage/zoom PNGs")
+    parser.add_argument("--png-compress-level", type=int, default=9, help="PNG compress level (0-9)")
     return parser.parse_args()
 
 
@@ -189,6 +191,17 @@ def crop_img(img: np.ndarray, x: int, y: int, c: int) -> np.ndarray:
     return np.ascontiguousarray(img[y:y + c, x:x + c])
 
 
+def save_png(path: str, image: np.ndarray, compress_level: int, max_width: int = 0):
+    if image.dtype != np.uint8:
+        image = np.clip(image, 0, 255).astype(np.uint8)
+    pil = Image.fromarray(image)
+    if max_width > 0 and pil.width > max_width:
+        new_h = int(round(pil.height * (max_width / float(pil.width))))
+        pil = pil.resize((max_width, max(1, new_h)), resample=Image.Resampling.BILINEAR)
+    level = max(0, min(9, int(compress_level)))
+    pil.save(path, format="PNG", optimize=True, compress_level=level)
+
+
 def write_summary(summary_path: str, lines: List[str]):
     with open(summary_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines).rstrip() + "\n")
@@ -273,7 +286,7 @@ def main():
             preds_by_group[run_name][tile_id] = pred
 
             pred_rgb = mf_utils.convert_to_color(pred)
-            io.imsave(os.path.join(out_dir, f"tile_{tile_id}_pred.png"), pred_rgb)
+            save_png(os.path.join(out_dir, f"tile_{tile_id}_pred.png"), pred_rgb, compress_level=args.png_compress_level)
 
         del net
         torch.cuda.empty_cache()
@@ -316,7 +329,7 @@ def main():
 
         merged = hstack_panels(panels)
         montage_rel = f"visual_compare/montage_tile_{tile_id}.png"
-        Image.fromarray(merged).save(os.path.join(run_root, montage_rel))
+        save_png(os.path.join(run_root, montage_rel), merged, compress_level=args.png_compress_level, max_width=args.max_panel_width)
         montage_paths.append(montage_rel)
 
         # Build local zoom montages for boundary-sensitive comparison
@@ -344,7 +357,7 @@ def main():
 
             zoom_merged = hstack_panels(zoom_panels)
             zoom_rel = f"visual_compare/zoom_tile_{tile_id}_{idx}.png"
-            Image.fromarray(zoom_merged).save(os.path.join(run_root, zoom_rel))
+            save_png(os.path.join(run_root, zoom_rel), zoom_merged, compress_level=args.png_compress_level, max_width=args.max_panel_width)
             zoom_paths.append(zoom_rel)
 
     # Rewrite summary markdown in Chinese with detailed analysis

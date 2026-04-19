@@ -1,0 +1,107 @@
+# REFERENCES
+
+[1] L. Gómez-Chova, D. Tuia, G. Moser, and G. Camps-Valls, “Multimodal classification of remote sensing images: A review and future directions,” Proc. IEEE, vol. 103, no. 9, pp. 1560–1584, Sep. 2015.   
+[2] J. Li et al., “Deep learning in multimodal remote sensing data fusion: A comprehensive review,” Int. J. Appl. Earth Observ. Geoinf., vol. 112, Aug. 2022, Art. no. 102926.   
+[3] J. Yao, B. Zhang, C. Li, D. Hong, and J. Chanussot, “Extended vision transformer (ExViT) for land use and land cover classification: A multimodal deep learning framework,” IEEE Trans. Geosci. Remote Sens., vol. 61, 2023, Art. no. 5514415.   
+[4] D. Hong, J. Hu, J. Yao, J. Chanussot, and X. X. Zhu, “Multimodal remote sensing benchmark datasets for land cover classification with a shared and specific feature learning model,” ISPRS J. Photogramm. Remote Sens., vol. 178, pp. 68–80, Aug. 2021.   
+[5] P. Karmakar, S. W. Teng, M. Murshed, S. Pang, Y. Li, and H. Lin, “Crop monitoring by multimodal remote sensing: A review,” Remote Sens. Appl., Soc. Environ., vol. 33, Jan. 2024, Art. no. 101093.   
+[6] N. Algiriyage, R. Prasanna, K. Stock, E. E. H. Doyle, and D. Johnston, “Multi-source multimodal data and deep learning for disaster response: A systematic review,” Social Netw. Comput. Sci., vol. 3, no. 1, pp. 1–29, Jan. 2022.   
+[7] X. Zhang, W. Yu, M.-O. Pun, and W. Shi, “Cross-domain landslide mapping from large-scale remote sensing images using prototype-guided domain-aware progressive representation learning,” ISPRS J. Photogramm. Remote Sens., vol. 197, pp. 1–17, Mar. 2023.   
+[8] O. Ronneberger, P. Fischer, and T. Brox, “U-net: Convolutional networks for biomedical image segmentation,” in Proc. Int. Conf. Med. Image Comput. Comput.-Assist. Intervent., 2015, pp. 234–241.   
+[9] R. Li, S. Zheng, C. Zhang, C. Duan, L. Wang, and P. M. Atkinson, “ABCNet: Attentive bilateral contextual network for efficient semantic segmentation of fine-resolution remotely sensed imagery,” ISPRS J. Photogramm. Remote Sens., vol. 181, pp. 84–98, Nov. 2021.   
+[10] C. Hazirbas, L. Ma, C. Domokos, and D. Cremers, “FuseNet: Incorporating depth into semantic segmentation via fusion-based CNN architecture,” in Proc. Asian Conf. Comput. Vis., 2016, pp. 213–228.   
+[11] X. Zhang, W. Yu, and M.-O. Pun, “Multilevel deformable attentionaggregated networks for change detection in bitemporal remote sensing imagery,” IEEE Trans. Geosci. Remote Sens., vol. 60, 2022, Art. no. 5621518.   
+[12] A. Vaswani et al., “Attention is all you need,” in Proc. Adv. Neural Inf. Process. Syst., vol. 30, 2017, pp. 1–11.   
+[13] A. Dosovitskiy et al., “An image is worth $1 6 \times 1 6$ words: Transformers for image recognition at scale,” in Proc. Int. Conf. Learn. Represent., 2021, pp. 1–22.   
+[14] Z. Liu et al., “Swin transformer: Hierarchical vision transformer using shifted windows,” in Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV), Oct. 2021, pp. 10012–10022.   
+[15] X. Ma, X. Zhang, and M.-O. Pun, “A crossmodal multiscale fusion network for semantic segmentation of remote sensing data,” IEEE J. Sel. Topics Appl. Earth Observ. Remote Sens., vol. 15, pp. 3463–3474, 2022.   
+[16] S. He, H. Yang, X. Zhang, and X. Li, “MFTransNet: A multi-modal fusion with CNN-transformer network for semantic segmentation of HSR remote sensing images,” Mathematics, vol. 11, no. 3, p. 722, Feb. 2023.   
+[17] X. Ma, X. Zhang, X. Ding, M.-O. Pun, and S. Ma, “Decompositionbased unsupervised domain adaptation for remote sensing image semantic segmentation,” IEEE Trans. Geosci. Remote Sens., vol. 62, 2024, Art. no. 5645118.   
+[18] A. Kirillov et al., “Segment anything,” in Proc. IEEE/CVF Int. Conf. Comput. Vis., Oct. 2023, pp. 4015–4026.   
+[19] J. Ma, Y. He, F. Li, L. Han, C. You, and B. Wang, “Segment anything in medical images,” Nature Commun., vol. 15, no. 1, p. 654, Jan. 2024.   
+[20] H. Wang et al., “SAM-CLIP: Merging vision foundation models towards semantic and spatial understanding,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. Workshops (CVPRW), Jun. 2024, pp. 3635–3647.   
+[21] Y. Li, H. Zhang, X. Xue, Y. Jiang, and Q. Shen, “Deep learning for remote sensing image classification: A survey,” Wiley Interdiscipl. Rev., Data Mining Knowl. Discovery, vol. 8, no. 6, p. e1264, May 2018.
+
+[22] Z. Zheng, Y. Zhong, J. Wang, and A. Ma, “Foreground-aware relation network for geospatial object segmentation in high spatial resolution remote sensing imagery,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR), Jun. 2020, pp. 4096–4105.   
+[23] X. Ma, X. Zhang, Z. Wang, and M.-O. Pun, “Unsupervised domain adaptation augmented by mutually boosted attention for semantic segmentation of VHR remote sensing images,” IEEE Trans. Geosci. Remote Sens., vol. 61, 2023, Art. no. 5400515.   
+[24] N. Houlsby et al., “Parameter-efficient transfer learning for NLP,” in Proc. Int. Conf. Mach. Learn., 2019, pp. 2790–2799.   
+[25] S. Chen et al., “AdaptFormer: Adapting vision transformers for scalable visual recognition,” in Proc. NIPS, vol. 35, 2022, pp. 16664–16678.   
+[26] X. He, C. Li, P. Zhang, J. Yang, and X. E. Wang, “Parameter-efficient model adaptation for vision transformers,” in Proc. AAAI Conf. Artif. Intell., 2023, vol. 37, no. 1, pp. 817–825.   
+[27] E. J. Hu et al., “LoRA: Low-rank adaptation of large language models,” in Proc. Int. Conf. Learn. Represent., 2022, pp. 1–20.   
+[28] Q. Zhang et al., “Adaptive budget allocation for parameter-efficient finetuning,” in Proc. 11th Int. Conf. Learn. Represent., 2023, pp. 1–17.   
+[29] X. Pu, H. Jia, L. Zheng, F. Wang, and F. Xu, “ClassWise-SAM-adapter: Parameter efficient fine-tuning adapts segment anything to SAR domain for semantic segmentation,” 2024, arXiv:2401.02326.   
+[30] X. Zhou et al., “MeSAM: Multiscale enhanced segment anything model for optical remote sensing images,” IEEE Trans. Geosci. Remote Sens., vol. 62, 2024, Art. no. 5623515.   
+[31] X. Lu and Q. Weng, “Multi-LoRA fine-tuned segment anything model for urban man-made object extraction,” IEEE Trans. Geosci. Remote Sens., vol. 62, 2024, Art. no. 5637519.   
+[32] F. I. Diakogiannis, F. Waldner, P. Caccetta, and C. Wu, “ResUNeta: A deep learning framework for semantic segmentation of remotely sensed data,” ISPRS J. Photogramm. Remote Sens., vol. 162, pp. 94–114, Apr. 2020.   
+[33] X. Ma, X. Zhang, M.-O. Pun, and M. Liu, “A multilevel multimodal fusion transformer for remote sensing semantic segmentation,” IEEE Trans. Geosci. Remote Sens., vol. 62, 2024, Art. no. 5403215.   
+[34] P. Zhang, B. Peng, C. Lu, Q. Huang, and D. Liu, “ASANet: Asymmetric semantic aligning network for RGB and SAR image land cover classification,” ISPRS J. Photogramm. Remote Sens., vol. 218, pp. 574–587, Dec. 2024.   
+[35] L. Wang et al., “UNetFormer: A UNet-like transformer for efficient semantic segmentation of remote sensing urban scene imagery,” ISPRS J. Photogramm. Remote Sens., vol. 190, pp. 196–214, Aug. 2022.   
+[36] N. Audebert, B. Le Saux, and S. Lefèvre, “Beyond RGB: Very high resolution urban remote sensing with multimodal deep networks,” ISPRS J. Photogramm. Remote Sens., vol. 140, pp. 20–32, Jun. 2018.   
+[37] J. Wu et al., “Medical SAM adapter: Adapting segment anything model for medical image segmentation,” 2023, arXiv:2304.12620.   
+[38] D. Li et al., “FusionSAM: Visual multi-modal learning with segment anything,” 2024, arXiv:2408.13980.   
+[39] M. A. Mazurowski, H. Dong, H. Gu, J. Yang, N. Konz, and Y. Zhang, “Segment anything model for medical image analysis: An experimental study,” Med. Image Anal., vol. 89, Oct. 2023, Art. no. 102918.   
+[40] D. Wang et al., “SAMRS: Scaling-up remote sensing segmentation dataset with segment anything model,” in Proc. 37th Conf. Neural Inf. Process. Syst. Datasets Benchmarks Track, 2023, pp. 1–13.   
+[41] Z. Qi et al., “Multi-view remote sensing image segmentation with sam priors,” in Proc. IEEE Int. Geosci. Remote Sens. Symp. (IGARSS), Jul. 2024, pp. 8446–8449.   
+[42] H. Chen, J. Song, and N. Yokoya, “Change detection between optical remote sensing imagery and map data via segment anything model (SAM),” 2024, arXiv:2401.09019.   
+[43] X. Ma, Q. Wu, X. Zhao, X. Zhang, M.-O. Pun, and B. Huang, “SAMassisted remote sensing imagery semantic segmentation with object and boundary constraints,” IEEE Trans. Geosci. Remote Sens., vol. 62, 2024, Art. no. 5636916.   
+[44] Z. Yan et al., “RingMo-SAM: A foundation model for segment anything in multimodal remote-sensing images,” IEEE Trans. Geosci. Remote Sens., vol. 61, 2023, Art. no. 5625716.   
+[45] L. Ding, K. Zhu, D. Peng, H. Tang, K. Yang, and L. Bruzzone, “Adapting segment anything model for change detection in VHR remote sensing images,” IEEE Trans. Geosci. Remote Sens., vol. 62, 2024, Art. no. 5611711.   
+[46] L. Mei et al., “SCD-SAM: Adapting segment anything model for semantic change detection in remote sensing imagery,” IEEE Trans. Geosci. Remote Sens., 2024, Art. no. 5626713.
+
+[47] A. Aghajanyan, L. Zettlemoyer, and S. Gupta, “Intrinsic dimensionality explains the effectiveness of language model fine-tuning,” 2020, arXiv:2012.13255.   
+[48] Y. Li, H. Mao, R. Girshick, and K. He, “Exploring plain vision transformer backbones for object detection,” in Proc. Eur. Conf. Comput. Vis. Cham, Switzerland: Springer, 2022, pp. 280–296.   
+[49] K. Zhang and D. Liu, “Customized segment anything model for medical image segmentation,” 2023, arXiv:2304.13785.   
+[50] Y. Li, Y. Zhou, Y. Zhang, L. Zhong, J. Wang, and J. Chen, “DKDFN: Domain knowledge-guided deep collaborative fusion network for multimodal unitemporal remote sensing land cover classification,” ISPRS J. Photogramm. Remote Sens., vol. 186, pp. 170–189, Apr. 2022.   
+[51] R. Li, S. Zheng, C. Duan, J. Su, and C. Zhang, “Multistage attention ResU-Net for semantic segmentation of fine-resolution remote sensing images,” IEEE Geosci. Remote Sens. Lett., vol. 19, pp. 1–5, 2022.   
+[52] D. Seichter, M. Köhler, B. Lewandowski, T. Wengefeld, and H.-M. Gross, “Efficient RGB-D semantic segmentation for indoor scene analysis,” in Proc. IEEE Int. Conf. Robot. Autom. (ICRA), May 2021, pp. 13525–13531.   
+[53] H. Hosseinpour, F. Samadzadegan, and F. D. Javan, “CMGFNet: A deep cross-modal gated fusion network for building extraction from very highresolution remote sensing images,” ISPRS J. Photogramm. Remote Sens., vol. 184, pp. 96–115, Feb. 2022.   
+[54] H. Zhao, J. Shi, X. Qi, X. Wang, and J. Jia, “Pyramid scene parsing network,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR), Jul. 2017, pp. 2881–2890.   
+[55] X. Chen et al., “Bi-directional cross-modality feature propagation with separation-and-aggregation gate for RGB-D semantic segmentation,” in Proc. Eur. Conf. Comput. Vis., 2020, pp. 561–577.   
+[56] J. Chen et al., “TransUNet: Transformers make strong encoders for medical image segmentation,” 2021, arXiv:2102.04306.   
+[57] X. Ma, X. Zhang, and M.-O. Pun, “RS3Mamba: Visual state space model for remote sensing image semantic segmentation,” IEEE Geosci. Remote Sens. Lett., vol. 21, pp. 1–5, 2024.   
+[58] H. Feng et al., “FTransDeepLab: Multimodal fusion transformer-based DeepLabv $^ { + }$ for remote sensing semantic segmentation,” IEEE Trans. Geosci. Remote Sens., vol. 63, 2025, Art. no. 4406618.   
+[59] Q. Wang, W. Chen, Z. Huang, H. Tang, and L. Yang, “MultiSenseSeg: A cost-effective unified multimodal semantic segmentation model for remote sensing,” EEE Trans. Geosci. Remote Sens., vol. 62, 2024, Art. no. 4703724.   
+[60] T. Lei et al., “Conditional adapters: Parameter-efficient transfer learning with fast inference,” in Proc. Adv. Neural Inf. Process. Syst., vol. 36, 2023, pp. 8152–8172.   
+[61] Y. Chen et al., “Hadamard adapter: An extreme parameter-efficient adapter tuning method for pre-trained language models,” in Proc. 32nd ACM Int. Conf. Inf. Knowl. Manage., Oct. 2023, pp. 276–285.   
+[62] S.-Y. Liu et al., “DoRA: Weight-decomposed low-rank adaptation,” in Proc. 41st Int. Conf. Mach. Learn., 2024, pp. 1–22.   
+[63] S. Hayou, N. Ghosh, and B. Yu, “LoRA+: Efficient low rank adaptation of large models,” 2024, arXiv:2402.12354.
+
+![](images/36ee4574f87efd5dd0193285ded4d47f15545f23e115ed30fedb947b44f29b2d.jpg)
+
+Xiaokang Zhang (Senior Member, IEEE) received the Ph.D. degree in photogrammetry and remote sensing from Wuhan University, Wuhan, China, in 2018.
+
+From 2019 to 2022, he was a Post-Doctoral Research Associate at The Hong Kong Polytechnic University, Hong Kong, and The Chinese University of Hong Kong-Shenzhen, Shenzhen, China. He is currently a specially appointed Professor with the School of Information Science and Engineering, Wuhan University of Science and Technology,
+
+Wuhan. He has authored or co-authored more than 50 scientific publications in international journals and conferences. His research interests include remote sensing image analysis, computer vision, and machine learning.
+
+Dr. Zhang is a reviewer for more than 40 renowned international journals and conferences.
+
+![](images/51c7c3256223337eb164c32ff2a299a16793fdf2c8a336c0710d6cd74c4b1cd5.jpg)
+
+Man-On Pun (Senior Member, IEEE) received the B.Eng. degree in electronic engineering from The Chinese University of Hong Kong (CUHK), Hong Kong, in 1996, the M.Eng. degree in computer science from the University of Tsukuba, Tsukuba, Japan, in 1999, and the Ph.D. degree in electrical engineering from the University of Southern California (USC), Los Angeles, CA, USA, in 2006.
+
+He was a Post-Doctoral Research Associate at Princeton University, Princeton, NJ, USA, from 2006 to 2008. He is currently an Associate
+
+Professor with the School of Science and Engineering, The Chinese University of Hong Kong-Shenzhen (CUHKSZ), Shenzhen, China. Prior to joining CUHKSZ in 2015, he held research positions at Huawei, Milford, NJ, USA; Mitsubishi Electric Research Labs (MERL), Boston, MA, USA; and Sony, Tokyo, Japan. His research interests include AI Internet of Things (AIoT) and applications of machine learning in communications and satellite remote sensing.
+
+Prof. Pun received the Best Paper Awards from IEEE VTC’06 Fall, IEEE ICC’08, and IEEE Infocom’09. He served as an Associate Editor for IEEE TRANSACTIONS ON WIRELESS COMMUNICATIONS from 2010 to 2014. He is the Founding Chair of the IEEE Joint SPS-ComSoc Chapter, Shenzhen.
+
+![](images/c84d45b9d0791a9fc49f28e3b0e821bfd5931f3e15f97e1abc652e984ac56ee9.jpg)
+
+Xianping Ma (Member, IEEE) received the bachelor’s degree in geographical information science from Wuhan University, Wuhan, China, in 2019, and the Ph.D. degree in computer and information engineering from The Chinese University of Hong Kong, Shenzhen, China, in 2025.
+
+Since 2025, he has been with the Faculty of Geosciences and Environmental Engineering, Southwest Jiaotong University, Chengdu, China, as an Assistant Professor. His research interests include remote sensing image processing, deep learning, multimodal
+
+fusion, and unsupervised domain adaptation. He has authored or co-authored more than 20 scientific publications in international journals and conferences.
+
+Dr. Ma serves as a reviewer for more than 30 renowned international journals, such as ISPRS Journal of Photogrammetry and Remote Sensing, Remote Sensing of Environment, IEEE TRANSACTIONS ON IMAGE PROCESSING, and IEEE TRANSACTIONS ON GEOSCIENCE AND REMOTE SENSING.
+
+![](images/fac1d0bd5132c0fded819776de27cc013d16e46ae87923fcd84774f06d52bcb4.jpg)
+
+Bo Huang received the Ph.D. degree in remote sensing and mapping from the Institute of Remote Sensing Applications, Chinese Academy of Sciences, Beijing, China, in 1997.
+
+He is currently the Chair Professor with the Department of Geography, The University of Hong Kong, Hong Kong, China. His research interests cover most aspects of GIScience, specifically the design and development of models and algorithms for unified satellite image fusion, spatiotemporal statistics and multiobjective spatial optimization, and
+
+their applications in environmental monitoring and sustainable spatial planning.
+
+Dr. Huang serves as an Associate Editor for International Journal of Geographical Information Science (Taylor and Francis) and was the Editorin-Chief of Comprehensive GIS (Elsevier), a three-volume GIS sourcebook.

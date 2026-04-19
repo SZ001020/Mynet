@@ -38,6 +38,8 @@ def parse_args():
     p.add_argument("--stride", type=int, default=32, help="inference sliding stride")
     p.add_argument("--num-zooms", type=int, default=2, help="zoom crops per tile")
     p.add_argument("--zoom-size", type=int, default=384, help="zoom crop side length")
+    p.add_argument("--max-panel-width", type=int, default=3200, help="max width for montage/zoom PNGs")
+    p.add_argument("--png-compress-level", type=int, default=9, help="PNG compress level (0-9)")
     return p.parse_args()
 
 
@@ -204,6 +206,17 @@ def crop_img(img: np.ndarray, x: int, y: int, c: int) -> np.ndarray:
     return np.ascontiguousarray(img[y:y + c, x:x + c])
 
 
+def save_png(path: str, image: np.ndarray, compress_level: int, max_width: int = 0):
+    if image.dtype != np.uint8:
+        image = np.clip(image, 0, 255).astype(np.uint8)
+    pil = Image.fromarray(image)
+    if max_width > 0 and pil.width > max_width:
+        new_h = int(round(pil.height * (max_width / float(pil.width))))
+        pil = pil.resize((max_width, max(1, new_h)), resample=Image.Resampling.BILINEAR)
+    level = max(0, min(9, int(compress_level)))
+    pil.save(path, format="PNG", optimize=True, compress_level=level)
+
+
 def read_best(csv_path: str):
     if not os.path.isfile(csv_path):
         return None
@@ -319,7 +332,7 @@ def main():
                 device=device,
             )
             preds_by_group[group_name][tile_id] = pred
-            io.imsave(os.path.join(out_dir, f"tile_{tile_id}_pred.png"), convert_to_color(pred))
+            save_png(os.path.join(out_dir, f"tile_{tile_id}_pred.png"), convert_to_color(pred), compress_level=args.png_compress_level)
 
         del net
         torch.cuda.empty_cache()
@@ -350,7 +363,7 @@ def main():
 
         merged = hstack_panels(panel_imgs)
         rel = f"visual_compare/montage_tile_{tile_id}.png"
-        Image.fromarray(merged).save(os.path.join(run_root, rel))
+        save_png(os.path.join(run_root, rel), merged, compress_level=args.png_compress_level, max_width=args.max_panel_width)
         montage_paths.append(rel)
 
         boxes = select_zoom_boxes(gt_mask, crop_size=args.zoom_size, top_k=args.num_zooms)
@@ -369,7 +382,7 @@ def main():
 
             zoom = hstack_panels(zoom_imgs)
             rel = f"visual_compare/zoom_tile_{tile_id}_{idx}.png"
-            Image.fromarray(zoom).save(os.path.join(run_root, rel))
+            save_png(os.path.join(run_root, rel), zoom, compress_level=args.png_compress_level, max_width=args.max_panel_width)
             zoom_paths.append(rel)
 
     report = []

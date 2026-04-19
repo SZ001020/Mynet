@@ -52,7 +52,7 @@ def parse_args():
     p.add_argument("--batch-size", type=int, default=8)
     p.add_argument("--stride", type=int, default=128)
     p.add_argument("--max-panel-width", type=int, default=3200, help="max output width for comparison panel")
-    p.add_argument("--jpeg-quality", type=int, default=82, help="JPEG quality (1-95), lower means smaller files")
+    p.add_argument("--png-compress-level", type=int, default=9, help="PNG compress level (0-9)")
     p.add_argument("--output-md", default=None, help="output markdown path")
     return p.parse_args()
 
@@ -302,10 +302,10 @@ def main():
             draw_title_bar(new_c, f"Round2 Best ({new_best_cfg})"),
         ])
 
-        out_name = f"compare_tile_{tile_id}.jpg"
+        out_name = f"compare_tile_{tile_id}.png"
         out_path = os.path.join(assets_dir, out_name)
         panel_img = compress_panel(panel, args.max_panel_width)
-        panel_img.save(out_path, format="JPEG", quality=max(1, min(95, args.jpeg_quality)), optimize=True, progressive=True)
+        panel_img.save(out_path, format="PNG", optimize=True, compress_level=max(0, min(9, int(args.png_compress_level))))
         visual_list.append(out_name)
 
     # markdown
