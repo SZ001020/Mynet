@@ -9,11 +9,16 @@ predictions/
 results*/
 
 # 2. 忽略模型权重与大文件
+*.pt
 *.pth
+*.ckpt
+*.bin
 *.tar
 *.pkl
 *.pth.tar
 *.onnx
+*.safetensors
+*.weights
 
 # 3. 忽略日志与临时文件
 *.log
