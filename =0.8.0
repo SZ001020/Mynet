@@ -1,0 +1,31 @@
+Looking in indexes: http://mirrors.aliyun.com/pypi/simple
+Collecting mmengine
+  Downloading http://mirrors.aliyun.com/pypi/packages/98/8e/f98332248aad102511bea4ae19c0ddacd2f0a994f3ca4c82b7a369e0af8b/mmengine-0.10.7-py3-none-any.whl (452 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 452.7/452.7 kB 930.2 kB/s eta 0:00:00
+Collecting addict (from mmengine)
+  Downloading http://mirrors.aliyun.com/pypi/packages/6a/00/b08f23b7d7e1e14ce01419a467b583edbb93c6cdb8654e54a9cc579cd61f/addict-2.4.0-py3-none-any.whl (3.8 kB)
+Requirement already satisfied: matplotlib in /root/miniconda3/lib/python3.12/site-packages (from mmengine) (3.10.3)
+Requirement already satisfied: numpy in /root/miniconda3/lib/python3.12/site-packages (from mmengine) (2.2.6)
+Requirement already satisfied: pyyaml in /root/miniconda3/lib/python3.12/site-packages (from mmengine) (6.0.2)
+Requirement already satisfied: rich in /root/miniconda3/lib/python3.12/site-packages (from mmengine) (13.4.2)
+Collecting termcolor (from mmengine)
+  Downloading http://mirrors.aliyun.com/pypi/packages/33/d1/8bb87d21e9aeb323cc03034f5eaf2c8f69841e40e4853c2627edf8111ed3/termcolor-3.3.0-py3-none-any.whl (7.7 kB)
+Collecting yapf (from mmengine)
+  Downloading http://mirrors.aliyun.com/pypi/packages/37/81/6acd6601f61e31cfb8729d3da6d5df966f80f374b78eff83760714487338/yapf-0.43.0-py3-none-any.whl (256 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 256.2/256.2 kB 2.0 MB/s eta 0:00:00
+Requirement already satisfied: opencv-python>=3 in /root/miniconda3/lib/python3.12/site-packages (from mmengine) (4.13.0.90)
+Requirement already satisfied: contourpy>=1.0.1 in /root/miniconda3/lib/python3.12/site-packages (from matplotlib->mmengine) (1.3.2)
+Requirement already satisfied: cycler>=0.10 in /root/miniconda3/lib/python3.12/site-packages (from matplotlib->mmengine) (0.12.1)
+Requirement already satisfied: fonttools>=4.22.0 in /root/miniconda3/lib/python3.12/site-packages (from matplotlib->mmengine) (4.58.0)
+Requirement already satisfied: kiwisolver>=1.3.1 in /root/miniconda3/lib/python3.12/site-packages (from matplotlib->mmengine) (1.4.8)
+Requirement already satisfied: packaging>=20.0 in /root/miniconda3/lib/python3.12/site-packages (from matplotlib->mmengine) (24.2)
+Requirement already satisfied: pillow>=8 in /root/miniconda3/lib/python3.12/site-packages (from matplotlib->mmengine) (11.2.1)
+Requirement already satisfied: pyparsing>=2.3.1 in /root/miniconda3/lib/python3.12/site-packages (from matplotlib->mmengine) (3.2.3)
+Requirement already satisfied: python-dateutil>=2.7 in /root/miniconda3/lib/python3.12/site-packages (from matplotlib->mmengine) (2.9.0.post0)
+Requirement already satisfied: markdown-it-py>=2.2.0 in /root/miniconda3/lib/python3.12/site-packages (from rich->mmengine) (4.0.0)
+Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /root/miniconda3/lib/python3.12/site-packages (from rich->mmengine) (2.19.1)
+Requirement already satisfied: platformdirs>=3.5.1 in /root/miniconda3/lib/python3.12/site-packages (from yapf->mmengine) (3.10.0)
+Requirement already satisfied: mdurl~=0.1 in /root/miniconda3/lib/python3.12/site-packages (from markdown-it-py>=2.2.0->rich->mmengine) (0.1.2)
+Requirement already satisfied: six>=1.5 in /root/miniconda3/lib/python3.12/site-packages (from python-dateutil>=2.7->matplotlib->mmengine) (1.17.0)
+Installing collected packages: addict, yapf, termcolor, mmengine
+Successfully installed addict-2.4.0 mmengine-0.10.7 termcolor-3.3.0 yapf-0.43.0
