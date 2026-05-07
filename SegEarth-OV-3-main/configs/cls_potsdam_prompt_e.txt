@@ -1,0 +1,5 @@
+aerial road, street from above, paved ground
+aerial building, overhead roof, structure top-down
+grass from above, lawn aerial view, low vegetation topdown
+tree canopy overhead, forest seen from above, treetop
+car on road aerial, vehicle top view, automobile from above

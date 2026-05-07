@@ -1,0 +1,5 @@
+road, street, paved surface, asphalt, highway, roadway
+building, house, structure, roof, construction, edifice
+grass, vegetation, lawn, meadow, low plants, turf
+tree, forest, woodland, canopy, woods, grove
+car, vehicle, automobile, sedan, truck, motor vehicle

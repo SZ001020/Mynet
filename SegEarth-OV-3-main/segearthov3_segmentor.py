@@ -61,11 +61,14 @@ class SegEarthOV3Segmentation(BaseSegmentor):
                 inference_state = self.processor.set_text_prompt(state=inference_state, prompt=query_word)
 
                 if self.use_transformer_decoder:
-                    if inference_state['masks_logits'].shape[0] > 0:
+                    if inference_state.get('masks_logits') is not None and \
+                       inference_state['masks_logits'].shape[0] > 0:
                         inst_len = inference_state['masks_logits'].shape[0]
+                        obj_scores = inference_state.get('object_score',
+                                      inference_state.get('scores'))
                         for inst_id in range(inst_len):
                             instance_logits = inference_state['masks_logits'][inst_id].squeeze()
-                            instance_score = inference_state['object_score'][inst_id]
+                            instance_score = obj_scores[inst_id] if obj_scores is not None and obj_scores.numel() > inst_id else torch.tensor(1.0)
                             # instance_mask = inference_state['masks'][inst_id].squeeze()
                             
                             # Handle potential dimension mismatch if SAM3 output differs slightly
@@ -80,19 +83,23 @@ class SegEarthOV3Segmentation(BaseSegmentor):
                             seg_logits[query_idx] = torch.max(seg_logits[query_idx], instance_logits * instance_score)
                     
                 if self.use_sem_seg:
-                    semantic_logits = inference_state['semantic_mask_logits']
-                    if semantic_logits.shape != (h, w):
+                    semantic_logits = inference_state.get('semantic_mask_logits')
+                    if semantic_logits is not None:
+                        if semantic_logits.shape != (h, w):
                             semantic_logits = F.interpolate(
-                                semantic_logits, 
-                                size=(h, w), 
-                                mode='bilinear', 
+                                semantic_logits.unsqueeze(0).unsqueeze(0) if semantic_logits.dim() == 2
+                                else semantic_logits.unsqueeze(0) if semantic_logits.dim() == 3
+                                else semantic_logits,
+                                size=(h, w),
+                                mode='bilinear',
                                 align_corners=False
                             ).squeeze()
-                    
-                    seg_logits[query_idx] = torch.max(seg_logits[query_idx], semantic_logits)
-                
+                        seg_logits[query_idx] = torch.max(seg_logits[query_idx], semantic_logits)
+
                 if self.use_presence_score:
-                    seg_logits[query_idx] = seg_logits[query_idx] * inference_state["presence_score"]
+                    ps = inference_state.get("presence_score")
+                    if ps is not None and isinstance(ps, torch.Tensor):
+                        seg_logits[query_idx] = seg_logits[query_idx] * ps.squeeze()
                 
         return seg_logits
 
@@ -158,6 +165,13 @@ class SegEarthOV3Segmentation(BaseSegmentor):
             # Load original image to preserve details for SAM3
             image_path = meta.get('img_path')
             image = Image.open(image_path).convert('RGB')
+            # Pre-resize large images (>2000px) to avoid CUDA OOM during mask interpolation
+            max_edge = 2000
+            if max(image.size) > max_edge:
+                ratio = max_edge / max(image.size)
+                image = image.resize(
+                    (int(image.size[0] * ratio), int(image.size[1] * ratio)),
+                    Image.BILINEAR)
             ori_shape = meta['ori_shape']
 
             # Determine inference mode

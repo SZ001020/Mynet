@@ -1,0 +1,5 @@
+road in nadir aerial photography
+building with roof seen from above
+grass and low vegetation in top-down remote sensing view
+tree crown with shadow in orthorectified aerial image
+car on road surface in birds eye view
