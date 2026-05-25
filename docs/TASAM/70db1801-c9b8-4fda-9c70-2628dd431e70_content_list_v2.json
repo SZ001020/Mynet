@@ -1,0 +1,2027 @@
+[
+    [
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "TASAM: Terrain-and-Aware Segment Anything Model for Temporal-Scale Remote Sensing Segmentation "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                114,
+                61,
+                883,
+                167
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "1st Tianyang Wang "
+                    }
+                ]
+            },
+            "bbox": [
+                158,
+                186,
+                302,
+                203
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "University of Alabama at Birmingham "
+                    }
+                ]
+            },
+            "bbox": [
+                101,
+                204,
+                359,
+                219
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Birmingham, United States "
+                    }
+                ]
+            },
+            "bbox": [
+                138,
+                219,
+                321,
+                234
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "toseattle@siu.edu "
+                    }
+                ]
+            },
+            "bbox": [
+                169,
+                234,
+                290,
+                248
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "2nd Xi Xiao "
+                    }
+                ]
+            },
+            "bbox": [
+                464,
+                185,
+                557,
+                200
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "University of Alabama at Birmingham "
+                    }
+                ]
+            },
+            "bbox": [
+                380,
+                204,
+                640,
+                219
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Birmingham, United States "
+                    }
+                ]
+            },
+            "bbox": [
+                418,
+                219,
+                602,
+                234
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "xxiao@uab.edu "
+                    }
+                ]
+            },
+            "bbox": [
+                457,
+                234,
+                563,
+                248
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "3rd Gaofei Chen "
+                    }
+                ]
+            },
+            "bbox": [
+                728,
+                186,
+                852,
+                200
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "University of Alabama at Birmingham "
+                    }
+                ]
+            },
+            "bbox": [
+                661,
+                204,
+                919,
+                218
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Birmingham, United States "
+                    }
+                ]
+            },
+            "bbox": [
+                697,
+                219,
+                883,
+                234
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "gchen2@uab.edu "
+                    }
+                ]
+            },
+            "bbox": [
+                733,
+                234,
+                848,
+                250
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "4th Hanzhang Chi "
+                    }
+                ]
+            },
+            "bbox": [
+                138,
+                265,
+                274,
+                281
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "University of Alabama at Birmingham "
+                    }
+                ]
+            },
+            "bbox": [
+                76,
+                282,
+                336,
+                297
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Birmingham, United States "
+                    }
+                ]
+            },
+            "bbox": [
+                114,
+                297,
+                299,
+                311
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "chihanzhang619@gmail.com "
+                    }
+                ]
+            },
+            "bbox": [
+                109,
+                313,
+                303,
+                328
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "5th Qi Zhang "
+                    }
+                ]
+            },
+            "bbox": [
+                467,
+                265,
+                568,
+                282
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Wuhan University "
+                    }
+                ]
+            },
+            "bbox": [
+                457,
+                282,
+                580,
+                297
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Wuhan, China "
+                    }
+                ]
+            },
+            "bbox": [
+                468,
+                297,
+                566,
+                311
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "zhangqi whursgcm@whu.edu.cn "
+                    }
+                ]
+            },
+            "bbox": [
+                406,
+                313,
+                629,
+                328
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "6th Guo Cheng "
+                    }
+                ]
+            },
+            "bbox": [
+                753,
+                265,
+                867,
+                281
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Dalian University of Technology "
+                    }
+                ]
+            },
+            "bbox": [
+                700,
+                282,
+                919,
+                297
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Dalian, China "
+                    }
+                ]
+            },
+            "bbox": [
+                761,
+                299,
+                857,
+                311
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "2013012145@dlut.edu.cn"
+                    }
+                ]
+            },
+            "bbox": [
+                723,
+                313,
+                895,
+                327
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "7th Yingrui Ji† "
+                    }
+                ]
+            },
+            "bbox": [
+                168,
+                342,
+                277,
+                359
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "University of Chinese Academy of Sciences "
+                    }
+                ]
+            },
+            "bbox": [
+                76,
+                361,
+                369,
+                376
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Beijing, China "
+                    }
+                ]
+            },
+            "bbox": [
+                173,
+                377,
+                274,
+                391
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "jiyingrui1996@gmail.com "
+                    }
+                ]
+            },
+            "bbox": [
+                133,
+                392,
+                310,
+                407
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Abstract—Segment Anything Model (SAM) has demonstrated impressive zero-shot segmentation capabilities across natural image domains, but it struggles to generalize to the unique challenges of remote sensing data, such as complex terrain, multi-scale objects, and temporal dynamics. In this paper, we introduce TASAM, a terrain- and temporally-aware extension of SAM designed specifically for high-resolution remote sensing image segmentation. TASAM integrates three lightweight yet effective modules: a terrain-aware adapter that injects elevation priors, a temporal prompt generator that captures land-cover changes over time, and a multi-scale fusion strategy that enhances fine-grained object delineation. Without retraining the SAM backbone, our approach achieves substantial performance gains across three remote sensing benchmarks—LoveDA, iSAID, and WHU-CD—outperforming both zero-shot SAM and task-specific models with minimal computational overhead. Our results highlight the value of domain-adaptive augmentation for foundation models and offer a scalable path toward more robust geospatial segmentation. "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                455,
+                491,
+                694
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Index Terms—Remote Sensing, Large Foundation Model, Segment Anything Model (SAM). "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                695,
+                490,
+                720
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "I. INTRODUCTION "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                215,
+                737,
+                349,
+                751
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Remote sensing image segmentation plays a pivotal role in earth observation, land-use monitoring, disaster assessment, and precision agriculture. With the increasing availability of high-resolution satellite imagery and digital elevation models (DEMs), there is a growing demand for automated, accurate, and generalizable segmentation algorithms that can adapt to complex geographic contexts and temporal variations. Recently, the Segment Anything Model (SAM) [1] has emerged "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                758,
+                491,
+                881
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "as a breakthrough in general-purpose segmentation, offering strong performance across diverse visual domains without task-specific fine-tuning. However, directly applying SAM to remote sensing scenarios reveals a critical performance gap due to three fundamental limitations. "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                454,
+                919,
+                527
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "First, remote sensing imagery often contains complex terrain features such as mountainous areas, river valleys, and dense urban clusters that lack prominent RGB contrast but exhibit rich elevation variance. Vanilla SAM, which relies solely on RGB inputs and lacks explicit terrain-awareness, fails to capture these topographical cues, leading to inaccurate boundary detection and under-segmentation in critical regions. "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                529,
+                919,
+                635
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Second, many remote sensing tasks require analyzing temporal dynamics, such as vegetation phenology, urban expansion, and flood progression. However, SAM is inherently static, operating on single-frame inputs without temporal context. This restricts its capacity to leverage the temporal cues essential for detecting gradual or seasonal changes in land cover. "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                636,
+                919,
+                739
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Third, SAM heavily depends on prompt engineering (e.g., box, point, or mask prompts), which is often infeasible or inconsistent in large-scale, unlabeled remote sensing datasets. Moreover, existing prompt formats are not optimized for multi-scale structures or dynamic changes specific to earth observation data. "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                741,
+                919,
+                830
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "To address these challenges, we propose TASAM (Terrain-Aware Segment Anything Model), a novel framework that enhances the adaptability of SAM for remote sensing segmentation through multi-modal and multi-temporal conditioning. Our method introduces three core components: (1)Terrain-Aware Adapter (TA-Adapter): A lightweight adapter network that injects topographic priors from DEMs into the SAM image encoder, enabling terrain-sensitive segmentation in structurally complex regions. (2)Temporal Prompt Generator (TP-Prompt): A prompt synthesis module that dynamically generates spatial prompts by modeling temporal evolution from multi-date satellite observations, improving change-sensitive segmentation. (3)Multi-Scale SAM Fusion (MS-SAM): A hierarchical token fusion strategy that integrates cross-scale representations within the SAM pipeline, enhancing the segmentation of small objects and fine-grained boundaries. "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                830,
+                921,
+                907
+            ]
+        },
+        {
+            "type": "page_aside_text",
+            "content": {
+                "page_aside_text_content": [
+                    {
+                        "type": "text",
+                        "content": "arXiv:2509.15795v1 [cs.CV] 19 Sep 2025 "
+                    }
+                ]
+            },
+            "bbox": [
+                22,
+                276,
+                60,
+                720
+            ]
+        },
+        {
+            "type": "page_footnote",
+            "content": {
+                "page_footnote_content": [
+                    {
+                        "type": "text",
+                        "content": "† Corresponding author. "
+                    }
+                ]
+            },
+            "bbox": [
+                88,
+                893,
+                220,
+                907
+            ]
+        }
+    ],
+    [
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": []
+            },
+            "bbox": [
+                73,
+                61,
+                491,
+                242
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "We conduct comprehensive experiments on three benchmark remote sensing datasets (LoveDA, iSAID, and WHU-CD) and demonstrate that TASAM significantly outperforms both the zero-shot SAM and fine-tuned segmentation baselines, particularly in topographically challenging or temporally dynamic environments. "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                244,
+                491,
+                335
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "This paper makes the following contributions: "
+                    }
+                ]
+            },
+            "bbox": [
+                89,
+                335,
+                403,
+                351
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "• We identify and formalize three key limitations of applying SAM in remote sensing segmentation: terrain insensitivity, temporal rigidity, and prompt dependence. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "• We introduce TASAM, a terrain- and temporally-aware extension of SAM, incorporating topographic priors, temporal prompt generation, and multi-scale token fusion. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "• We empirically validate TASAM on multiple datasets and show substantial improvements over both traditional and recent segmentation baselines under challenging remote sensing scenarios. "
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                89,
+                356,
+                491,
+                508
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "II. RELATED WORK "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                210,
+                527,
+                356,
+                541
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "A. Remote Sensing Image Segmentation "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                73,
+                554,
+                348,
+                569
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Remote sensing segmentation underpins land cover classification [2], urban mapping [3], and disaster monitoring [4]. CNN-based models like U-Net [5] and DeepLabV3+ [6] are widely used, while transformers such as Swin-Unet [7] and SegFormer [8] improve long-range context. Yet these methods require full supervision, remain task-specific, and generalize poorly across domains, often ignoring priors like elevation or temporal change. Our approach instead adapts the generalpurpose SAM with terrain- and temporal-aware modules for better domain transfer. "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                577,
+                490,
+                728
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "B. Foundation Models and Segment Anything "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                73,
+                748,
+                385,
+                763
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Foundation models enable zero/few-shot transfer across vision tasks. CLIP [9, 10, 11], DINO [12], and SAM [1] achieve strong performance in classification, retrieval, and segmentation. SAM employs prompt-driven ViT backbones [13, 14, 15], but struggles with terrain reasoning, temporal dynamics, and small or low-contrast objects in satellite imagery. While adaptations to medical [16], agricultural [17], and urban [18] domains exist, they remain superficial. We address these bottlenecks via modular extensions injecting multi-source priors. "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                771,
+                491,
+                907
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "C. Terrain Modeling and Temporal Change Detection "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                504,
+                61,
+                872,
+                77
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Geospatial priors improve segmentation, with DEMs and slope maps aiding landform classification [19], hydrological modeling [20], and edge enhancement [21]. Temporal fusion is crucial for monitoring land use, vegetation, and infrastructure [22]. Existing methods often use Siamese [23] or bitemporal networks [24], but these remain incompatible with prompt-driven segmentation. Our framework bridges this gap through terrain- and temporal-aware prompt integration. "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                82,
+                921,
+                204
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "III. METHODOLOGY "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                637,
+                215,
+                787,
+                229
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "We aim to predict a dense semantic map "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\hat { Y } \\in \\mathbb { R } ^ { H \\times W }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "for a satellite image "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "I \\in \\mathbb { R } ^ { H \\times W \\times 3 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", aided by a DEM E and multitemporal inputs "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\{ I _ { t } \\} _ { t = 1 } ^ { T }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ". The task is formulated as learning an augmentation "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\mathcal { F } _ { \\theta }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "over the frozen SAM encoder S such that "
+                    }
+                ]
+            },
+            "bbox": [
+                503,
+                237,
+                921,
+                299
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "\\hat {Y} = \\mathcal {D} \\big (\\mathcal {F} _ {\\theta} (I, E, \\{I _ {t} \\}), P \\big),",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/b719b35819488caffc4abe5f848ecc865e18cb6a1197e5a302e58d9035be4608.jpg"
+                }
+            },
+            "bbox": [
+                616,
+                306,
+                807,
+                325
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "where D is the SAM mask decoder and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "P \\in \\mathbb { R } ^ { k \\times d }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "denotes learnable or dynamic prompts. As shown in Fig. 1, our TASAM framework enhances SAM through three lightweight modules. First, the Terrain-Aware Adapter (TA-Adapter) injects elevation priors: DEM E is encoded via a CNN into "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "F _ { E } = \\phi _ { \\mathrm { D E M } } ( E )"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", then fused with SAM features "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "F _ { I } = S _ { \\mathrm { e n c } } ( I )"
+                    },
+                    {
+                        "type": "text",
+                        "content": "by gated mixing "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                334,
+                921,
+                441
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "F _ {\\mathrm{TA}} = \\gamma \\odot F _ {E} + (1 - \\gamma) \\odot F _ {I}, \\quad \\gamma = \\sigma (W _ {\\gamma} [ F _ {E} \\| F _ {I} ]).",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/8fba07e4a308fb4b1f3490e3f75a29e205c0e68e98ae0c6a8013b0fe20ba533c.jpg"
+                }
+            },
+            "bbox": [
+                524,
+                450,
+                900,
+                468
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Second, the Temporal Prompt Generator (TP-Prompt) encodes historical features "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "F _ { t } = S _ { \\mathrm { e n c } } ( I _ { t } )"
+                    },
+                    {
+                        "type": "text",
+                        "content": "via self-attention, aggregates them into "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "F _ { \\mathrm { t e m p } }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", and synthesizes k prompts with an MLP: "
+                    }
+                ]
+            },
+            "bbox": [
+                503,
+                476,
+                919,
+                523
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "P = \\mathrm{MLP} (\\mathrm{Pool} (F _ {\\mathrm{temp}})).",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/a809d14bac0816fe51d324d7181fd9505487a7d5f1408ee3beeb096146347388.jpg"
+                }
+            },
+            "bbox": [
+                622,
+                532,
+                800,
+                549
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Finally, the Multi-Scale SAM Fusion (MS-SAM) resizes I into "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\{ I ^ { ( s ) } \\}"
+                    },
+                    {
+                        "type": "text",
+                        "content": "}, extracts features "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "F ^ { ( s ) } = { \\cal S } _ { \\mathrm { e n c } } ( I ^ { ( s ) } )"
+                    },
+                    {
+                        "type": "text",
+                        "content": "), and fuses them by cross-attention: "
+                    }
+                ]
+            },
+            "bbox": [
+                504,
+                558,
+                919,
+                602
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "F _ {\\mathrm{MS}} = \\mathrm{CrossAttn} (F ^ {(1)}, F ^ {(2)}, F ^ {(3)}), \\quad \\hat {Y} = \\mathcal {D} ([ F _ {\\mathrm{MS}} \\| P ]).",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/6036e5dc473c2a7828345262735695fd5fa3add19a418852884f49d6c21d8780.jpg"
+                }
+            },
+            "bbox": [
+                514,
+                612,
+                910,
+                631
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "These modules operate plug-and-play, preserve SAM’s frozen backbone, and enable robust segmentation under terrain variation, temporal dynamics, and scale diversity. "
+                    }
+                ]
+            },
+            "bbox": [
+                503,
+                638,
+                919,
+                686
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "IV. EXPERIMENTS "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                643,
+                698,
+                781,
+                712
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "A. Experimental Setup "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                503,
+                720,
+                663,
+                734
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "a) Datasets: We evaluate TASAM on three remote sensing benchmarks: LoveDA [25] (8-class land-cover with 598 training and 166 validation images), iSAID [26] (655k object instances over 15 categories for dense aerial instance segmentation), and WHU-CD [27] (building change detection for temporal variation analysis). "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "b) Evaluation Metrics: Following common practice, we report mean Intersection over Union (mIoU) as the main segmentation metric, along with F1, Precision, and Recall for balance and completeness. Computational efficiency is measured using FLOPs and inference time. "
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                739,
+                921,
+                907
+            ]
+        }
+    ],
+    [
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/ae34e41a53c4df550af0196ec6187510b8012e1ae6765168b5939ef21a4a5450.jpg"
+                },
+                "content": "```mermaid\ngraph TD\n    A[\"Remote Sensing Image\"] --> B[\"Terrain-Aware Adapter\"]\n    B --> C[\"TA-Adapter\"]\n    C --> D[\"SAM Encoder\"]\n    D --> E[\"DEM\"]\n    E --> F[\"Temporal Prompt Generator\"]\n    F --> G[\"P\"]\n    F --> H[\"P\"]\n    F --> I[\"P\"]\n    G --> J[\"Learnable or dynamically generate\"]\n    H --> J\n    I --> J\n    J --> K[\"Dense Segmentation Map\"]\n    L[\"...\"] --> M[\"SAM Encoder\"]\n    M --> N[\"Multi-Scale SAM Fusion\"]\n    N --> O[\"Scale 0.5 x 1.0 x 2.0 x\"]\n    M --> P[\"...\"]\n    P --> M\n```",
+                "image_caption": [
+                    {
+                        "type": "text",
+                        "content": "Fig. 1. Overview of the proposed TASAM framework. Given a remote sensing image, a corresponding elevation map (DEM), and a set of multi-temporal observations, TASAM enhances the Segment Anything Model (SAM) via three key modules: (1) a Terrain-Aware Adapter that injects topographic priors into the image encoder, (2) a Temporal Prompt Generator that generates spatially adaptive prompts based on temporal dynamics, and (3) a Multi-Scale SAM Fusion mechanism that enables robust segmentation across varied object sizes. These extensions allow TASAM to effectively segment complex landcover scenes without full model fine-tuning. "
+                    }
+                ],
+                "image_footnote": []
+            },
+            "sub_type": "flowchart",
+            "bbox": [
+                81,
+                63,
+                475,
+                247
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "c) Implementation Details.: All experiments are conducted on an NVIDIA A100 GPU with PyTorch 2.0. We use the official SAM ViT-B model [1] as the backbone. During training, we freeze the original SAM encoder and only optimize the introduced modules (adapters, temporal prompt generator, and cross-scale fusion). We use AdamW optimizer with a learning rate of "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "5 \\times 1 0 ^ { - 4 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", batch size of 16, and train for 100 epochs. Multi-scale inputs are generated using image rescaling at factors "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\{ 0 . 5 { \\times } , 1 . 0 { \\times } , 2 . 0 { \\times } \\}"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", and temporal prompt inputs use "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "T \\ = \\ 3"
+                    },
+                    {
+                        "type": "text",
+                        "content": "frames (e.g., three timestamps for each spatial region). For fair comparison, all baselines are re-trained or evaluated using the same data splits and input resolutions. "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                388,
+                491,
+                571
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "B. Comparison with State-of-the-Art Methods "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                75,
+                582,
+                387,
+                597
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "As shown in Table I, TASAM achieves the best mIoU, F1, and recall on LoveDA, iSAID, and WHU-CD, surpassing both general-purpose (SAM) and domain-specific (SegFormer, iFormer) baselines. Fine-tuned SAM narrows the gap but struggles with spatial complexity, whereas TASAM shows clear advantages, especially on WHU-CD (+6.5 mIoU), highlighting the benefit of multi-temporal prompts for changesensitive segmentation. Table II shows TASAM’s robustness in dense urban, rural, and seasonal farmland regions. Terrainand topography-aware fusion improve boundary delineation, while multi-scale temporal prompting yields over 10 mIoU gains on small-object clusters. "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                602,
+                490,
+                785
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "C. Ablation Study "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                75,
+                796,
+                202,
+                811
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "We conduct a comprehensive ablation study to validate the contribution of each core component in TASAM, including the Terrain-Aware Adapter, Temporal Prompt Generator, and Multi-Scale Fusion module. Table III summarizes the mIoU results on the LoveDA dataset for various model variants. Starting from the fine-tuned SAM baseline (60.5 mIoU), each proposed module brings a consistent improvement. Removing the Terrain Adapter drops performance to 62.8, indicating that incorporating elevation priors significantly enhances segmentation in topographically complex regions. Removing the Temporal Prompt module results in a larger drop (63.1 mIoU), suggesting that capturing temporal changes is essential for dynamic or seasonal landscapes. The Multi-Scale Fusion module also proves important, as omitting it leads to a 2.1 point drop. The full TASAM model achieves 66.3 mIoU. "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                816,
+                491,
+                907
+            ]
+        },
+        {
+            "type": "table",
+            "content": {
+                "image_source": {
+                    "path": "images/310939d751bd6dd72067c8fee119c41d4117506626ca8f9b687c7885eff04256.jpg"
+                },
+                "table_caption": [
+                    {
+                        "type": "text",
+                        "content": "TABLE I COMPARISON WITH STATE-OF-THE-ART SEGMENTATION METHODS ON THREE REMOTE SENSING BENCHMARKS. TASAM CONSISTENTLY OUTPERFORMS BOTH DOMAIN-SPECIFIC BASELINES ACROSS ALL DATASETS. BOLD NUMBERS INDICATE THE BEST PERFORMANCE. NOTE: PREC. PRESENTS PRECISION. SAM (ZS) DENOTES SAM (ZERO-SHOT) AND SAM (FT) DENOTES SAM (FINE-TUNED). "
+                    }
+                ],
+                "table_footnote": [],
+                "html": "<table><tr><td>Dataset</td><td>Method</td><td>mIoU↑</td><td>F1_Score↑</td><td>Prec.↑</td><td>Recall↑</td><td>Backbone</td></tr><tr><td rowspan=\"5\">LoveDA</td><td>SAM (ZS)</td><td>48.3</td><td>61.0</td><td>59.2</td><td>63.1</td><td>ViT-B</td></tr><tr><td>SegFormer-B1</td><td>59.7</td><td>71.5</td><td>70.8</td><td>72.2</td><td>MiT-B1</td></tr><tr><td>iFormer</td><td>62.0</td><td>73.1</td><td>72.4</td><td>73.8</td><td>iFormer-L</td></tr><tr><td>SAM (FT)</td><td>60.5</td><td>72.0</td><td>71.0</td><td>73.2</td><td>ViT-B</td></tr><tr><td>TASAM (Ours)</td><td>66.3</td><td>77.4</td><td>76.1</td><td>78.8</td><td>ViT-B + Ours</td></tr><tr><td rowspan=\"5\">iSAID</td><td>SAM (ZS)</td><td>42.8</td><td>55.6</td><td>53.7</td><td>57.5</td><td>ViT-B</td></tr><tr><td>SegFormer-B1</td><td>54.1</td><td>66.3</td><td>64.9</td><td>67.8</td><td>MiT-B1</td></tr><tr><td>iFormer</td><td>57.9</td><td>69.2</td><td>68.0</td><td>70.3</td><td>iFormer-L</td></tr><tr><td>SAM (FT)</td><td>56.4</td><td>68.1</td><td>67.0</td><td>69.5</td><td>ViT-B</td></tr><tr><td>TASAM (Ours)</td><td>63.7</td><td>74.5</td><td>73.2</td><td>75.9</td><td>ViT-B + Ours</td></tr><tr><td rowspan=\"5\">WHU-CD</td><td>SAM (ZS)</td><td>51.2</td><td>63.9</td><td>62.7</td><td>65.1</td><td>ViT-B</td></tr><tr><td>SegFormer-B1</td><td>61.5</td><td>74.3</td><td>73.1</td><td>75.6</td><td>MiT-B1</td></tr><tr><td>iFormer</td><td>64.4</td><td>76.0</td><td>75.1</td><td>77.2</td><td>iFormer-L</td></tr><tr><td>SAM (FT)</td><td>63.3</td><td>75.1</td><td>74.0</td><td>76.4</td><td>ViT-B</td></tr><tr><td>TASAM (Ours)</td><td>69.8</td><td>80.5</td><td>79.3</td><td>81.8</td><td>ViT-B + Ours</td></tr></table>",
+                "table_type": "complex_table",
+                "table_nest_level": 1
+            },
+            "bbox": [
+                506,
+                154,
+                934,
+                377
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/36ef99db567eafa364cf2f86d61da389f83a1bc8da5b2a3aaf3a943b4e1e8cbc.jpg"
+                },
+                "content": "Input\nSAM(Zero-shot)\nSegformer\niFormer\nSAM\nOurs",
+                "image_caption": [
+                    {
+                        "type": "text",
+                        "content": "Fig. 2. Visualization of attention heatmaps across methods. We compare attention maps generated by different segmentation models: SAM (Zero-Shot), Segformer, iFormer, SAM (Fine-Tuned), and our proposed TASAM. Compared to baselines, TASAM exhibits more compact and semantically aligned activations, particularly in rooftop and boundary regions. This suggests improved spatial precision and robustness to clutter. "
+                    }
+                ],
+                "image_footnote": []
+            },
+            "sub_type": "text_image",
+            "bbox": [
+                511,
+                407,
+                915,
+                522
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": []
+            },
+            "bbox": [
+                501,
+                645,
+                921,
+                781
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Figure 3 provides additional insights. The left plot compares different prompt strategies: manually annotated points and boxes yield lower accuracy due to sparse spatial coverage, while learned prompts offer modest improvement. The right plot shows how performance varies with the temporal window size: while using more frames improves accuracy up to 3 frames, adding more leads to marginal degradation, likely due to increased noise and redundancy. "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                786,
+                921,
+                907
+            ]
+        }
+    ],
+    [
+        {
+            "type": "table",
+            "content": {
+                "image_source": {
+                    "path": "images/458766ce59ed76c79a2468ae31e788d8227af06815e26ad0744645d0276a4b27.jpg"
+                },
+                "table_caption": [
+                    {
+                        "type": "text",
+                        "content": "TABLE II PERFORMANCE COMPARISON ON CHALLENGING REMOTE SENSING SUB-REGIONS. TASAM DEMONSTRATES SUPERIOR SEGMENTATION ACCURACY ON SMALL OBJECTS, COMPLEX TERRAIN, AND TEMPORALLY DYNAMIC REGIONS. BOLD VALUES INDICATE THE BEST RESULTS. "
+                    }
+                ],
+                "table_footnote": [],
+                "html": "<table><tr><td>Scene Type</td><td>Method</td><td>mIoU ↑</td><td>Precision ↑</td><td>Recall ↑</td></tr><tr><td rowspan=\"4\">Urban High-Rise (Dense Buildings)</td><td>SAM (Zero-Shot)</td><td>45.2</td><td>51.0</td><td>49.5</td></tr><tr><td>SAM (Fine-Tuned)</td><td>53.9</td><td>62.1</td><td>58.2</td></tr><tr><td>iFormer</td><td>58.3</td><td>66.4</td><td>62.0</td></tr><tr><td>TASAM (Ours)</td><td>63.7</td><td>72.8</td><td>67.4</td></tr><tr><td rowspan=\"4\">Rural Terrain (Hill/Valley)</td><td>SAM (Zero-Shot)</td><td>44.1</td><td>50.2</td><td>48.0</td></tr><tr><td>SAM (Fine-Tuned)</td><td>52.5</td><td>59.3</td><td>56.1</td></tr><tr><td>iFormer</td><td>55.7</td><td>63.8</td><td>60.4</td></tr><tr><td>TASAM (Ours)</td><td>61.0</td><td>69.1</td><td>65.7</td></tr><tr><td rowspan=\"4\">Seasonal Farmland (Time-Variant)</td><td>SAM (Zero-Shot)</td><td>46.6</td><td>54.5</td><td>51.3</td></tr><tr><td>SAM (Fine-Tuned)</td><td>55.4</td><td>63.1</td><td>61.2</td></tr><tr><td>iFormer</td><td>57.9</td><td>66.2</td><td>64.3</td></tr><tr><td>TASAM (Ours)</td><td>65.6</td><td>73.5</td><td>71.4</td></tr><tr><td rowspan=\"4\">Small Object Cluster (Vehicles, Rooftops)</td><td>SAM (Zero-Shot)</td><td>39.3</td><td>44.8</td><td>42.0</td></tr><tr><td>SAM (Fine-Tuned)</td><td>48.7</td><td>54.2</td><td>51.5</td></tr><tr><td>iFormer</td><td>52.0</td><td>58.6</td><td>56.0</td></tr><tr><td>TASAM (Ours)</td><td>58.9</td><td>65.7</td><td>62.3</td></tr></table>",
+                "table_type": "complex_table",
+                "table_nest_level": 1
+            },
+            "bbox": [
+                76,
+                130,
+                496,
+                367
+            ]
+        },
+        {
+            "type": "chart",
+            "content": {
+                "image_source": {
+                    "path": "images/13d79cbfb2f1ffba752d59aa54918fe87ca05e0f97c879515d8aec62cf366012.jpg"
+                },
+                "content": "| Method | mIoU (%) |\n|---|---|\n| Manual Point | 60.0 |\n| Manual Box | 62.5 |\n| Learned | 64.0 |\n| Temporal (Ours) | 66.5 |",
+                "chart_caption": [],
+                "chart_footnote": []
+            },
+            "sub_type": "line",
+            "bbox": [
+                117,
+                383,
+                287,
+                474
+            ]
+        },
+        {
+            "type": "chart",
+            "content": {
+                "image_source": {
+                    "path": "images/9811ca49711a0dc270cf7053a4ecda45e897fa0c546e88c209dbeec07272b7d9.jpg"
+                },
+                "content": "| Frames | mIoU (%) |\n| ------ | -------- |\n| 1 Frame | 61       |\n| 2 Frames | 63       |\n| 3 Frames | 66       |\n| 4 Frames | 65       |",
+                "chart_caption": [
+                    {
+                        "type": "text",
+                        "content": "Fig. 3. Prompt strategy and temporal window ablation. Left: Our temporal prompt mechanism outperforms manual point/box and learned prompts. Right: Increasing the temporal window size improves performance up to 3 frames, after which performance plateaus or drops. "
+                    }
+                ],
+                "chart_footnote": []
+            },
+            "sub_type": "line",
+            "bbox": [
+                290,
+                383,
+                447,
+                474
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "D. Qualitative Results and Visualization "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                75,
+                563,
+                352,
+                578
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "To further investigate the spatial reasoning behavior of different models, we visualize attention heatmaps in Figure 2. Compared to SAM (Zero-Shot), Segformer, iFormer, and even fine-tuned SAM, our TASAM produces attention maps that are both more compact and more semantically aligned with actual object boundaries. In complex rural and urban scenes, TASAM effectively suppresses background noise and focuses on topographically relevant regions—e.g., rooftops and roads—while avoiding diffuse or fragmented attention. The sharper focus and reduced false activations demonstrate the benefit of integrating terrain priors and temporal context into prompt-aware segmentation. These visualizations not only confirm the quantitative improvements but also highlight the interpretability and robustness of TASAM in practical scenarios. "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                584,
+                491,
+                811
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "E. Prompt Sensitivity and Generalization "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                75,
+                825,
+                357,
+                840
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "We first examine the impact of prompt quantity on segmentation performance (Table IV). TASAM achieves optimal results using four prompts, while further increasing the number leads to saturation or slight decline. This indicates that overly dense prompting introduces redundancy without contributing meaningful guidance. "
+                    }
+                ]
+            },
+            "bbox": [
+                73,
+                845,
+                490,
+                907
+            ]
+        },
+        {
+            "type": "table",
+            "content": {
+                "image_source": {
+                    "path": "images/426ddf8aafa4d5b11382948a3eb165fbdfcf4888c6a4c2d0a4cfd4ba4ce5fb54.jpg"
+                },
+                "table_caption": [
+                    {
+                        "type": "text",
+                        "content": "TABLE III ABLATION STUDY ON LOVEDA. EACH MODULE CONTRIBUTES TO MIOU IMPROVEMENT. "
+                    }
+                ],
+                "table_footnote": [],
+                "html": "<table><tr><td>Variant</td><td>Terrain</td><td>Temporal</td><td>Multi-Scale</td><td>mIoU ↑</td></tr><tr><td>SAM (Fine-Tuned)</td><td>✕</td><td>✕</td><td>✕</td><td>60.5</td></tr><tr><td>w/o Terrain Adapter</td><td>✕</td><td>√</td><td>√</td><td>62.8</td></tr><tr><td>w/o Temporal Prompt</td><td>√</td><td>✕</td><td>√</td><td>63.1</td></tr><tr><td>w/o Multi-Scale Fusion</td><td>√</td><td>√</td><td>✕</td><td>64.2</td></tr><tr><td>TASAM (Full)</td><td>√</td><td>√</td><td>√</td><td>66.3</td></tr></table>",
+                "table_type": "simple_table",
+                "table_nest_level": 1
+            },
+            "bbox": [
+                506,
+                107,
+                929,
+                181
+            ]
+        },
+        {
+            "type": "table",
+            "content": {
+                "image_source": {
+                    "path": "images/6f9d9e4890b1c103774afcc6d7bf3ad48044cfd956b5823bbbbbdf9c8d9ed042.jpg"
+                },
+                "table_caption": [
+                    {
+                        "type": "text",
+                        "content": "TABLE IV EFFECT OF PROMPT QUANTITY ON SEGMENTATION PERFORMANCE. TASAM ACHIEVES THE BEST RESULTS WITH 4 PROMPTS. PERFORMANCE SATURATES OR SLIGHTLY DROPS BEYOND THIS POINT DUE TO POTENTIAL REDUNDANCY. "
+                    }
+                ],
+                "table_footnote": [],
+                "html": "<table><tr><td>#Prompts</td><td>1</td><td>2</td><td>4</td><td>6</td><td>8</td></tr><tr><td>mIoU (%)</td><td>63.2</td><td>64.4</td><td>66.3</td><td>66.2</td><td>65.9</td></tr><tr><td>F1 Score (%)</td><td>74.6</td><td>75.9</td><td>77.4</td><td>77.2</td><td>76.8</td></tr><tr><td>Recall (%)</td><td>75.2</td><td>76.5</td><td>78.8</td><td>78.4</td><td>78.0</td></tr></table>",
+                "table_type": "simple_table",
+                "table_nest_level": 1
+            },
+            "bbox": [
+                540,
+                263,
+                887,
+                321
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": []
+            },
+            "bbox": [
+                503,
+                347,
+                919,
+                378
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "F. Efficiency and Scalability "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                504,
+                388,
+                700,
+                402
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "We report the model complexity and inference efficiency of TASAM in Table V. While TASAM introduces only a modest increase in parameters (+1.6M) and FLOPs (+2.4G) over SAM (ViT-B), it achieves a substantial improvement of +5.8% mIoU. Moreover, TASAM maintains real-time inference capability, with only a 4.4ms increase in per-image runtime compared to the SAM baseline. When compared to iFormer, which has fewer parameters but lower accuracy, TASAM offers a more balanced trade-off between accuracy and computational cost. "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                407,
+                921,
+                559
+            ]
+        },
+        {
+            "type": "table",
+            "content": {
+                "image_source": {
+                    "path": "images/fc04fdfb653e7804989cdf7a431eaa2271ca65441f2a0118c25808ff58dff41a.jpg"
+                },
+                "table_caption": [
+                    {
+                        "type": "text",
+                        "content": "TABLE V EFFICIENCY AND SCALABILITY COMPARISON. TASAM ADDS MINIMAL OVERHEAD OVER SAM WHILE IMPROVING PERFORMANCE. "
+                    }
+                ],
+                "table_footnote": [],
+                "html": "<table><tr><td>Method</td><td>mIoU (%)</td><td>Params (M)</td><td>FLOPs (G)</td><td>Time (ms)</td></tr><tr><td>SAM (ViT-B)</td><td>60.5</td><td>86.0</td><td>89.7</td><td>132.4</td></tr><tr><td>iFormer</td><td>62.0</td><td>72.8</td><td>65.3</td><td>101.6</td></tr><tr><td>TASAM (Ours)</td><td>66.3</td><td>87.6</td><td>92.1</td><td>136.8</td></tr></table>",
+                "table_type": "simple_table",
+                "table_nest_level": 1
+            },
+            "bbox": [
+                529,
+                619,
+                898,
+                698
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "V. CONCLUSION "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                651,
+                720,
+                772,
+                734
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "In this paper, we presented TASAM, a terrain- and temporally-aware extension of the Segment Anything Model tailored for remote sensing image segmentation. By incorporating digital elevation priors, temporal prompt generation, and multi-scale fusion into the SAM architecture, TASAM addresses key challenges in geographic complexity, temporal dynamics, and scale variability. Extensive experiments on multiple remote sensing benchmarks demonstrate that TASAM significantly outperforms both foundation models and domainspecific baselines, while introducing only minimal computational overhead. Our findings suggest that domain-adaptive augmentation of foundation models is a promising direction for geospatial understanding. In future work, we plan to explore incorporating semantic priors from multispectral or hyperspectral modalities and extending TASAM to instancelevel and 3D segmentation tasks. "
+                    }
+                ]
+            },
+            "bbox": [
+                501,
+                741,
+                921,
+                907
+            ]
+        }
+    ],
+    [
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": []
+            },
+            "bbox": [
+                73,
+                61,
+                491,
+                137
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "REFERENCES "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                235,
+                157,
+                331,
+                170
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "reference_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[1] A. Kirillov, E. Mintun, N. Ravi, H. Mao, C. Rolland, L. Gustafson, T. Xiao, S. Whitehead, A. C. Berg, W.- Y. Lo et al., “Segment anything,” in ICCV, 2023, pp. 4015–4026. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[2] X. X. Zhu, D. Tuia, L. Mou, G.-S. Xia, L. Zhang, F. Xu, and F. Fraundorfer, “Deep learning in remote sensing: A comprehensive review and list of resources,” IEEE GRS, vol. 5, no. 4, pp. 8–36, 2017. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[3] C. Yuan, R. Shan, Y. Zhang, X.-X. Li, T. Yin, J. Hang, and L. Norford, “Multilayer urban canopy modelling and mapping for traffic pollutant dispersion at high density urban areas,” Science of the total environment, vol. 647, pp. 255–267, 2019. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[4] D. Chen, Z. Liu, L. Wang, M. Dou, J. Chen, and H. Li, “Natural disaster monitoring with wireless sensor networks: A case study of data-intensive applications upon low-cost scalable systems,” Mobile Networks and Applications, vol. 18, no. 5, pp. 651–663, 2013. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[5] O. Ronneberger, P. Fischer, and T. Brox, “U-net: Convolutional networks for biomedical image segmentation,” in MICCAI. Springer, 2015, pp. 234–241. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[6] L.-C. Chen, Y. Zhu, G. Papandreou, F. Schroff, and H. Adam, “Encoder-decoder with atrous separable convolution for semantic image segmentation,” in ECCV, 2018, pp. 801–818. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[7] H. Cao, Y. Wang, J. Chen, D. Jiang, X. Zhang, Q. Tian, and M. Wang, “Swin-unet: Unet-like pure transformer for medical image segmentation,” in ECCV. Springer, 2022, pp. 205–218. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[8] E. Xie, W. Wang, Z. Yu, A. Anandkumar, J. M. Alvarez, and P. Luo, “Segformer: Simple and efficient design for semantic segmentation with transformers,” NeurIPS, vol. 34, pp. 12 077–12 090, 2021. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[9] A. Radford, J. W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal, G. Sastry, A. Askell, P. Mishkin, J. Clark et al., “Learning transferable visual models from natural language supervision,” in ICML, 2021, pp. 8748–8763. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[10] Y. Ji, X. Xiao, G. Chen, H. Xu, C. Ma, L. Zhu, A. Liang, and J. Chen, “Cibr: Cross-modal information bottleneck regularization for robust clip generalization,” 2025, arXiv:2503.24182. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[11] Y. Zhang, A. Mehra, S. Niu, and J. Hamm, “Dpcore: Dynamic prompt coreset for continual test-time adaptation,” 2025. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[12] H. Zhang, F. Li, S. Liu, L. Zhang, H. Su, J. Zhu, L. M. Ni, and H.-Y. Shum, “Dino: Detr with improved denoising anchor boxes for end-to-end object detection,” arXiv:2203.03605, 2022. "
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                75,
+                176,
+                493,
+                909
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "reference_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[13] X. Xiao, Y. Zhang, J. Wang, L. Zhao, Y. Wei, H. Li, Y. Li, X. Wang, S. K. Roy, H. Xu, and T. Wang, “Roadbench: A vision-language foundation model and benchmark for road damage understanding,” 2025, arXiv:2507.17353. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[14] X. Xiao, A. Tsaris, A. Tabassum, J. Lagergren, L. M. York, T. Wang, and X. Wang, “Focus: Fused observation of channels for unveiling spectra,” 2025, arXiv:2507.14787. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[15] X. Xiao, Y. Zhang, X. Li, T. Wang, X. Wang, Y. Wei, J. Hamm, and M. Xu, “Visual instance-aware prompt tuning,” 2025, arXiv:2507.07796. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[16] Z. Ma, X. He, S. Sun, B. Yan, H. Kwak, and J. Gao, “Zero-shot digital rock image segmentation with a finetuned segment anything model,” 2023. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[17] R. P. Sishodia, R. L. Ray, and S. K. Singh, “Applications of remote sensing in precision agriculture: A review,” Remote sensing, vol. 12, no. 19, p. 3136, 2020. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[18] D. Yu and C. Fang, “Urban remote sensing with spatial big data: A review and renewed perspective of urban studies in recent decades,” Remote Sensing, vol. 15, no. 5, p. 1307, 2023. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[19] J. Li, Y. Zhao, P. Bates, J. Neal, S. Tooth, L. Hawker, and C. Maffei, “Digital elevation models for topographic characterisation and flood flow modelling along lowgradient, terminal dryland rivers: A comparison of spaceborne datasets for the r´ıo colorado, bolivia,” Journal of Hydrology, vol. 591, p. 125617, 2020. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[20] J. Gao, D. Peng, T. Zhou, T. Wang, and C. Xu, “Terrain matching localization for underwater vehicle based on gradient fitting,” Journal of Sensors, vol. 2018, no. 1, p. 3717430, 2018. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[21] C. Wang, Y. Ji, Y. Meng, Y. Zhang, and Y. Zhu, “Sopseg: Prompt-based small object instance segmentation in remote sensing imagery,” 2025. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[22] R. C. Daudt, B. Le Saux, A. Boulch, and Y. Gousseau, “Urban change detection for multispectral earth observation using convolutional neural networks,” in IGARSS 2018. Ieee, 2018, pp. 2115–2118. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[23] R. C. Daudt, B. Le Saux, and A. Boulch, “Fully convolutional siamese networks for change detection,” in 2018 25th IEEE ICIP. IEEE, 2018, pp. 4063–4067. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[24] L. Ding, H. Guo, S. Liu, L. Mou, J. Zhang, and L. Bruzzone, “Bi-temporal semantic reasoning for the semantic change detection in hr remote sensing images,” IEEE TGRS, vol. 60, pp. 1–14, 2022. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[25] J. Wang, Z. Zheng, A. Ma, X. Lu, and Y. Zhong, “Loveda: A remote sensing land-cover dataset for domain adaptive semantic segmentation,” 2021. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[26] S. Waqas Zamir, A. Arora, A. Gupta, S. Khan, G. Sun, F. Shahbaz Khan, F. Zhu, L. Shao, G.-S. Xia, and X. Bai, “isaid: A large-scale dataset for instance segmentation in aerial images,” in CVPR workshops, 2019, pp. 28–37. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[27] S. Ji, S. Wei, and M. Lu, “Fully convolutional networks for multisource building extraction from an open aerial and satellite imagery data set,” IEEE TGRS, vol. 57, no. 1, pp. 574–586, 2018. "
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                506,
+                60,
+                924,
+                907
+            ]
+        }
+    ]
+]

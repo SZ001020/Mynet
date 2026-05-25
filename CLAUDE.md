@@ -2,296 +2,262 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Repository Overview
-
-This is the SSRS (Semantic Segmentation for Remote Sensing) repo, containing PyTorch implementations of multiple published remote sensing works. The repo is organized as independent research projects under one umbrella.
-
-Active development is on the `segearthov3` branch, which focuses on SegEarth-OV-3 evaluation with SAM 3 for zero-shot open-vocabulary segmentation.
-
 ## Hardware & Environment
 
-- GPU: RTX 5090 32GB (CUDA 12.8), PyTorch 2.7.0 with bf16 + FA3 support
+- GPU: RTX 5090 32GB (CUDA 12.8), PyTorch 2.7.0, bf16 + FA3
 - RAM: 754 GB
-- Data disk: `/root/autodl-tmp` (100G) — store checkpoints and run results here
-- Public disk: `/autodl-pub` (14T, 7.1T free) — for large model weights and dataset backups
+- Data disk: `/root/autodl-tmp` (100G) — checkpoints, run outputs
+- Public disk: `/autodl-pub` (14T) — model weights, dataset backups
 
-## Research Context — READ THIS FIRST
+## Active Research
 
-The current branch has gone through two research plans. Understanding the negative results from Plan1 is essential before suggesting any approach.
+This is the SSRS remote sensing segmentation repo. Active branch: `segearthov3`, working through 7 research plans (plan.md → plan7.md). The task is frozen-backbone SAM3 semantic segmentation on ISPRS Vaihingen/Potsdam with DSM (digital surface model) fusion.
 
-### Plan1 (Multi-Class Paradigm) — `plan.md`
+**Core architecture**: SAM3 ViTDet (frozen) + in-ViT MMAdapter (RGB/DSM dual-stream at every ViT block) + MFNetDecoder.
 
-Concluded that **SAM3 should NOT be forced into a multi-class argmax model**:
+**Current best (2026-05-19)**:
 
-| Phase | What | Result |
-|-------|------|--------|
-| Phase 1 | Zero-shot baseline + dual-head analysis | Semantic-Only head best for Vaihingen (65.8%), Dual-Head best for Potsdam (56.6%). Removing "clutter" class improves results. |
-| Phase 2 | Prompt engineering (A-E groups) | **Single-word prompts = optimal.** Any complexity (RS terms, geometry descriptions, synonyms) catastrophically degrades performance (up to -50% mIoU). SAM3's text encoder is OOD for domain-specific prompts. |
-| Phase 3 | Partial fine-tuning (FPN decoder) | **Fine-tuned worse than zero-shot** (Vaihingen: 65.8% → 56.6%, Potsdam: 55.6% → 21.0%). SAM3's fused operators (`perflib/fused.py`) don't support gradients. FPN decoder (797K params) too weak to learn text-vision alignment. |
-| Phase 4 | DSM elevation injection | **DSM logit bias catastrophically fails** (Vaihingen: 43.3% → 15.4%). Simple post-hoc multiplication destroys SAM3's carefully trained logit distribution. |
+| Model | mIoU | OA | Trainable | Eval |
+|-------|------|-----|-----------|------|
+| **Plan7-A: DSM edge/slope prompt** | **77.55%** | 88.20% | ~5M | 软 logit |
+| Plan7-A (old eval) | 77.14% | 87.75% | ~5M | per-patch argmax |
+| Phase4 F0: shared + LoRA + SEFusion | 77.34% | 88.23% | ~7.2M | 软 logit |
+| Plan6 Phase1: full DSM attention | 77.38% | 87.83% | ~5M | 软 logit |
+| Plan6 Phase1 (old eval) | 76.57% | 87.27% | ~5M | per-patch argmax |
+| MFNet Frozen SAM1 (reference) | 75.11% | 88.01% | LoRA | SAM1 |
 
-### Plan2 (Per-Class Binary Paradigm) — `plan2.md`
+**Phase 4 key finding (2026-05-19)**: LoRA on SAM3 ViTDet (rank=8) is the dominant factor (+1.5pp within the Phase 4 chain), comparable in importance to in-ViT MMAdapter. Shared encoder + LoRA + SEFusion (77.34%) is competitive but slightly below Plan7-A (77.55%, same soft-logit eval, -0.21pp). LoRA + simple architecture ≈ frozen + complex adapter architecture. The value of Phase 4 is the fair controlled comparison, not a new SOTA.
 
-Pivot to SAM3's native paradigm: **prompt → binary mask** per class, independent evaluation.
+**Plan8 (2026-05-16) — NEGATIVE**: Cross-attention (-0.26pp) and DSM attention bias (-0.65pp) in frozen ViT provide no benefit over gate-only baseline. Gate fusion alone is sufficient for RGB-DSM interaction at this scale.
 
-**Phase 1 — Completed (2026-04-30):** Per-class binary baseline in `RS-SAM3/`. Zero-cost threshold tuning yields +10.3% mIoU over baseline (0.450 → 0.554). Key finding: Plan1's multi-class IoU overestimated SAM3's real per-class capability by ~19%.
+**Phase 3 ablation (2026-05-14)**: in-ViT MMAdapter is the dominant contributor (+6.75pp over late fusion). Gate type (sigmoid vs softmax), loss (CE vs structure_loss), and data loading (fixed vs online crops) each contribute ≤0.2pp. Decoder upgrade from simple to MFNetDecoder adds ~0.7pp.
 
-**Phase 2 — In progress:** SAM3 fine-tuning inspired by Medical-SAM3's checkpoint loading pattern. Three strategies: (A) Medical-SAM3 zero-shot transfer, (B) LoRA fine-tune on ISPRS, (C) full fine-tune on LoveDA. Implementation in `sam3_isprs/` using the official `sam3-main` training pipeline.
+**Failed directions — do not retry**:
 
-**Phase 3 — Future:** Train a dedicated "Remote-SAM3" checkpoint. DSM integration via hillshade visualization overlay (not model architecture changes).
+| Direction | Evidence | Δ vs baseline | Plan |
+|-----------|----------|---------------|------|
+| Cross-attention RGB↔DSM in frozen ViT | CA-A 74.52 vs CTRL 74.77 | -0.26pp | Plan8 |
+| DSM-derived attention bias | AB-A 74.12 vs CTRL 74.77 | -0.65pp | Plan8 |
+| Full fine-tuning | 72.87 vs frozen 73.54 | degrades | Plan4 |
+| LoRA on frozen backbone | 75.57 vs 76.57 | -1.00pp | Plan6 |
+| Unfreeze attention layers | 72.51 vs 76.57 | -4.06pp | Plan6 |
+| Boundary/object auxiliary loss | — | no gain | Plan5 |
+| SAM-HQ residual correction | 77.05 vs 77.14 | -0.09pp | Plan7-C3 |
+| Multi-scale TTA | 77.33 vs 77.55 | -0.22pp | Plan7-D1 |
+| Curvature/roughness prompt expansion | 76.49 vs 77.14 | -0.65pp | Plan7-B3 |
 
-### Plan3 (Three Routes for SAM3 Fine-Tuning) — `plan3.md`
+**Before proposing any new direction, check this table and the Experiment Lineage below.**
 
-Derived from Plan1's negative results and Plan2's per-class paradigm. Three complementary routes:
+## Experiment Lineage
 
-| Route | Approach | Trainable Params | Text Prompt | Risk |
-|-------|----------|-----------------|-------------|------|
-| A: Adapter+UNet | VPT adapters in ViT + UNet decoder | ~2M | No (vision-only) | Low |
-| B: LoRA-Full-SAM3 | LoRA on ViT/Text/DETR/Mask decoders | 2M→15M | Yes | Medium |
-| C: Two-stage | Route A validate → Route B complete | A:2M → B:15M | Eventually yes | Low→Medium |
+Every experiment branch is recorded here. Read top-to-bottom to trace the full derivation chain. Each `→` is an experiment; ✅/❌/➖ marks gain / loss / noise-level result. Lines ending in ❌ are closed and should not be retried.
 
-**Key design principles:**
-- Never modify SAM3's fused CUDA operators (keep frozen, no_grad)
-- Inject trainable parameters only on standard PyTorch layers (Adapter on features, LoRA on nn.Linear)
-- Maintain per-class binary paradigm from Plan2
-- Route A (Adapter+UNet) is the fastest path to validate "fine-tuning can beat zero-shot"
-- Route B (LoRA) preserves open-vocabulary capability
-- Structure loss: edge-weighted BCE + weighted IoU for building/road boundary precision
+```
+Plan6 Phase1 (76.57%) — first in-ViT MMAdapter, no prompt
+  │
+  ├─→ Plan7-A (+ Sobel/Laplacian prompt) → 77.14% ✅ +0.57pp  [CURRENT BEST]
+  ├─→ Plan7-B1 (slope only prompt) → 76.49% ❌ -0.65pp
+  ├─→ Plan7-B3 (slope+edge+curvature) → 76.49% ❌ no gain
+  ├─→ Plan7-C3 (SAM-HQ residual correction) → 77.05% ➖ -0.09pp
+  └─→ Plan7-D1 (multi-scale TTA) → 77.33% ➖ -0.22pp
 
-## Project Components
+Plan6 Phase3 (ablation) — all variants from Plan6 Phase1 parent
+  ├─→ A0: no adapter → 53.10%
+  ├─→ A1: late fusion → 65.86% (+12.76pp)
+  ├─→ A3: in-ViT MMAdapter → 72.88% (+6.75pp over A1) ← KEY ABLATION
+  ├─→ B1: softmax gate → +0.04pp ➖
+  ├─→ C0: fixed windows → noise-level
+  └─→ D1: CE loss → noise-level
 
-### Active Development
+Plan8 — SAM3 base, seed=42, all from scratch (formal ablation)
+  │
+  ├─→ CTRL (gate-only, Plan7-A architecture) → 74.77%
+  ├─→ CA-A (+ DSM→RGB cross-attn, 4 global blocks) → 74.52% ❌ -0.26pp
+  │   └─→ Chain 1 closed: cross-attn in frozen ViT provides no benefit
+  └─→ AB-A (+ DSM elevation attn bias, factorized) → 74.12% ❌ -0.65pp
+      └─→ Chain 2 closed: attn bias degrades frozen attention
 
-#### `RS-SAM3/` — Plan2 Per-Class Binary Evaluation (active)
-- **`eval_binary.py`** — Per-class binary evaluation runner. Outputs Dice/IoU/Precision/Recall per class to `runs/plan2_phase1_{timestamp}/`. Usage:
-  ```bash
-  cd /root/Mynet/RS-SAM3
-  python eval_binary.py --dataset vaihingen [--max-samples N]
-  ```
-- **`tune_thresholds.py`** — Per-class top-K% threshold scanner. Sweeps K ∈ [3,5,8,10,12,15,18,20,25,30,35,40,50] on validation tiles, finds optimal per-class threshold.
-- **`sam3_model.py`** — `SAM3Model` wrapper compatible with Medical-SAM3 checkpoint format
-- **`dataset_rs.py`** — Per-class binary dataset loader (each tile × each class = one sample). Class definitions and text prompts in `TEXT_PROMPTS` dict.
-- **`metrics.py`** — Dice, IoU, Precision, Recall computation
+Plan6 Phase4 — MFNet strict comparison, seed=42 (formal ablation)
+  │
+  ├─→ F0 (shared encoder + LoRA + SEFusion + MFNetDecoder) → 77.34% ✅ [PHASE4 BEST]
+  ├─→ F1 (in-ViT MMAdapter + LoRA) → 77.29% ➖ -0.11pp vs F0
+  │   └─→ in-ViT adapter provides NO gain over shared+SEFusion when LoRA present
+  ├─→ F2 (in-ViT MMAdapter, frozen) → 75.51% ❌ -1.49pp vs F1
+  │   └─→ LoRA is the DOMINANT factor: contributes ~1.5pp
+  └─→ F3 (in-ViT MMAdapter, frozen + prompt) → 76.52% (+0.65pp vs F2)
+      └─→ Prompt gain consistent with Plan7-A (+0.57pp); confirms reproducibility
 
-#### `fineNet/` — Plan1 Fine-Tuning Experiments (completed, reference)
-- **`train.py`** — Phase 3 partial fine-tuning (frozen SAM3 backbone + trainable FPN decoder)
-- **`train_dual_stream.py`** — Phase 4 dual-stream: RGB through frozen SAM3 + DSM through lightweight CNN encoder → UNet decoder
-- **`train_phase3_unet.py`** — UNet decoder variant with ConvBlock + upsample layers
-- **`train_phase4_dsm.py`** — Phase 4 dual-stream RGB+DSM fine-tuning (DSMEncoder + UNet decoder)
-- **`phase4_approach_a.py`** — DSM logit bias post-processing (failed approach, kept for reference)
-- **`phase4_dsm.py`** — DSM feature extraction and visualization
-- **`phase3_visualize.py`** — Generate comparison visualizations (zero-shot vs fine-tuned predictions)
-- **`finetune_model.py`** — FPN decoder model definition
-- **`finetune_dataset.py`** — Training dataset loader (ISPRS tile-based)
+Earlier plans (superseded):
+  Plan3: Adapter+decoder beats full fine-tuning despite 175× fewer params
+  Plan4: Full ViT training degrades; unfreeze harms frozen backbone
+  Plan5: Boundary/object auxiliary loss provides no gain
+  Plan1-2: Zero-shot baselines; per-class binary paradigm overestimates
+```
 
-#### `sam3_isprs/` — Official SAM3 Training on ISPRS (active)
-Uses `sam3-main`'s training pipeline (not SegEarth's fused operators) for fine-tuning SAM3 on ISPRS:
-- **`train_official.py`** — SAM3 fine-tuning via official `build_sam3_image_model(eval_mode=False)` with simplified detection loss on COCO-format data
-- **`train_sam3_decoder.py`** — SAM3 feature extraction + UNet decoder (stronger decoder approach)
-- **`train_simple.py`** — Simplified single-class training script
-- **`convert_to_coco.py`** — Convert ISPRS tile annotations to COCO JSON format with per-class binary masks
-- **`vaihingen/`, `potsdam/`, `combined/`** — COCO-format ISPRS data with annotations.json + tile images
+**Lineage conventions:**
+- `formal_ablation`: same parent ckpt, single variable change. Directly comparable.
+- `continuation`: loaded from best ckpt, but changed multiple variables. Compare with caution.
+- `from scratch`: no inherited weights. Compare only within same seed group.
+- All experiments must record `init_from`, `lineage_type`, and `comparison_role` in both `plan{N}.md` and `model_registry.py`.
 
-#### `SegEarth-OV-3-main/` — Zero-Shot Evaluation (Plan1 Phases 1-2)
-- **`eval.py`** — MMSeg-based evaluation runner. Usage:
-  ```bash
-  cd SegEarth-OV-3-main
-  python eval.py ./configs/cfg_vaihingen.py [--out output_dir] [--show]
-  ```
-- **`demo.py`** — Quick single-image inference demo
-- **`segearthov3_segmentor.py`** — `SegEarthOV3Segmentation` (mmseg `BaseSegmentor` subclass). Wraps SAM3 via `Sam3Processor`, performs per-category text-prompted inference with dual-head fusion (instance + semantic) and presence-guided filtering.
-- **`configs/`** — One config file per dataset. Each inherits from `base_config.py`. Configs with `_noclutter` suffix exclude clutter class (5-class evaluation). Configs with `_prompt_b/c/d/e` suffixes correspond to Plan1 Phase 2 prompt experiments.
-- **`cls_*.txt`** — Per-dataset class name lists (used as SAM3 text prompts)
-- **`pamr.py`** — PAMR post-processing for mask refinement
-- **`custom_datasets.py`** — MMSeg dataset registrations for 20+ RS datasets
+## Key Architecture
 
-### External SAM3 Codebases
+### In-ViT MMAdapter (Plan6/7)
 
-#### `sam3-main/` — Official SAM 3 & SAM 3.1 (Meta)
-Independent installable package. Contains the full model definition with SAM 3.1 multiplex tracking. This is **different** from `SegEarth-OV-3-main/sam3/` — newer, includes multiplex and SAM 3.1 support.
-- Install: `pip install -e sam3-main/`
-- Entry point: `sam3/model_builder.py`
-- Training: `sam3/train/train.py` — official training pipeline (the correct path for fine-tuning, unlike the fused operators in `SegEarth-OV-3-main/sam3/`)
-- Checkpoints auto-downloaded from HF: `facebook/sam3`, `facebook/sam3.1`
+DSM tokens enter SAM3 ViT at every layer alongside RGB tokens, sharing the frozen attention mechanism:
 
-#### `Medical-SAM3/` — Reference Implementation (read-only)
-Reference for checkpoint loading pattern used in Plan2 Phase 2. Demonstrates that SAM3 can be fine-tuned and weights reloaded with `strict=False`. Key insight: `build_sam3_image_model(checkpoint_path=None, load_from_HF=False)` + `model.load_state_dict(ckpt, strict=False)`.
+```
+RGB → ViT patch embed → RGB tokens (BHWC, 1024-dim)
+DSM → CNN encoder → DSM tokens (same spatial grid)
 
-#### `SAM3_LoRA-main/` — LoRA Fine-Tuning Implementation
-Full LoRA implementation for SAM3 with training scripts and configs. Three training entry points:
-- `train_sam3_lora.py` — Standard LoRA training
-- `train_sam3_lora_native.py` — Native PyTorch training loop
-- `train_sam3_lora_with_categories.py` — Category-aware training
-- `lora_layers.py` — LoRA layer definitions
-- `inference_lora.py` — Inference with LoRA weights
-- Configs in `configs/` directory
+In every ViT block (32 blocks, global attn at [7,15,23,31]):
+  RGB attn = frozen_self_attention(RGB)
+  DSM attn = frozen_self_attention(DSM)  ← "full" mode reuses same weights
+  gate = softmax(learnable_logits) → 3-way fusion (RGB/DSM/prompt)
+  output = gate[0]*RGB_adapter + gate[1]*DSM_adapter + gate[2]*prompt_adapter
 
-#### `SAM3-UNet-main/` — SAM3UNet Paper Implementation
-- `train.py` / `eval.py` — Training and evaluation
-- `SAM3UNet.py` — Model combining SAM3 encoder with UNet decoder
-- `sam3/` — Bundled SAM3 code subset
+After ViT: multi-scale features (blocks 8/16/24/32 output via backbone_fpn)
+  → Pyramid4Scale (4-scale FPN)
+  → MFNetDecoder (3 GLA blocks + FeatureRefinementHead) → 5-class logits
+```
 
-#### `mlx_sam3-main/` — Apple Silicon MLX Port
-SAM3 ported to Apple's MLX framework. Not relevant for CUDA development.
+Plan7 extends this by adding a third input branch: DSM edge+slope prompt tokens computed from the DSM via Sobel/Laplacian, encoded by a separate PromptEncoder, and injected into each block's 3-way softmax gate.
 
-### Legacy Projects (other branches: `week2`, `week3`, `master`)
+**Critical implementation detail**: The ViTDet is accessed via `vision_backbone.trunk.blocks` (not `vision_backbone.blocks`). The `vision_backbone` is a `Sam3DualViTDetNeck` wrapping a ViT `trunk` with 32 blocks, each wrapped by `MMAdapterPromptBlock`.
 
-#### `MFNet/` — Multimodal Fine-Tuning with SAM (IEEE TGRS 2025)
-- **`train.py`** — Supervised training via environment variables
-- **`UNetFormer_MMSAM.py`** — SAM encoder + multimodal FPN fusion + UNetFormer decoder with LoRA PEFT
-- **`train_uda_struct_v1.py`** — Weak cross-domain UDA training
-- Training config via env vars: `SSRS_DATASET`, `SSRS_DATA_ROOT`, `SSRS_BATCH_SIZE`, `SSRS_BASE_LR`, `SSRS_EPOCHS`, `SSRS_SEED`, `SSRS_LOSS_MODE`, `SSRS_LAMBDA_BDY`, `SSRS_LAMBDA_OBJ`
+### MFNetDecoder
 
-#### `SAM_RS/` — SAM-Assisted RS Segmentation (IEEE TGRS 2024)
-- **`train.py`** — Supports 4 architectures: UNetFormer, FTUNetFormer, ABCNet, CMTFNet
-- **`model/`** — Model implementations
-- Uses same env var pattern as MFNet
+Input: 4-scale features [1/4, 1/8, 1/16, 1/32] from Pyramid4Scale.
+Architecture: GLA (Global-Local Attention) blocks with window attention + relative position bias, WF weighted fusion modules, FeatureRefinementHead with PA+CA dual attention.
+Output: [B, 5, H/4, W/4] logits.
 
-## Key Architecture Patterns
+## Project Directory Map
 
-### SegEarth-OV-3 Inference Pipeline
-1. Input image + text class names → SAM3 model via `Sam3Processor`
-2. Per-class text prompt → instance masks (Transformer decoder) + semantic logits (segmentation head)
-3. **Instance aggregation** — consolidate sparse object predictions
-4. **Dual-head fusion** — element-wise max of instance masks and semantic logits
-5. **Presence filtering** — SAM3's presence score suppresses false positives from absent categories
+Our code lives under `Personal-Project/`. Vendored reference projects under `Reference-Project/`. Plans under `Plan/`.
 
-### MFNet Model Flow
-1. RGB (x) and DSM (y) → shared SAM image encoder → `deepx`, `deepy` features
-2. FPN-style multi-scale projections per modality (`fpn1x..fpn4x`, `fpn1y..fpn4y`)
-3. Cross-modal fusion at each scale via `SEFusion` (squeeze-and-excitation channel attention)
-4. UNetFormer decoder with Global-Local Attention blocks
-5. Only `lora_` parameters in the encoder are trainable (PEFT with LoRA)
+| Directory | Purpose | Status |
+|-----------|---------|--------|
+| `Personal-Project/RS-SAM3-p6/phase1_mm_adapter/` | Plan6 Phase1: in-ViT MMAdapter (best 76.57%) | Reference |
+| `Personal-Project/RS-SAM3-p6/phase3_ablation/` | Plan6 Phase3: adapter/gate/data/loss/decoder ablation | Done |
+| `Personal-Project/RS-SAM3-p7/phase_a_dsm_prompt/` | Plan7-A: DSM edge/slope prompt (best 77.14%) | **Active** |
+| `Personal-Project/RS-SAM3-p7/phase_b_prompt_ablation/` | Plan7-B: slope/curvature morphology ablation | Done |
+| `Personal-Project/RS-SAM3-p7/phase_c_residual_boundary/` | Plan7-C3: SAM-HQ residual correction (no gain) | Done |
+| `Personal-Project/RS-SAM3-p7/phase_d_multiscale_spatial/` | Plan7-D1: multi-scale TTA eval (no gain) | Done |
+| `Personal-Project/RS-SAM3-p8/` | Plan8: cross-attn + attn bias (negative) | Done |
+| `Personal-Project/RS-SAM3-p3/` `RS-SAM3-p3r/` `RS-SAM-p3b/` | Plan3 Route A/B: VPT adapter + UNet | Superseded |
+| `Personal-Project/RS-SAM3-p1/` `RS-SAM3-p2/` `RS-SAM3-p4/` `RS-SAM3-p5/` `RS-SAM3/` | Plan1/2/4/5 | Superseded |
+| `Reference-Project/SegEarth-OV-3-main/` | Zero-shot eval (Plan1) + SAM3 model loading | Read-only |
+| `Reference-Project/sam3-main/` | Official SAM3 package (`pip install -e Reference-Project/sam3-main/`) | Read-only |
+| `Reference-Project/MFNet/` `Reference-Project/SAM_RS/` | MFNet and SAM_RS papers (legacy) | Read-only |
+| `docs/` | Paper notes for 10+ RS papers | Reference |
+| `Plan/` | plan1-8.md research plans | Reference |
+| `model_registry.py` | Authoritative registry of all checkpoints, metrics, lineage | **Single source of truth** |
 
-### Per-Class Binary Paradigm (Plan2)
-1. Image + single class text prompt → SAM3 → logits
-2. Per-class thresholding (top-K% of activated pixels, K tuned per class) → binary mask
-3. Evaluate Dice/IoU independently per class
-4. No argmax competition between classes — each class stands on its own
+Each experiment directory has its own isolated code (`model.py`, `train.py`, `eval.py`). Parameter signatures differ between versions — when loading old checkpoints, use the corresponding code.
 
-## Experiment Results
+## Datasets
 
-All experiment outputs go to `/root/Mynet/autodl-tmp/runs/`. Naming convention:
-- `phase1_baseline_YYYYMMDD_HHMMSS/` — Plan1 zero-shot experiments
-- `phase2_prompt_YYYYMMDD_HHMMSS/` — Plan1 prompt engineering
-- `phase3_partial_YYYYMMDD_HHMMSS/` — Plan1 fine-tuning runs
-- `plan2_phase1_YYYYMMDD_HHMMSS/` — Plan2 per-class binary baselines
-- `plan2_phase1b_YYYYMMDD_HHMMSS/` — Plan2 threshold tuning results
-- `sam3_unet_combined_YYYYMMDD_HHMMSS/` — Plan3 Route A: SAM3+UNet fine-tuning runs
+**Data root**: `/root/autodl-tmp/dataset/`
 
-Each run directory contains `experiment.log`, CSV results, and per-tile visualization PNGs.
+| Dataset | Modality | Classes | Train/Test | Notes |
+|---------|----------|---------|------------|-------|
+| Vaihingen | NIRRG+DSM | 5 (excl. clutter) | 12/4 tiles | 9cm GSD, DSM pixel-aligned |
+| Potsdam | RGBIR+DSM | 5 (excl. clutter) | 16/6 tiles | 5cm GSD |
+| LoveDA | RGB | 7 | 2522/1669 | Largest training set |
 
-## Dataset Support (ISPRS focus for active work)
-
-**Data root:** `/root/autodl-tmp/dataset/`
-
-| Dataset | Modality | Classes | Train/Test | Path | Notes |
-|---------|----------|---------|------------|------|-------|
-| ISPRS Vaihingen | NIRRG+DSM | 6 (5 w/o clutter) | 12 train / 4 test | `/root/autodl-tmp/dataset/Vaihingen/` | DSM pixel-aligned with RGB |
-| ISPRS Potsdam | RGBIR+DSM | 6 (5 w/o clutter) | 18 train / 6 test | `/root/autodl-tmp/dataset/Potsdam/` | DSM pixel-aligned with RGB |
-| LoveDA | RGB | 7 | 2522 train / 1669 val | `/root/autodl-tmp/dataset/LoveDA/` | Largest available training set |
-
-Other supported datasets (for zero-shot eval): OpenEarthMap, iSAID, UAVid, WHU, Inria, xBD, UDD5, VDD, CHN6-CUG, COCO Object/Stuff, PascalVOC, PascalContext, ADE20K, CityScapes, DeepGlobe Road, Massachusetts Road, SpaceNet Road, WBS-SI.
-
-## Evaluation Metrics
-- Per-class IoU, mean IoU (mIoU), Overall Accuracy (OA), mean Accuracy (mAcc)
-- Plan2 adds: Per-class Dice, Precision, Recall (binary classification metrics)
-- mean F1 Score, Kappa coefficient, Confusion matrix
-
-## Standard Dataset Splits (MFNet Protocol)
-
-**CRITICAL: All experiments use the MFNet standard train/test splits. Do NOT modify.**
-
-These splits are aligned with the MFNet paper (IEEE TGRS 2025) for reproducible comparison.
+### MFNet Standard Splits (DO NOT MODIFY)
 
 ```python
-# MFNet Standard Splits — single source of truth
-VAIHINGEN_TRAIN = ['1','3','23','26','7','11','13','28','17','32','34','37']  # 12 tiles
-VAIHINGEN_TEST  = ['5','21','15','30']                                        # 4 tiles
-POTSDAM_TRAIN   = ['6_10','7_10','2_12','3_11','2_10','7_8','5_10','3_12','5_12','7_11','7_9','6_9','7_7','6_8','4_12','6_12']  # 16 tiles
-POTSDAM_TEST    = ['4_10','5_11','2_11','3_10','6_11','7_12']                 # 6 tiles
-
-# Tile name formats:
-#   Vaihingen: top_mosaic_09cm_area{id}.tif / top_mosaic_09cm_area{id}.png
-#   Potsdam:   top_potsdam_{id}_RGB.tif       / top_potsdam_{id}.png
+VAIHINGEN_TRAIN = ['1','3','23','26','7','11','13','28','17','32','34','37']
+VAIHINGEN_TEST  = ['5','21','15','30']
+POTSDAM_TRAIN   = ['6_10','7_10','2_12','3_11','2_10','7_8','5_10','3_12',
+                   '5_12','7_11','7_9','6_9','7_7','6_8','4_12','6_12']
+POTSDAM_TEST    = ['4_10','5_11','2_11','3_10','6_11','7_12']
 ```
 
-**Usage by experiment:**
-- Phase 1 (zero-shot eval): test tiles only
-- Phase 2 (prompt engineering): test tiles only
-- Phase 3 (fine-tuning): train tiles for training, test tiles for validation
-- Phase 4 (DSM): same as Phase 3
-- Plan2 Phase 1 (binary eval): test tiles only
-- Plan3 Route A/B/C: train tiles for training, test tiles for validation
+## Evaluation Protocol
 
-## Evaluation Protocol (CRITICAL — 2026-05-02)
+**256×256 sliding window, stride=128, soft-logit accumulation (MANDATORY)**.
 
-**Final evaluation MUST use 256×256 sliding window with overlap averaging** (aligned with MFNet/ISPRS standard).
+Every eval must output: `avg_oa`, `avg_miou`, `per_class_iou`, `per_class_recall`, `per_class_oa`.
 
-| Protocol | Window | Stride | Use | Reliability |
-|----------|--------|--------|-----|-------------|
-| 512² crop | 512² | — | Training monitoring only | **Underestimates** (Potsdam 47%→74%, -27pp gap) |
-| 1008² sliding | 1008² | 672 | Intermediate reference | Overestimates (model trained at 1008²) |
-| **256² sliding** | **256²** | **128** | **Final evaluation (MANDATORY)** | Matches MFNet paper protocol |
+Key rules:
+- **Soft-logit accumulation**: accumulate logits across all patches before argmax (NOT per-patch argmax). Per-patch argmax loses ~0.4-0.8pp.
+- Edge trim: `min(16, ph//4)` pixels from each patch edge.
+- `per_class_recall = TP/(TP+FN)` — this matches MFNet paper's "per-class OA". Do NOT use `(TP+TN)/total` for comparison with MFNet.
+- Multi-tile results use accumulated inter/union across all tiles (not tile-wise average).
 
-Implementation: `RS-SAM3-p3/eval_mfnet_protocol.py`
-Usage:
-```bash
-cd RS-SAM3-p3
-python eval_mfnet_protocol.py --model rgb --dataset vaihingen
-python eval_mfnet_protocol.py --model dsm --dataset vaihingen
-```
-
-This protocol is documented in plan.md, plan2.md, and plan3.md.
-
-### Code Version Management (CRITICAL — 2026-05-08)
-
-Each experiment version has its own code directory. When loading old checkpoints, use the corresponding code — parameter signatures differ between versions.
-
-**Model Registry:** `RS-SAM3-p4/model_registry.py` — maps every checkpoint → source code + loading params.
-**Universal Eval:** `RS-SAM3-p4/eval_universal.py` — load any registered checkpoint, run 256² evaluation.
+**Training monitoring**: 512² or 1008² crop validation is for training monitoring only. It underestimates final mIoU by up to 27pp on Potsdam. Only 256² sliding window is final.
 
 ```bash
-python eval_universal.py --list              # List all registered models
-python eval_universal.py --name "VPT+MFNet"  # Evaluate specific model
-python eval_universal.py                     # Evaluate all models
+# Plan6 eval
+python Personal-Project/RS-SAM3-p6/phase1_mm_adapter/eval_mfnet_protocol.py \
+  --checkpoint <path> --dataset vaihingen
+
+# Plan7 eval
+python Personal-Project/RS-SAM3-p7/phase_a_dsm_prompt/eval.py --dataset vaihingen
+
+# Plan7-C3 eval
+python Personal-Project/RS-SAM3-p7/phase_c_residual_boundary/c3_full/eval.py \
+  --checkpoint <path> --dataset vaihingen
+
+# Multi-scale eval (D1/P2-D1)
+python Personal-Project/RS-SAM3-p7/phase_d_multiscale_spatial/d1_multiscale_eval/eval_ms.py \
+  --checkpoint <path> --dataset vaihingen --scales 1.0 0.75
 ```
 
-| Directory | Contents | Key Models |
-|-----------|----------|------------|
-| `RS-SAM3-p3/` | Route A: VPT Adapter + simple UNet | AdapterSAM3UNet |
-| `RS-SAM3-p3r/` | Route A+DSM: VPT + UNetFormer + cross-attn DSM | AdapterSAM3UNetFormerDSM |
-| `RS-SAM-p3b/` | Route B: LoRA ViT + UNetFormer + MFNet decoder | LoRASAM3UNetFormer, VPT_MFNetDecoder |
-| `RS-SAM3-p4/` | Plan4: Full training + eval registry | SAM3FullTrain, model_registry.py |
+## Key Commands
 
-### Evaluation Output Standard (ALL eval/validate must comply)
+```bash
+# Train Plan7-A (DSM edge/slope prompt)
+cd Personal-Project/RS-SAM3-p7/phase_a_dsm_prompt
+python train_a.py --dataset vaihingen --dsm-attn-mode full --checkpoint-attn \
+  --epochs 8 --batch 2 --init-from <Plan6_Phase1_best>
 
-Every evaluate/validate function must output **four metrics**:
+# Train Plan6 Phase1 (in-ViT MMAdapter)
+cd Personal-Project/RS-SAM3-p6/phase1_mm_adapter
+python train_phase1.py --dataset vaihingen --dsm-attn-mode full --checkpoint-attn
 
-| Metric | JSON key | Description |
-|--------|----------|-------------|
-| Overall OA | `avg_oa` | Overall accuracy across all foreground classes |
-| Overall mIoU | `avg_miou` | Mean IoU across all foreground classes |
-| Per-class IoU | `per_class_iou` | Per-class IoU dict |
-| Per-class OA | `per_class_oa` | Per-class OA dict: (TP+TN)/total |
+# Install SAM3
+pip install -e Reference-Project/sam3-main/
 
-Per-class OA formula (derived from existing inter/union, no extra accumulators needed):
+# List all registered models
+python model_registry.py
 ```
-pc_oa[c] = (inter[c] + total - union[c]) / total * 100
-```
-Derivation: TN = total - TP - FP - FN = total - union[c], so OA = (TP+TN)/total.
 
-This enables direct comparison with MFNet paper's per-class OA (Table I reports per-class OA, not per-class IoU).
+All run outputs go to `/root/autodl-tmp/runs/`. Naming: `plan{N}_{phase}_{dataset}_{timestamp}/`.
+Each run contains: `best_model.pt`, `history.json`, `config.json`, eval JSONs.
 
 ## Important Constraints
 
-- **SAM3 fused operators don't support autograd**: `SegEarth-OV-3-main/sam3/` contains custom fused CUDA ops (`perflib/fused.py`, `vlcombiner.py`) that breaks gradient flow. For fine-tuning, use either `sam3-main/sam3/train/train.py` (official training pipeline) or Medical-SAM3's `strict=False` checkpoint loading pattern.
-- **Single-word class names only**: Any prompt complexity beyond simple category words severely degrades SAM3's text-vision alignment. See Plan1 Phase 2 results.
-- **Evaluate per-class, not via argmax**: Multi-class argmax overestimates SAM3's real class capability by ~19% mIoU due to competitive exclusion effects between classes.
-- **Import path conflicts**: `SegEarth-OV-3-main/sam3/` and `sam3-main/sam3/` both export a `sam3` package. Scripts that use `sam3-main` must remove SegEarth's sam3 from `sys.path`:
-  ```python
-  sys.path.insert(0, '/root/Mynet/sam3-main')
-  for p in list(sys.path):
-      if p == os.path.join('/root/Mynet/SegEarth-OV-3-main', 'sam3'):
-          sys.path.remove(p)
-  ```
+- **SAM3 fused ops don't support autograd**: `Reference-Project/SegEarth-OV-3-main/sam3/` has custom fused CUDA ops. For fine-tuning, use `Reference-Project/sam3-main/` pipeline or `strict=False` checkpoint loading.
+- **Single-word class names only**: any prompt complexity beyond simple category words catastrophically degrades SAM3's text-vision alignment (Plan1 Phase 2).
+- **Import path conflicts**: `Reference-Project/SegEarth-OV-3-main/sam3/` and `Reference-Project/sam3-main/sam3/` both export `sam3`. Scripts using `sam3-main` must remove SegEarth's sam3 from `sys.path`.
+- **ViTDet block access**: `vision_backbone.trunk.blocks[i]`, not `vision_backbone.blocks[i]`. The `vision_backbone` is `Sam3DualViTDetNeck`.
+- **Model registry is authoritative**: `model_registry.py` is the single source of truth for checkpoint paths, architectures, metrics, lineage. Consult it before loading any model. Update it after every experiment.
+- **AGENTS.md** has subagent dispatch templates, coding style, and commit conventions.
+- **CC工作模式.md** and **CC任务工作需求.md** define the master-session/subagent workflow for this project.
+- **Lineage tracking**: every experiment must record `init_from`, `lineage_type` (`formal_ablation` or `continuation`), and `comparison_role`. Formal ablation must start from the same parent checkpoint.
+- **Never modify** vendored reference projects in `Reference-Project/` unless the task explicitly targets them.
+
+## Plan Closure Checklist
+
+**Every plan must pass this checklist before being marked "已完成". No exceptions.**
+
+When a plan (or a phase within a plan) reaches a conclusion:
+
+```
+□ plan{N}.md status updated: "状态: 已完成" with one-sentence conclusion
+□ All checkpoints written to model_registry.py with: ckpt path, eval metrics, protocol, init_from, lineage_type, comparison_role, note
+□ Experiment added to §Experiment Lineage above (with ✅/❌/➖ marker)
+□ If negative result: added to §Failed Directions table above
+□ CLAUDE.md "Current best" updated (if new record)
+□ Run directory status decided:
+    - Best checkpoint run dir: keep as-is
+    - Other run dirs: tar.gz to /root/autodl-tmp/archives/, delete originals
+    - Decision recorded in model_registry.py "archived_note" field
+□ If formal ablation: the single variable changed and comparison baseline are unambiguous in both plan and registry
+□ If failure: failure reason documented in plan{N}.md (not just "无效" — must state what was tried, what happened, and why it was abandoned)
+```
+
+**A plan without this closure record is considered "dangling"** — future work may inadvertently retry the same direction because the conclusion was never written down.

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan7-A: SAM3 + MMAdapter + DSM Structural Prior — Model Architecture & Improvement Decomposition</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; line-height: 1.6; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
+  h1 { text-align: center; font-size: 28px; margin-bottom: 8px; color: #1a1a1a; }
+  .subtitle { text-align: center; color: #666; font-size: 14px; margin-bottom: 40px; }
+
+  .section { background: #fff; border-radius: 10px; padding: 28px 32px; margin-bottom: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .section h2 { font-size: 20px; color: #1a1a1a; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid #2563eb; }
+  .section h3 { font-size: 16px; color: #333; margin: 16px 0 8px; }
+
+  /* Architecture Diagram */
+  .arch { display: flex; flex-direction: column; gap: 12px; font-family: 'Courier New', monospace; font-size: 13px; }
+  .arch-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; }
+  .arch-label { font-weight: bold; min-width: 100px; color: #555; }
+  .arch-box { padding: 6px 14px; border-radius: 4px; font-weight: 600; }
+  .arch-box.rgb { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+  .arch-box.dsm { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+  .arch-box.prompt { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+  .arch-box.frozen { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
+  .arch-box.train { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+  .arch-arrow { color: #9ca3af; font-size: 16px; }
+  .arch-flow { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+
+  /* Block detail */
+  .block-diagram { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 12px 0; }
+  .block-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-family: 'Courier New', monospace; font-size: 12px; }
+  .block-comment { color: #9ca3af; font-size: 11px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th, td { padding: 10px 14px; text-align: center; border-bottom: 1px solid #e5e7eb; }
+  th { background: #f9fafb; font-weight: 600; color: #555; font-size: 13px; }
+  .best { background: #ecfdf5; font-weight: 600; }
+  .gain { color: #059669; font-weight: 600; }
+
+  /* Arrow chain */
+  .chain { display: flex; align-items: center; gap: 12px; padding: 16px 0; flex-wrap: wrap; justify-content: center; }
+  .chain-item { text-align: center; }
+  .chain-box { padding: 12px 20px; border-radius: 8px; font-weight: 600; }
+  .chain-arrow { font-size: 20px; color: #9ca3af; }
+  .chain-value { font-size: 12px; color: #666; margin-top: 4px; }
+
+  ul { margin: 8px 0 8px 20px; }
+  li { margin: 4px 0; }
+
+  .note { background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 12px 16px; font-size: 13px; color: #92400e; margin: 12px 0; }
+
+  .legend { display: flex; gap: 20px; font-size: 12px; margin: 8px 0; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-swatch { width: 14px; height: 14px; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Plan7-A Model Architecture & Improvement Decomposition</h1>
+<p class="subtitle">SAM3 ViTDet + In-ViT MMAdapter + DSM Structural Prior — 2026-05-12</p>
+
+<!-- ===== Legend ===== -->
+<div class="section">
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:#fee2e2;border:1px solid #fca5a5"></div> RGB stream</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#dbeafe;border:1px solid #93c5fd"></div> DSM stream</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#fef3c7;border:1px solid #fcd34d"></div> Prompt stream (DSM edge/slope)</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#f3f4f6;border:1px solid #d1d5db"></div> Frozen</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#dcfce7;border:1px solid #86efac"></div> Trainable</div>
+  </div>
+</div>
+
+<!-- ===== Architecture Overview ===== -->
+<div class="section">
+  <h2>1. Architecture Overview</h2>
+
+  <div class="arch-flow">
+    <span class="arch-box rgb">RGB (3×1008²)</span>
+    <span class="arch-arrow">→</span>
+    <span class="arch-box frozen">Patch Embed</span>
+    <span class="arch-arrow">→</span>
+    <span class="arch-box train" style="font-size:12px">[MMAdapterPromptBlock ×32]</span>
+    <span class="arch-arrow">→</span>
+    <span class="arch-box train">Pyramid4Scale</span>
+    <span class="arch-arrow">→</span>
+    <span class="arch-box train">MFNetDecoder</span>
+    <span class="arch-arrow">→</span>
+    <span style="font-weight:600">5-class logits</span>
+  </div>
+
+  <div class="arch-flow" style="margin-top:4px;">
+    <span class="arch-box dsm">DSM (1×1008²)</span>
+    <span class="arch-arrow">→</span>
+    <span class="arch-box train">DSMTokenEncoder</span>
+    <span class="arch-arrow">→</span>
+    <span class="arch-box dsm" style="font-size:12px">dsm_tokens (63²×1024)</span>
+    <span style="margin: 0 20px; color:#aaa;">│</span>
+  </div>
+
+  <div class="arch-flow">
+    <span class="arch-box dsm">DSM (1×1008²)</span>
+    <span class="arch-arrow">→</span>
+    <span style="font-size:11px;color:#92400e;">Sobel+Laplacian</span>
+    <span class="arch-arrow">→</span>
+    <span class="arch-box train">PromptEncoder</span>
+    <span class="arch-arrow">→</span>
+    <span class="arch-box prompt" style="font-size:12px">prompt_tokens (63²×1024)</span>
+  </div>
+
+  <p style="color:#666;font-size:13px;margin-top:12px;">
+    DSM 和 Prompt token 通过共享的 state dict 注入每一层的 MMAdapterPromptBlock。
+  </p>
+</div>
+
+<!-- ===== Inside MMAdapterPromptBlock ===== -->
+<div class="section">
+  <h2>2. Inside MMAdapterPromptBlock</h2>
+
+  <div class="block-diagram">
+    <h3 style="font-size:14px;color:#555;margin-bottom:8px;">Attention Stage</h3>
+    <div class="block-row">
+      <span class="arch-box rgb">RGB x</span> <span class="arch-arrow">→</span>
+      <span class="arch-box frozen">frozen attn</span> <span class="arch-arrow">→</span>
+      <span style="font-size:11px">attn_x</span>
+      <span class="arch-arrow">+</span>
+      <span class="arch-box train">rgb_attn_adapter</span>
+    </div>
+    <div class="block-row">
+      <span class="arch-box dsm">DSM y</span> <span class="arch-arrow">→</span>
+      <span class="arch-box frozen">frozen attn</span> <span class="arch-arrow">→</span>
+      <span style="font-size:11px">attn_y</span>
+      <span class="arch-arrow">+</span>
+      <span class="arch-box train">dsm_attn_adapter</span>
+    </div>
+    <div class="block-comment">RGB 和 DSM 共享同一个 frozen attention 权重</div>
+
+    <h3 style="font-size:14px;color:#555;margin:16px 0 8px;">MLP Stage (Fusion)</h3>
+    <div class="block-row">
+      <span class="arch-box rgb">x</span> <span class="arch-arrow">→</span>
+      <span class="arch-box frozen">frozen MLP</span> <span class="arch-arrow">→</span>
+      <span style="font-size:11px">mlp_x</span>
+      <span class="arch-arrow">+</span>
+      <span class="arch-box train">rgb_mlp_adapter</span>
+      <span class="arch-arrow">+</span>
+      <span class="arch-box train">dsm_mlp_adapter</span>
+      <span class="arch-arrow">+</span>
+      <span class="arch-box train">prompt_mlp_adapter</span>
+    </div>
+    <div class="block-row" style="margin-left:40px;">
+      <span style="color:#059669;font-weight:600;">Gate: softmax(w_rgb, w_dsm, w_prompt)</span>
+    </div>
+    <div class="block-comment">3 分支通过 softmax gate 自动选择权重，避免 multi-sigmoid 叠加</div>
+  </div>
+</div>
+
+<!-- ===== Improvement Chain ===== -->
+<div class="section">
+  <h2>3. Improvement Decomposition</h2>
+  <p style="font-size:13px;color:#666;margin-bottom:16px;">所有数字来自严格全局混淆矩阵聚合的 256² 滑动窗口评估，可与 MFNet 直接对比。</p>
+
+  <table>
+    <tr><th>阶段</th><th>方法</th><th>256² OA</th><th>256² mIoU</th><th>Δ</th><th>核心改动</th></tr>
+    <tr>
+      <td>基线</td><td>SAM3 Zero-shot</td><td>77.84%</td><td>60.46%</td><td>—</td>
+      <td style="font-size:12px;text-align:left">Dual-head fusion + presence score</td>
+    </tr>
+    <tr>
+      <td>Plan3</td><td>VPT + MFNet Decoder</td><td>86.45%</td><td>73.10%</td><td class="gain">+12.64</td>
+      <td style="font-size:12px;text-align:left">VPT adapter 注入 frozen ViT<br>MFNetDecoder (GLA blocks)<br>SEFusion late DSM fusion</td>
+    </tr>
+    <tr>
+      <td>Plan6-1</td><td>MMAdapter DSM-lite</td><td>87.06%</td><td>74.88%</td><td class="gain">+1.78</td>
+      <td style="font-size:12px;text-align:left">DSM 进入 ViT 内部 (in-ViT)<br>DSM 走低秩 adapter 更新</td>
+    </tr>
+    <tr>
+      <td>Plan6-1</td><td>MMAdapter full attn</td><td>87.27%</td><td>76.57%</td><td class="gain">+1.69</td>
+      <td style="font-size:12px;text-align:left">DSM 复用 frozen attention<br>双流 attention + gate fusion</td>
+    </tr>
+    <tr class="best">
+      <td>Plan7-A</td><td>+ DSM edge/slope prompt</td><td>87.75%</td><td>77.14%</td><td class="gain">+0.57</td>
+      <td style="font-size:12px;text-align:left">DSM → Sobel+Laplacian → PromptEncoder<br>3-branch softmax gate fusion<br>结构先验显式注入 ViT</td>
+    </tr>
+  </table>
+
+  <div class="note">
+    <strong>Phase 1.5 (+LoRA)</strong> 75.57% (-1.00pp)、<strong>Phase 1.6 (+unfreeze 4L)</strong> 72.51% (-4.06pp) 均为负向，未列入主线。
+    <strong>Plan7-B1 (slope_only)</strong> 76.49%、<strong>B3 (+curvature)</strong> 76.49% 均不如 Plan7-A edge+slope。
+  </div>
+</div>
+
+<!-- ===== Per-class Breakdown ===== -->
+<div class="section">
+  <h2>4. Per-Class Recall (vs MFNet)</h2>
+  <p style="font-size:13px;color:#666;margin-bottom:16px;">Recall = TP/(TP+FN)，与 MFNet 论文 Table I 的 "per-class OA" 公式一致。</p>
+
+  <table>
+    <tr><th></th><th>road</th><th>building</th><th>grass</th><th>tree</th><th>car</th><th>mIoU</th></tr>
+    <tr>
+      <td>Zero-shot</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>60.46%</td>
+    </tr>
+    <tr>
+      <td>Plan6 Phase1 full</td><td>90.3%</td><td>91.5%</td><td>77.8%</td><td>85.4%</td><td>87.7%</td><td>76.57%</td>
+    </tr>
+    <tr class="best">
+      <td><strong>Plan7-A (current)</strong></td><td>88.5%</td><td><strong>93.0%</strong></td><td><strong>79.7%</strong></td><td>86.1%</td><td><strong>91.6%</strong></td><td><strong>77.14%</strong></td>
+    </tr>
+    <tr style="color:#888">
+      <td>MFNet Frozen (SAM1)</td><td>89.5%</td><td>94.6%</td><td>71.7%</td><td>89.5%</td><td>76.8%</td><td>75.11%</td>
+    </tr>
+    <tr style="color:#888">
+      <td>MFNet Best (SAM1)</td><td>93.4%</td><td>98.8%</td><td>81.2%</td><td>93.2%</td><td>89.2%</td><td>84.72%</td>
+    </tr>
+  </table>
+
+  <div class="note">
+    Plan7-A 在 grass (79.7% vs 71.7%) 和 car (91.6% vs 76.8%) 上大幅超越 MFNet Frozen SAM1。
+    DSM edge/slope prompt 对植被地形边界和车辆高程突变的显式引导已在 per-class 数据中得到证实。
+  </div>
+</div>
+
+<!-- ===== Model Specs ===== -->
+<div class="section">
+  <h2>5. Model Specifications</h2>
+
+  <table>
+    <tr><th>组件</th><th>参数</th><th>说明</th></tr>
+    <tr><td>SAM3 ViTDet backbone</td><td style="color:#6b7280">464.7M (frozen)</td><td>32 blocks, window_size=14/24, 1008² fixed</td></tr>
+    <tr><td>MMAdapter blocks ×32</td><td style="color:#059669">10.7M (trainable)</td><td>R=32 bottleneck, attn_adapter + mlp_adapter + softmax gate</td></tr>
+    <tr><td>DSMTokenEncoder</td><td style="color:#059669">0.37M (trainable)</td><td>4-stage CNN (32→64→128→128) + 1×1 proj → 1024</td></tr>
+    <tr><td>PromptEncoder</td><td style="color:#059669">0.37M (trainable)</td><td>Same structure, input: 2ch (slope+edge)</td></tr>
+    <tr><td>Pyramid4Scale</td><td style="color:#6b7280">0 (frozen)</td><td>ConvTranspose2d + MaxPool2d → 4 scales</td></tr>
+    <tr><td>MFNetDecoder</td><td style="color:#059669">0.52M (trainable)</td><td>4× GLA blocks + FeatureRefinementHead</td></tr>
+    <tr style="font-weight:600"><td>Total trainable</td><td style="color:#059669">~12.7M</td><td>1.55% of total 820M parameters</td></tr>
+  </table>
+</div>
+
+<!-- ===== Key Design Decisions ===== -->
+<div class="section">
+  <h2>6. Key Design Decisions</h2>
+
+  <table>
+    <tr><th style="width:280px">决策</th><th>选择</th><th style="width:200px">依据</th></tr>
+    <tr><td>DSM 融合位置</td><td>ViT 内部 (in-ViT)</td><td>late fusion 天花板 ~73%</td></tr>
+    <tr><td>DSM attention 模式</td><td>Full (复用 frozen attention)</td><td>比 adapter 模式 +1.69pp</td></tr>
+    <tr><td>Gate 类型</td><td>Softmax (3-branch)</td><td>Sigmoid 叠加导致 residual 过大</td></tr>
+    <tr><td>Prompt 来源</td><td>DSM edge/slope (非 RGB FFT)</td><td>RGB 高频增强树冠噪声</td></tr>
+    <tr><td>LoRA</td><td>不采用</td><td>单模态/跨模态均无正向收益</td></tr>
+    <tr><td>Unfreeze attention</td><td>不采用</td><td>退化 4pp，window attention 泛化差</td></tr>
+    <tr><td>评估协议</td><td>严格全局混淆矩阵聚合</td><td>与 MFNet 可对标</td></tr>
+  </table>
+</div>
+
+</div>
+</body>
+</html>

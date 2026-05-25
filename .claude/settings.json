@@ -1,5 +1,37 @@
 {
   "enabledPlugins": {
     "andrej-karpathy-skills@karpathy-skills": true
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Bash(nvidia-smi *)",
+      "Bash(ls *)",
+      "Bash(df *)",
+      "Bash(du *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(echo *)",
+      "Bash(date *)",
+      "Bash(python *)",
+      "Bash(ps *)",
+      "Bash(sleep *)",
+      "Bash(sed *)",
+      "Bash(mkdir *)",
+      "Bash(tmux *)",
+      "Bash(pkill *)",
+      "Bash(CUDA_VISIBLE_DEVICES=* python *)",
+      "Bash(cd *)",
+      "WebSearch",
+      "WebFetch"
+    ],
+    "additionalDirectories": [
+      "/root/autodl-tmp",
+      "/tmp"
+    ]
   }
 }

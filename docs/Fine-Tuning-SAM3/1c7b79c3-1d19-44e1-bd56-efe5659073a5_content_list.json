@@ -1,0 +1,724 @@
+[
+    {
+        "type": "text",
+        "text": "On the Effectiveness of Textual Prompting with Lightweight Fine-Tuning for SAM3 Remote Sensing Segmentation ",
+        "text_level": 1,
+        "bbox": [
+            112,
+            69,
+            883,
+            175
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Roni Blushtein-Livnon\\* , Osher Rafaeli\\* , David Ioffe , Amir Boger , Karen Sandberg Esquenazi , and Tal Svoray ",
+        "bbox": [
+            112,
+            189,
+            880,
+            224
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Abstract—Remote sensing (RS) segmentation is limited by scarce annotations and domain gaps between overhead and natural imagery, motivating effective adaptation under constrained supervision. SAM3’s concept-driven framework enables mask generation from textual prompts without target-specific modification. We evaluate SAM3 across four RS targets, sources, and resolutions, comparing textual, geometric, and hybrid prompting under lightweight fine-tuning at increasing supervision levels, and zero-shot inference. Results show that combining semantic and geometric cues consistently yields the best performance, while text-only prompting performs worst, particularly for irregular targets, reflecting limited semantic alignment between textual concepts and overhead appearances. Nevertheless, lightly finetuned textual prompting offers a favorable performance-effort trade-off for regular targets. Performance improves sharply from zero-shot to fine-tuning, followed by diminishing returns, indicating that modest annotation effort may suffice. Persistent Precision–IoU gaps further reveal under-segmentation and boundary errors as dominant failure modes, especially for irregular and less prevalent targets. ",
+        "bbox": [
+            73,
+            234,
+            491,
+            489
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Index Terms—SAM3, Textual-prompt, Geometric-prompt, Foundation models, Semantic segmentation. ",
+        "bbox": [
+            73,
+            489,
+            491,
+            518
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "I. INTRODUCTION ",
+        "text_level": 1,
+        "bbox": [
+            215,
+            531,
+            351,
+            544
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Image segmentation is fundamental to remote sensing (RS) applications but is challenged by high scene heterogeneity, irregular object boundaries, extreme scale variation, dense spatial patterns, and sensor-specific distortions [1]. Moreover, most foundation models are trained on natural images, limiting their generalization to RS data. Consequently, effective utilization of these models for RS requires both domain and target-specific adaptation [2], [3]. ",
+        "bbox": [
+            73,
+            550,
+            490,
+            671
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Mirroring a broader paradigm of text-promptable queries, as in LLMs and TTIs (Text-to-Image) generators, recent CV models redefined user/model interactions, shifting from static architectures to prompt-driven execution. This is evident in classifiers (e.g., CLIP [4]), object detection (e.g., Grounded DINO [5]), and segmentation (e.g., CLIPSeg [6]). Many adopt transformer-based vision-language models (VLM), combining ViT or Swin backbones with language encoders, yet often lack the pixel-level precision and prompting flexibility required for fine-grained RS delineation. ",
+        "bbox": [
+            73,
+            671,
+            491,
+            820
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Recent RS studies leverage textual prompting in VLMs primarily for semantic alignment. While domain-adapted mod-",
+        "bbox": [
+            73,
+            821,
+            491,
+            853
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "els, e.g., RemoteCLIP [7], encode meaningful semantic cues via large-scale pretraining, they rely on template-based text and do not directly support pixel-level segmentation. Others show that textual prompt formulation in RS is nontrivial, as prompts emphasizing either global scene semantics or isolated local details often fail to capture the complexity of overhead imagery [8]. These findings highlight the importance of prompt design but remain centered on cross-modal retrieval rather than segmentation [9]. Even when text is incorporated into RS semantic segmentation, as in SegCLIP [10], it guides supervised, closed-vocabulary architectures rather than serving as an open, standalone interface. Overall, existing VLMs and openvocabulary approaches focus on architectural adaptation, classbased supervision, or prompt engineering, whereas we adopt here an analytical perspective on how prompting modalities interact with RS target properties and supervision levels. ",
+        "bbox": [
+            501,
+            234,
+            921,
+            476
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "In parallel with VLMs, a complementary paradigm uses geometric cues and localized user input to guide interactive segmentation, typically via CNN-based encoder–decoder models with lightweight attention (e.g., RITM [11]). However, adapting such geometric prompting to RS imagery is nontrivial and often requires substantial retraining [2]. ",
+        "bbox": [
+            503,
+            477,
+            921,
+            566
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Recently, the original SAM [12], and its subsequent variant, SAM2, extended this paradigm through extremely large-scale pretraining to enable zero-shot (ZS) segmentation. However, their performance degrades on RS imagery without adaptation, particularly in limited-data settings, motivating targetaware fine-tuning (FT) [13]. Although geometric prompt-based models can perform well after fine-tuning, generating highquality prompts requires expert, labor-intensive annotation of complex scenes, especially at large scales [14]. To reduce this burden, intermediary models such as YOLO are often used to automatically generate prompts, trading annotation effort for added dependence on their accuracy and additional training. ",
+        "bbox": [
+            503,
+            566,
+            921,
+            748
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Accordingly, hybrid prompting architectures have emerged as a bridge between VLMs and interactive segmentation. For example, SEEM [15] combines CLIP-based textual cues with spatial guidance via a shared Transformer decoder. More recently, SAM3 [16] introduced a concept-driven interface centered on short semantic phrases as primary prompts, unifying textual and geometric inputs within a shared embedding space processed by a ViT-based decoder. Designed to operate directly from text while optionally incorporating spatial priors, SAM3 supports seamless multimodal prompting and robust ZS segmentation, a capability that may be critical for RS tasks with limited geometric inputs. ",
+        "bbox": [
+            503,
+            748,
+            921,
+            929
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "However, SAM3 is pretrained without overhead imagery, raising concerns about domain generalization. We address this by evaluating its RS performance across prompt strategies, target types, and training extents, analyzing when conceptdriven prompting succeeds and when limited geometric supervision constrains it. Key contributions include: (1) Benchmarking SAM3 in RS across anthropogenic and natural targets of varying size and shape. (2) Comparing text-only, geometry-only, and hybrid prompting strategies. (3) Assessing prompting performance across aerial and satellite imagery with different spatial resolutions. (4) Evaluating performance across 3 lightweight fine-tuning scales to quantify supervisiondependent gains and the training extent required for effective adaptation, with ZS inference as a generalization baseline. ",
+        "bbox": [
+            519,
+            929,
+            921,
+            945
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "page_number",
+        "text": "1 ",
+        "bbox": [
+            911,
+            30,
+            919,
+            40
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "aside_text",
+        "text": "arXiv:2512.15564v2 [cs.CV] 12 Apr 2026 ",
+        "bbox": [
+            22,
+            275,
+            60,
+            724
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "page_footnote",
+        "text": "\\* These authors contributed equally to this work. ",
+        "bbox": [
+            88,
+            862,
+            357,
+            875
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "page_footnote",
+        "text": "R. Blushtein-Livnon, O. Rafaeli, D. Ioffe, A. Boger, K. Sandberg Esquenazi, and T. Svoray are with the Department of Environmental, Geoinformatics and Urban Planning Sciences, Ben-Gurion University of the Negev, Israel (e-mails: livnon@bgu.ac.il;osherr@post.bgu.ac.il; ioffed@post.bgu.ac.il; bogera@post.bgu.ac.il; sandbeka@post.bgu.ac.il; tsvoray@bgu.ac.il). ",
+        "bbox": [
+            76,
+            875,
+            491,
+            933
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            73,
+            69,
+            491,
+            267
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "II. MATERIALS AND METHODOLOGY ",
+        "text_level": 1,
+        "bbox": [
+            150,
+            275,
+            415,
+            287
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "A. Datasets ",
+        "text_level": 1,
+        "bbox": [
+            73,
+            296,
+            158,
+            309
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "We constructed four independent datasets (Table I; Fig. 1A), each aligned with a distinct target type spanning diverse geometric properties, spatial scales, and class frequencies. The two anthropogenic targets, (1) residential structures (RSt) in rural or suburban settings and (2) small residential PVs (SP), share regular, well-defined shapes but differ in spatial extent, resulting in distinct background–target balance conditions. The two natural targets, (3) dead trees (DT) and (4) sinkholes (SH), exhibit irregular morphology, high intra-class variability, and lower real-world prevalence. While diverse, the selected targets do not cover the full spectrum of RS object types; thus, findings should be interpreted as indicative. For all targets, images were curated, tiled, and manually annotated by experts to produce pixel-accurate masks. Data sources include aerial imagery with varied spatial resolutions (0.13–0.25 m/px), tiled into fixed-size patches (256 or 512 pixels) with binary masks. A cross-source comparison for anthropogenic targets contrasts aerial imagery (0.13 m/px) with WorldView satellite imagery (0.30 m/px) from distinct geographic regions. ",
+        "bbox": [
+            73,
+            315,
+            491,
+            603
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "B. SAM3 ",
+        "text_level": 1,
+        "bbox": [
+            75,
+            609,
+            142,
+            623
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "SAM3 [16] is a VLM for promptable, concept-level segmentation, interpreting textual prompts as abstract visual concepts to segment all corresponding object instances in an image. It unifies textual and geometric prompts via a shared Perception Encoder that projects images and text into a common embedding space. Object recognition and localization are performed by a DETR-based module with a presence head that estimates concept existence prior to localization, while pixel-level masks are generated by a MaskFormer-style decoder using learned queries rather than per-pixel classification. SAM3 reports improved ZS and fine-tuned performance over earlier versions. ",
+        "bbox": [
+            73,
+            630,
+            490,
+            796
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "C. Experimental Setup ",
+        "text_level": 1,
+        "bbox": [
+            75,
+            804,
+            233,
+            819
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "1) Text Prompt Selection (Fig. 1B): SAM3 lacks mechanisms for selecting image-conditioned prompts, making prompt selection challenging. Although models, e.g., BLIP or Florence, support visual-to-text generation, their training on natural images limits their applicability to RS data, leaving prompt selection largely heuristic in overhead imagery. To address this, we introduce a refined procedure for selecting an effective textual descriptor for each target. ",
+        "bbox": [
+            73,
+            823,
+            491,
+            946
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "image",
+        "img_path": "images/de71c70e188a12be9a3fa919336cd5a1aa316d38b18276940b8282403b7da2ed.jpg",
+        "image_caption": [
+            "Fig. 1. Experimental setup: SAM3 performance is evaluated across 4 target types using varying prompt-based training pipelines and FT scales (C). Inference relies on prompt modalities (D). Optimal conceptual text prompt for each target is determined through a structured selection procedure (B). "
+        ],
+        "image_footnote": [],
+        "content": "```mermaid\ngraph TD\n    A[\"ANTHROPogenic\"] --> B[\"Residential structures\"]\n    A --> C[\"Solar panels\"]\n    D[\"Natural\"] --> E[\"Dead trees\"]\n    D --> F[\"Sinkholes\"]\n    G[\"B. TEXT-PROMPT SELECTION\"] --> H[\"Seed term definition\"]\n    H --> I[\"LLM expansion\"]\n    I --> J[\"Wikidata retrieval\"]\n    J --> K[\"Candidate prompt pool\"]\n    K --> L[\"Text-only inference (zero-shot)\"]\n    M[\"C. FINE-TUNING STRATEGY\"] --> N[\"Supervision scales 1-3: Examples 100-300\"]\n    M --> O[\"Prompts 1-2: Geometric BBs + Textual Noun phrase + Mask decoder\"]\n    M --> P[\"Fine-tuned components 1-3: Text encoder + Geometry encoder + Text encoder\"]\n    Q[\"D. INFERENCE CONFIGURATION\"] --> R[\"Supervision regimes: Fine-tuned, Zero-shot\"]\n    R --> S[\"Prompts 1-2: Textual Noun phrase + Geometric BBs + Hybrid BBs + Noun phrase\"]\n```",
+        "sub_type": "flowchart",
+        "bbox": [
+            509,
+            70,
+            915,
+            506
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "Specifically, we construct a pool of domain-relevant noun phrases (up to four words, following SAM3 recommendations) from a seed term, expanded using LLM-generated variants. These are then queried against Wikidata [17] to ensure semantic validity and alignment with the SA-Co ontology underlying SAM3’s concept vocabulary. Let $P = \\{ p _ { 1 } , \\dots , p _ { M } \\}$ denote the resulting set of candidate prompts, where $M = 1 0$ in our experiments. Each candidate prompt $p _ { j }$ is evaluated on a heldout validation set consisting of 50 annotated image-mask pairs by applying SAM3 in a text-only prompting mode. A scalar score $S ( p _ { j } )$ is computed from average F1 and IoU scores and used to rank candidate prompts. The selected prompt $p _ { \\mathrm { o p t } }$ is: ",
+        "bbox": [
+            503,
+            561,
+            921,
+            743
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "equation",
+        "text": "$$\np _ {\\text { opt }} = \\arg \\max _ {p _ {j} \\in P} S (p _ {j}).\n$$",
+        "text_format": "latex",
+        "bbox": [
+            633,
+            746,
+            789,
+            770
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "2) FT Strategy (Fig. 1C): Each target is fine-tuned with 100, 200, and 300 objects, corresponding to supervision scales FT100, FT200, and FT300. The training data consists of image tiles paired with ground-truth binary masks. Tiles were randomly sampled from annotated imagery across different scenes and acquisition conditions, and split into training, validation, and test sets. The validation set size was matched to the corresponding training set. FT is conducted using two complementary prompting pipelines: a textual-only pipeline based on target-specific noun phrases (see Section II-C1) and a geometric-textual pipeline that augments textual prompts with ",
+        "bbox": [
+            503,
+            777,
+            921,
+            946
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "page_number",
+        "text": "2 ",
+        "bbox": [
+            911,
+            30,
+            919,
+            40
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "table",
+        "img_path": "images/cb91115e9af68aab8411b1a7958d5d2c6475b262e45493572d4a96fc425201ed.jpg",
+        "table_caption": [
+            "TABLE I DATASET AND TARGET CHARACTERISTICS "
+        ],
+        "table_footnote": [
+            "Notes: ∗Mean (SD); ∗∗Total tiles (aerial and satellite). "
+        ],
+        "table_body": "<table><tr><td>Target</td><td># Tiles</td><td>Size* (m2)</td><td>Location</td></tr><tr><td>RSt**</td><td>790</td><td>56.2 (77.3)</td><td>Northern Negev, Israel; CA, US</td></tr><tr><td>SP**</td><td>975</td><td>8.3 (6.3)</td><td>Northern Negev, Israel; CA, US</td></tr><tr><td>DT</td><td>250</td><td>3.7 (7.2)</td><td>Lahav Forest, Israel</td></tr><tr><td>SH</td><td>330</td><td>70.9 (149.3)</td><td>Dead Sea, Israel</td></tr></table>",
+        "bbox": [
+            101,
+            95,
+            467,
+            166
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "BBs. In the textual-only pipeline, the text encoder is unfrozen to adapt semantic representations to RS, while all visual and geometric backbones remain fixed. In the geometrictextual pipeline, spatial guidance is provided via automatically generated BBs derived from ground-truth binary masks, and both text and geometry encoders are unfrozen to enable joint semantic and spatial conditioning. In both, the mask decoder is unfrozen, whereas the vision encoder and DETR encoderdecoder are kept frozen to preserve pretrained representations. All FT runs use identical hyperparameters $\\scriptstyle ( \\mathrm { L } \\mathrm { R } = 1 e ^ { - 5 }$ , 25 epochs, batch size=2) to ensure comparability across supervision scales and target types. ",
+        "bbox": [
+            73,
+            183,
+            491,
+            364
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "3) Inference Configuration (Fig. 1D): Preliminary experiments indicate that performance degrades when training and inference prompt configurations are mismatched. This is likely due to increased reliance on explicit spatial cues during FT, which may limit the model’s ability to localize target instances based solely on textual semantics during inference. Consequently, inference is performed using prompt configurations that are consistent with the corresponding FT setup. ",
+        "bbox": [
+            73,
+            367,
+            490,
+            488
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Inference was performed on 500 held-out samples per target under three prompting modes: (1) text-only prompting using selected noun phrases; (2) geometric-only prompting based on BBs; and (3) hybrid prompting that combines geometric and textual cues. ZS segmentation is evaluated in parallel under similar prompting configurations, using pretrained models without task-specific adaptation. In addition, SAM3 was compared with a mainstream CNN model, U-Net, using an ImageNet-pretrained ResNet-50 encoder. ",
+        "bbox": [
+            73,
+            488,
+            491,
+            625
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "4) Evaluation Strategy: Segmentation performance is evaluated along four dimensions. These include: ZS versus FT; supervision scale effect; differences in prompting configuration; and comparisons across targets. Evaluation metrics include: precision, recall, F1, and IoU. An additional crosssource (aerial, satellite) comparison was conducted for RSt and SP. Per-metric differences were computed by subtracting the best-performing satellite result from the best-performing aerial result. ",
+        "bbox": [
+            73,
+            626,
+            491,
+            760
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "III. RESULTS ",
+        "text_level": 1,
+        "bbox": [
+            233,
+            760,
+            333,
+            773
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Prompts were selected based on ZS performance across 10 semantically varying noun phrases per target. As an illustrative example, for SP, candidates such as tilted solar panels, residential solar panels, photovoltaic installation, and rooftop and ground PV were evaluated, with tilted solar panels achieving the highest scores (IoU 68.7%, F1 81.4%). Across targets, generic or abstract prompts (e.g., soil depressions, tree mortality) and those reflecting ground-level semantics (e.g., standing dead tree, concave terrain anomaly) tended to underperform. In contrast, visually descriptive noun phrases aligned with RS appearance consistently achieved superior performance. Accordingly, the selected prompts were rectangular structure (RSt), tilted solar panels (SP), healthy woody vegetation trees (LT), silvery dead crown aerial view (DT), and dark circular void in soil (SH). ",
+        "bbox": [
+            73,
+            777,
+            491,
+            946
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            503,
+            69,
+            921,
+            128
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "image",
+        "img_path": "images/6c807a20100e25f6f8d0bda68f58149420c9337af3a851f52adf6be934b54e59.jpg",
+        "image_caption": [
+            "Fig. 2. Performance under FT200 and ZS by prompt type. A: Average metric scores across all targets; B: F1 scores by target. "
+        ],
+        "image_footnote": [],
+        "content": "",
+        "bbox": [
+            506,
+            138,
+            916,
+            362
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "The experimental results are presented in Fig. 2, Table II, and Table III. As shown in Fig. 2A, the hybrid prompt achieves the highest performance across all metrics (averaged overall targets), with the exception of a small advantage of the geometric prompt in Recall. Text prompt consistently yields the lowest scores across all metrics and targets (Fig. 2A-B). FT200 improves all metrics relative to ZS, except for Recall, with the largest gains observed in precision. Improvements by the hybrid prompt remain modest, given its already high ZS scores. Clear differences emerge between Precision and IoU, with IoU scores 10% or lower, indicating a systematic reduction in geometric accuracy across targets. ",
+        "bbox": [
+            501,
+            396,
+            921,
+            577
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Fig. 2B further reveals pronounced and consistent differences between target categories. Anthropogenic, regularly shaped targets consistently achieve substantially higher scores than natural, irregularly shaped targets. RSt achieves high scores already under ZS across all prompts, and this advantage persists after FT200. Under text prompting, performance gaps between target categories widen substantially, reaching up to thirty percent after FT200. This disparity is even more pronounced under ZS, where performance drops sharply for natural targets and fails entirely for DT. Table II illustrates the model’s learning score and trajectory across supervision scales and compares its performance with ResUNet [18]. Averaged across prompting strategies, the largest performance gain occurs between ZS and FT100 for all targets (F1 gain increases from ∼10.7% for RSt up to ∼28.3% for DT), while further training yields partial or full metric convergence. Differences between FT200 and FT300 are negligible and occasionally negative (F1 change: ∼−3.9% for DT up to ∼+1.3% for SH). The hybrid prompt is the most stable across metrics and targets, showing only moderate improvements with increasing supervision due to its relatively strong ZS performance. In contrast, the text prompt consistently lags behind other prompts, even after FT300. Except for RSt, its Recall score declines at FT300, and for several targets, its geometric accuracy (IoU) also deteriorates. Anthropogenic, regularly shaped, targets achieve substantially higher performance from the FT100 onward, with small variability across metrics, whereas natural, irregularly shaped targets display lower scores and greater fluctuations across supervision scales. ResUNet achieves reasonable performance after FT on 300 samples, particularly on RSt and PV (IoU of 60.46% and 69.81%, respectively); however, it consistently underperforms all SAM3 prompting configurations. ",
+        "bbox": [
+            501,
+            582,
+            921,
+            946
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "page_number",
+        "text": "3 ",
+        "bbox": [
+            911,
+            30,
+            919,
+            40
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "table",
+        "img_path": "images/118a086cd41b024b6ab4510abdd474f3b6a438c32412e5225fae312285d35e49.jpg",
+        "table_caption": [
+            "TABLE II PERFORMANCE METRICS (%) ACROSS FINE-TUNING SCALES BY PROMPT AND TARGET TYPES. "
+        ],
+        "table_footnote": [
+            "Abbreviations: RSt - Residential Structures; SP - Solar Panels; SH - Sinkholes; DT - Dead Trees. Bold values denote the highest score. "
+        ],
+        "table_body": "<table><tr><td rowspan=\"2\"></td><td rowspan=\"2\">Target</td><td colspan=\"4\">Precision</td><td colspan=\"4\">Recall</td><td colspan=\"4\">F1</td><td colspan=\"4\">IoU</td></tr><tr><td>ZS</td><td>FT100</td><td>FT200</td><td>FT300</td><td>ZS</td><td>FT100</td><td>FT200</td><td>FT300</td><td>ZS</td><td>FT100</td><td>FT200</td><td>FT300</td><td>ZS</td><td>FT100</td><td>FT200</td><td>FT300</td></tr><tr><td rowspan=\"4\">Text prompt</td><td>RSt</td><td>73.18</td><td>90.40</td><td>92.62</td><td>91.93</td><td>93.88</td><td>90.95</td><td>89.38</td><td>91.01</td><td>82.25</td><td>90.67</td><td>90.97</td><td>91.47</td><td>69.85</td><td>82.94</td><td>83.44</td><td>84.28</td></tr><tr><td>SH</td><td>9.50</td><td>81.14</td><td>79.49</td><td>88.81</td><td>58.42</td><td>44.08</td><td>50.06</td><td>39.42</td><td>16.34</td><td>57.13</td><td>61.44</td><td>54.64</td><td>8.90</td><td>39.99</td><td>44.34</td><td>37.56</td></tr><tr><td>DT</td><td>0.00</td><td>66.78</td><td>70.11</td><td>77.51</td><td>0.00</td><td>51.48</td><td>55.45</td><td>47.08</td><td>0.00</td><td>58.14</td><td>61.93</td><td>58.58</td><td>0.00</td><td>40.98</td><td>44.85</td><td>41.42</td></tr><tr><td>SP</td><td>59.10</td><td>88.60</td><td>87.00</td><td>92.14</td><td>90.29</td><td>78.97</td><td>85.28</td><td>79.61</td><td>71.44</td><td>83.51</td><td>86.13</td><td>85.42</td><td>55.57</td><td>78.97</td><td>75.64</td><td>74.54</td></tr><tr><td rowspan=\"4\">Geometry prompt</td><td>RSt</td><td>67.60</td><td>84.82</td><td>88.68</td><td>94.09</td><td>99.0</td><td>97.39</td><td>97.77</td><td>94.90</td><td>80.40</td><td>90.67</td><td>93.00</td><td>94.49</td><td>67.20</td><td>82.93</td><td>86.92</td><td>89.56</td></tr><tr><td>SH</td><td>59.90</td><td>72.19</td><td>95.54</td><td>77.37</td><td>87.50</td><td>84.25</td><td>69.86</td><td>91.52</td><td>71.11</td><td>77.76</td><td>80.71</td><td>83.86</td><td>55.20</td><td>63.61</td><td>67.66</td><td>72.20</td></tr><tr><td>DT</td><td>38.39</td><td>72.27</td><td>70.51</td><td>55.62</td><td>91.72</td><td>89.18</td><td>85.92</td><td>92.63</td><td>54.13</td><td>79.84</td><td>77.46</td><td>69.50</td><td>37.10</td><td>66.44</td><td>63.21</td><td>53.26</td></tr><tr><td>SP</td><td>17.19</td><td>85.11</td><td>88.55</td><td>92.48</td><td>96.33</td><td>94.86</td><td>94.70</td><td>92.89</td><td>29.17</td><td>89.72</td><td>91.52</td><td>92.69</td><td>17.08</td><td>81.36</td><td>84.37</td><td>86.37</td></tr><tr><td rowspan=\"4\">ResUNet prompt</td><td>RSt</td><td>-</td><td>88.50</td><td>91.74</td><td>62.11</td><td>-</td><td>87.98</td><td>88.12</td><td>95.78</td><td>-</td><td>88.24</td><td>89.90</td><td>75.35</td><td>-</td><td>78.96</td><td>81.65</td><td>60.46</td></tr><tr><td>PV</td><td>-</td><td>75.34</td><td>80.26</td><td>87.20</td><td>-</td><td>71.89</td><td>76.88</td><td>77.78</td><td>-</td><td>73.57</td><td>78.53</td><td>82.22</td><td>-</td><td>58.20</td><td>64.65</td><td>69.81</td></tr><tr><td>SH</td><td>-</td><td>39.40</td><td>62.30</td><td>37.16</td><td>-</td><td>53.25</td><td>33.26</td><td>71.58</td><td>-</td><td>45.29</td><td>43.37</td><td>48.93</td><td>-</td><td>29.27</td><td>27.69</td><td>32.39</td></tr><tr><td>SP</td><td>-</td><td>70.86</td><td>75.72</td><td>85.39</td><td>-</td><td>30.44</td><td>41.10</td><td>41.00</td><td>-</td><td>42.59</td><td>53.28</td><td>55.40</td><td>-</td><td>27.06</td><td>36.31</td><td>38.31</td></tr><tr><td rowspan=\"4\">Hybrid prompt</td><td>RSt</td><td>71.07</td><td>96.07</td><td>94.00</td><td>98.22</td><td>98.18</td><td>95.80</td><td>97.64</td><td>92.36</td><td>82.40</td><td>95.94</td><td>95.79</td><td>95.20</td><td>70.10</td><td>92.19</td><td>91.91</td><td>90.84</td></tr><tr><td>SH</td><td>47.32</td><td>81.83</td><td>96.26</td><td>88.28</td><td>89.60</td><td>84.96</td><td>70.22</td><td>89.35</td><td>61.93</td><td>83.37</td><td>81.20</td><td>88.81</td><td>44.86</td><td>71.48</td><td>68.35</td><td>79.87</td></tr><tr><td>DT</td><td>73.68</td><td>76.20</td><td>84.02</td><td>77.91</td><td>89.49</td><td>88.51</td><td>84.09</td><td>90.27</td><td>80.82</td><td>81.89</td><td>84.06</td><td>83.64</td><td>67.81</td><td>69.34</td><td>72.50</td><td>71.88</td></tr><tr><td>SP</td><td>69.43</td><td>87.51</td><td>89.49</td><td>93.34</td><td>96.12</td><td>94.29</td><td>93.83</td><td>92.38</td><td>80.62</td><td>90.77</td><td>91.61</td><td>92.86</td><td>67.54</td><td>83.10</td><td>84.51</td><td>86.67</td></tr></table>",
+        "bbox": [
+            81,
+            95,
+            923,
+            281
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "table",
+        "img_path": "images/ab6db7253cfd4196bbcfa12ec8a83b9f739aabf5aebd763f39db67a587614bc9.jpg",
+        "table_caption": [
+            "TABLE III PER-METRIC DIFFERENCES (%) BETWEEN THE BEST-PERFORMING RESULTS OBTAINED FROM AERIAL AND SATELLITE IMAGERY. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Prompt</td><td>Object</td><td>Precision</td><td>Recall</td><td>F1</td><td>IoU</td></tr><tr><td rowspan=\"2\">Text</td><td>RSt</td><td>5.1</td><td>16.3</td><td>9.2</td><td>14.5</td></tr><tr><td>SP</td><td>11.6</td><td>16.3</td><td>9.5</td><td>17.9</td></tr><tr><td rowspan=\"2\">Geometry</td><td>RSt</td><td>10.1</td><td>6.7</td><td>8.7</td><td>3.7</td></tr><tr><td>SP</td><td>1.0</td><td>3.8</td><td>1.2</td><td>-7.5</td></tr><tr><td rowspan=\"2\">Hybrid</td><td>RSt</td><td>12.7</td><td>8.3</td><td>8.8</td><td>15.0</td></tr><tr><td>SP</td><td>1.3</td><td>3.9</td><td>1.4</td><td>2.3</td></tr></table>",
+        "bbox": [
+            96,
+            359,
+            470,
+            444
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            73,
+            450,
+            491,
+            585
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Table III reports performance differences across RS sources, contrasting aerial and WorldView satellite imagery at different spatial resolutions. This comparison is restricted to the anthropogenic targets, for which comparable cross-source datasets were available. A consistent advantage of aerial imagery is observed, most pronounced under text prompting, with large gains in Recall and IoU for both targets. Geometry prompting substantially reduces cross-source gaps and, for SP, even reverses the IoU advantage, indicating that spatial cues mitigate resolution-related limitations. Hybrid prompting combines robustness and accuracy, yielding clear gains for RSt while largely equalizing performance across sources for SP. Overall, cross-source sensitivity is highest for text-only prompting and lowest when geometric information is incorporated. ",
+        "bbox": [
+            73,
+            588,
+            490,
+            800
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "IV. DISCUSSION AND CONCLUSION ",
+        "text_level": 1,
+        "bbox": [
+            155,
+            805,
+            410,
+            819
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Our results reveal consistent performance differences across prompt strategies, target categories, supervision scales, and RS sources. The hybrid prompt achieves the highest overall accuracy across metrics, indicating that combining semantic cues with explicit spatial constraints supports stable mask generation. This behavior is consistent with a complementary conditioning mechanism, where textual prompts provide coarse semantic filtering of candidate regions, while geometric prompts impose explicit spatial priors that reduce localization ambiguity during mask decoding. In contrast, geometric prompting alone tends to produce more inclusive predictions, yielding slightly higher Recall at the expense of boundary accuracy. Text-only prompting consistently underperforms, reflecting a limited semantic alignment between SAM3’s text embeddings and RS visual representations, particularly for natural targets whose appearance in overhead imagery diverges from ground-level views [19], with DT representing an extreme case of visual-semantic embedding mismatch. From a representation-learning perspective, this divergence translates into a mismatch between the visual cues encoded by the model’s textual embeddings, learned from object-centric textures and viewpoints, and the reflectance-based, scalecompressed, and planimetric representations that characterize RS imagery, thereby weakening cross-modal correspondence [8]. RSt constitute a notable exception, likely due to the target prevalence as a semantically well-defined concept in the model corpora, as well as its large spatial extent, regular geometry, and high contrast with the background, which reduces segmentation ambiguity. ",
+        "bbox": [
+            73,
+            823,
+            491,
+            946
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            501,
+            321,
+            921,
+            638
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "The cross-source comparison further indicates that prompting strategies also differ in their sensitivity to sensing modality and resolution. Text-only prompting is the most sourcedependent, with substantially larger gains for aerial imagery, particularly in Recall and IoU, reflecting its reliance on finegrained visual detail. Geometric prompting markedly reduces cross-source disparities, suggesting that explicit spatial cues partially compensate for reduced image detail. Hybrid prompting exhibits the most robust cross-source behavior, preserving the aerial advantage for larger, regular targets while largely equalizing performance for smaller objects. The smaller crosssource gaps observed for SP may reflect their high visual consistency across locations, in contrast to RSt, whose appearance and surrounding context vary more strongly across regions. ",
+        "bbox": [
+            501,
+            641,
+            921,
+            852
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Across targets, a systematic gap between Precision and IoU indicates that SAM3 generally identifies object presence correctly but struggles with accurate boundary delineation. Under-segmentation emerges as the dominant error mode, characterized by frequent FNs and shape distortions along boundaries. These effects are most pronounced for natural targets with fine-scale geometric variability and, in the case of DT, weak spectral contrast, confirming that geometric reasoning remains a primary source of challenge even when most target pixels are correctly identified. ",
+        "bbox": [
+            501,
+            854,
+            921,
+            946
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "page_number",
+        "text": "4 ",
+        "bbox": [
+            911,
+            31,
+            919,
+            39
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            73,
+            69,
+            491,
+            128
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Target-specific differences further highlight these trends. Anthropogenic targets consistently achieve higher scores across metrics, including under text prompting, and exhibit strong ZS performance with low variability across supervision scales. This likely indicates stronger inductive alignment with visual and semantic priors encoded by SAM3, whose favorable geometric characteristics enable reliable boundary delineation. SP, however, exhibits a more complex response. Under ZS, performance is high when semantic cues are available but degrades under purely geometric prompting, likely because the angular positioning of small PVs increases the backgroundto-target ratio within BBs. Limited FT reverses this trend, with geometric constraints becoming a primary driver of performance gains. Compared with RSt, SP lower performance is plausibly explained by differences in target size and background contrast. In our datasets, PVs appear on rooftops and the ground, the latter exhibiting low contrast with its surroundings. In contrast, natural targets consistently achieve lower segmentation performance. Within this category, SH exhibits comparatively improved boundary inference, likely due to internal, depth-induced shadowing that enhances objectbackground contrast, whereas DT remains low due to reduced spectral contrast and fragmented geometry. Accordingly, prompting effectiveness in RS can be interpreted as targetdependent: geometrically regular and spectrally distinctive objects benefit more from semantic cues, whereas irregular, fragmented, or low-contrast targets require explicit spatial constraints to compensate for weaker semantic embeddings. Finally, improvements across supervision scales exhibit clear diminishing returns. Most gains occur between ZS inference and FT100, with only marginal improvements at FT200 and FT300. As supervision increases, performance stabilizes, while the relative ranking of prompt strategies and target categories is preserved, indicating that limited target-specific data are sufficient for effective adaptation to RS. Still, text prompting exhibits a slight decline in Recall at FT300, suggesting reduced generalization when textual cues become tightly coupled to a narrow fine-tuning distribution. In sum, our results support four conclusions: (1) Hybrid prompting is recommended for RS segmentation, particularly under limited supervision, as it consistently yielded the highest performance across targets and metrics. (2) Text-only prompting should be used with caution. While generally insufficient for accurate delineation, it can provide a favorable performance-to-effort trade-off for targets that are visually salient, geometrically simple, and well represented in the model’s pre-training data, where short FT regimes may yield meaningful gains without the need for geometric annotation. (3) Segmentation performance is strongly target dependent and sensitive to sensing conditions. Object geometry and visual consistency across RS sources, as well as their representation in pre-training data, critically influence model performance. (4) Limited FT of SAM3 is adequate for adaptation. Most gains are achieved with a small dataset, while additional supervision primarily stabilizes predictions, indicating that modest annotation effort is sufficient for practical deployment. ",
+        "bbox": [
+            73,
+            128,
+            493,
+            946
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            503,
+            68,
+            921,
+            99
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "ACKNOWLEDGMENT ",
+        "text_level": 1,
+        "bbox": [
+            638,
+            101,
+            787,
+            112
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "This work was supported by the Israel Science Foundation (ISF), Grant 299/23. ",
+        "bbox": [
+            504,
+            113,
+            919,
+            142
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "REFERENCES ",
+        "text_level": 1,
+        "bbox": [
+            666,
+            140,
+            761,
+            152
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "list",
+        "sub_type": "ref_text",
+        "list_items": [
+            "[1] I. Kotaridis and M. Lazaridou, “Remote sensing image segmentation advances: A meta-analysis,” ISPRS Journal of Photogrammetry and Remote Sensing, vol. 173, pp. 309–322, 2021. ",
+            "[2] N. Liu, X. Xu, Y. Su, H. Zhang, and H. Li, “Pointsam: Pointlysupervised segment anything model for remote sensing images,” IEEE Transactions on Geoscience and Remote Sensing, vol. 63, pp. 1–15, 2025. ",
+            "[3] J. Gao, D. Zhang, F. Wang, L. Ning, Z. Zhao, and X. Li, “Combining sam with limited data for change detection in remote sensing,” IEEE Transactions on Geoscience and Remote Sensing, 2025. ",
+            "[4] A. Radford, J. W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal, G. Sastry, A. Askell, P. Mishkin, J. Clark, et al., “Learning transferable visual models from natural language supervision,” in International conference on machine learning, pp. 8748–8763, PmLR, 2021. ",
+            "[5] S. Liu, Z. Zeng, T. Ren, F. Li, H. Zhang, J. Yang, Q. Jiang, C. Li, J. Yang, H. Su, et al., “Grounding dino: Marrying dino with grounded pre-training for open-set object detection,” in European conference on computer vision, pp. 38–55, Springer, 2024. ",
+            "[6] T. Luddecke and A. Ecker, “Image segmentation using text and image ¨ prompts,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pp. 7086–7096, 2022. ",
+            "[7] F. Liu, D. Chen, Z. Guan, X. Zhou, J. Zhu, Q. Ye, L. Fu, and J. Zhou, “Remoteclip: A vision language foundation model for remote sensing,” IEEE Transactions on Geoscience and Remote Sensing, vol. 62, pp. 1– 16, 2024. ",
+            "[8] T. Sun, C. Zheng, X. Li, Y. Gao, J. Nie, L. Huang, and Z. Wei, “Strong and weak prompt engineering for remote sensing image-text cross-modal retrieval,” IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing, 2025. ",
+            "[9] X. Zi, K. Jin, X. Tao, J. Li, A. Braytee, R. R. Shah, and M. Prasad, “Visual and text prompt segmentation: A novel multi-model framework for remote sensing,” arXiv preprint arXiv:2503.07911, 2025. ",
+            "[10] S. Zhang, B. Zhang, Y. Wu, H. Zhou, J. Jiang, and J. Ma, “Segclip: Multimodal visual-language and prompt learning for high-resolution remote sensing semantic segmentation,” IEEE Transactions on Geoscience and Remote Sensing, 2024. ",
+            "[11] K. Sofiiuk, I. A. Petrov, and A. Konushin, “Reviving iterative training with mask guidance for interactive segmentation,” in 2022 IEEE international conference on image processing, pp. 3141–3145, IEEE, 2022. ",
+            "[12] A. Kirillov, E. Mintun, N. Ravi, H. Mao, C. Rolland, L. Gustafson, T. Xiao, S. Whitehead, A. C. Berg, W.-Y. Lo, et al., “Segment anything,” in Proceedings of the IEEE/CVF international conference on computer vision, pp. 4015–4026, 2023. ",
+            "[13] K. Chen, C. Liu, H. Chen, H. Zhang, W. Li, Z. Zou, and Z. Shi, “Rsprompter: Learning to prompt for remote sensing instance segmentation based on visual foundation model,” IEEE Transactions on Geoscience and Remote Sensing, vol. 62, pp. 1–17, 2024. ",
+            "[14] L. P. Osco, Q. Wu, E. L. De Lemos, W. N. Gonc¸alves, A. P. M. Ramos, J. Li, and J. M. Junior, “The segment anything model (sam) for remote sensing applications: From zero to one shot,” International Journal of Applied Earth Observation and Geoinformation, vol. 124, 2023. ",
+            "[15] X. Zou, J. Yang, H. Zhang, F. Li, L. Li, J. Wang, L. Wang, J. Gao, and Y. J. Lee, “Segment everything everywhere all at once,” Advances in neural information processing systems, vol. 36, pp. 19769–19782, 2023. ",
+            "[16] N. Carion, L. Gustafson, Y.-T. Hu, S. Debnath, R. Hu, et al., “Sam 3: Segment anything with concepts,” arXiv preprint arXiv:2511.16719, 2025. ",
+            "[17] D. Vrandeciˇ c and M. Kr´ otzsch, “Wikidata: a free collaborative knowl-¨ edgebase,” Communications of the ACM, vol. 57, no. 10, pp. 78–85, 2014. ",
+            "[18] F. I. Diakogiannis, F. Waldner, P. Caccetta, and C. Wu, “Resunet-a: A deep learning framework for semantic segmentation of remotely sensed data,” ISPRS Journal of Photogrammetry and Remote Sensing, vol. 162, pp. 94–114, 2020. ",
+            "[19] D. Deng and P. Yao, “Dual-alignment clip: Task-specific alignment of text and visual features for few-shot remote sensing scene classification,” IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing, 2025. "
+        ],
+        "bbox": [
+            503,
+            155,
+            924,
+            943
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "page_number",
+        "text": "5 ",
+        "bbox": [
+            911,
+            30,
+            919,
+            39
+        ],
+        "page_idx": 4
+    }
+]

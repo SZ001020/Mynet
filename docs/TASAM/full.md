@@ -1,0 +1,283 @@
+# TASAM: Terrain-and-Aware Segment Anything Model for Temporal-Scale Remote Sensing Segmentation
+
+1st Tianyang Wang
+
+University of Alabama at Birmingham
+
+Birmingham, United States
+
+toseattle@siu.edu
+
+2nd Xi Xiao
+
+University of Alabama at Birmingham
+
+Birmingham, United States
+
+xxiao@uab.edu
+
+3rd Gaofei Chen
+
+University of Alabama at Birmingham
+
+Birmingham, United States
+
+gchen2@uab.edu
+
+4th Hanzhang Chi
+
+University of Alabama at Birmingham
+
+Birmingham, United States
+
+chihanzhang619@gmail.com
+
+5th Qi Zhang
+
+Wuhan University
+
+Wuhan, China
+
+zhangqi whursgcm@whu.edu.cn
+
+6th Guo Cheng
+
+Dalian University of Technology
+
+Dalian, China
+
+2013012145@dlut.edu.cn
+
+7th Yingrui Ji†
+
+University of Chinese Academy of Sciences
+
+Beijing, China
+
+jiyingrui1996@gmail.com
+
+Abstract—Segment Anything Model (SAM) has demonstrated impressive zero-shot segmentation capabilities across natural image domains, but it struggles to generalize to the unique challenges of remote sensing data, such as complex terrain, multi-scale objects, and temporal dynamics. In this paper, we introduce TASAM, a terrain- and temporally-aware extension of SAM designed specifically for high-resolution remote sensing image segmentation. TASAM integrates three lightweight yet effective modules: a terrain-aware adapter that injects elevation priors, a temporal prompt generator that captures land-cover changes over time, and a multi-scale fusion strategy that enhances fine-grained object delineation. Without retraining the SAM backbone, our approach achieves substantial performance gains across three remote sensing benchmarks—LoveDA, iSAID, and WHU-CD—outperforming both zero-shot SAM and task-specific models with minimal computational overhead. Our results highlight the value of domain-adaptive augmentation for foundation models and offer a scalable path toward more robust geospatial segmentation.
+
+Index Terms—Remote Sensing, Large Foundation Model, Segment Anything Model (SAM).
+
+# I. INTRODUCTION
+
+Remote sensing image segmentation plays a pivotal role in earth observation, land-use monitoring, disaster assessment, and precision agriculture. With the increasing availability of high-resolution satellite imagery and digital elevation models (DEMs), there is a growing demand for automated, accurate, and generalizable segmentation algorithms that can adapt to complex geographic contexts and temporal variations. Recently, the Segment Anything Model (SAM) [1] has emerged
+
+as a breakthrough in general-purpose segmentation, offering strong performance across diverse visual domains without task-specific fine-tuning. However, directly applying SAM to remote sensing scenarios reveals a critical performance gap due to three fundamental limitations.
+
+First, remote sensing imagery often contains complex terrain features such as mountainous areas, river valleys, and dense urban clusters that lack prominent RGB contrast but exhibit rich elevation variance. Vanilla SAM, which relies solely on RGB inputs and lacks explicit terrain-awareness, fails to capture these topographical cues, leading to inaccurate boundary detection and under-segmentation in critical regions.
+
+Second, many remote sensing tasks require analyzing temporal dynamics, such as vegetation phenology, urban expansion, and flood progression. However, SAM is inherently static, operating on single-frame inputs without temporal context. This restricts its capacity to leverage the temporal cues essential for detecting gradual or seasonal changes in land cover.
+
+Third, SAM heavily depends on prompt engineering (e.g., box, point, or mask prompts), which is often infeasible or inconsistent in large-scale, unlabeled remote sensing datasets. Moreover, existing prompt formats are not optimized for multi-scale structures or dynamic changes specific to earth observation data.
+
+To address these challenges, we propose TASAM (Terrain-Aware Segment Anything Model), a novel framework that enhances the adaptability of SAM for remote sensing segmentation through multi-modal and multi-temporal conditioning. Our method introduces three core components: (1)Terrain-Aware Adapter (TA-Adapter): A lightweight adapter network that injects topographic priors from DEMs into the SAM image encoder, enabling terrain-sensitive segmentation in structurally complex regions. (2)Temporal Prompt Generator (TP-Prompt): A prompt synthesis module that dynamically generates spatial prompts by modeling temporal evolution from multi-date satellite observations, improving change-sensitive segmentation. (3)Multi-Scale SAM Fusion (MS-SAM): A hierarchical token fusion strategy that integrates cross-scale representations within the SAM pipeline, enhancing the segmentation of small objects and fine-grained boundaries.
+
+We conduct comprehensive experiments on three benchmark remote sensing datasets (LoveDA, iSAID, and WHU-CD) and demonstrate that TASAM significantly outperforms both the zero-shot SAM and fine-tuned segmentation baselines, particularly in topographically challenging or temporally dynamic environments.
+
+This paper makes the following contributions:
+
+• We identify and formalize three key limitations of applying SAM in remote sensing segmentation: terrain insensitivity, temporal rigidity, and prompt dependence.   
+• We introduce TASAM, a terrain- and temporally-aware extension of SAM, incorporating topographic priors, temporal prompt generation, and multi-scale token fusion.   
+• We empirically validate TASAM on multiple datasets and show substantial improvements over both traditional and recent segmentation baselines under challenging remote sensing scenarios.
+
+# II. RELATED WORK
+
+# A. Remote Sensing Image Segmentation
+
+Remote sensing segmentation underpins land cover classification [2], urban mapping [3], and disaster monitoring [4]. CNN-based models like U-Net [5] and DeepLabV3+ [6] are widely used, while transformers such as Swin-Unet [7] and SegFormer [8] improve long-range context. Yet these methods require full supervision, remain task-specific, and generalize poorly across domains, often ignoring priors like elevation or temporal change. Our approach instead adapts the generalpurpose SAM with terrain- and temporal-aware modules for better domain transfer.
+
+# B. Foundation Models and Segment Anything
+
+Foundation models enable zero/few-shot transfer across vision tasks. CLIP [9, 10, 11], DINO [12], and SAM [1] achieve strong performance in classification, retrieval, and segmentation. SAM employs prompt-driven ViT backbones [13, 14, 15], but struggles with terrain reasoning, temporal dynamics, and small or low-contrast objects in satellite imagery. While adaptations to medical [16], agricultural [17], and urban [18] domains exist, they remain superficial. We address these bottlenecks via modular extensions injecting multi-source priors.
+
+# C. Terrain Modeling and Temporal Change Detection
+
+Geospatial priors improve segmentation, with DEMs and slope maps aiding landform classification [19], hydrological modeling [20], and edge enhancement [21]. Temporal fusion is crucial for monitoring land use, vegetation, and infrastructure [22]. Existing methods often use Siamese [23] or bitemporal networks [24], but these remain incompatible with prompt-driven segmentation. Our framework bridges this gap through terrain- and temporal-aware prompt integration.
+
+# III. METHODOLOGY
+
+We aim to predict a dense semantic map $\hat { Y } \in \mathbb { R } ^ { H \times W }$ for a satellite image $I \in \mathbb { R } ^ { H \times W \times 3 }$ , aided by a DEM E and multitemporal inputs $\{ I _ { t } \} _ { t = 1 } ^ { T }$ . The task is formulated as learning an augmentation $\mathcal { F } _ { \theta }$ over the frozen SAM encoder S such that
+
+$$
+\hat {Y} = \mathcal {D} \big (\mathcal {F} _ {\theta} (I, E, \{I _ {t} \}), P \big),
+$$
+
+where D is the SAM mask decoder and $P \in \mathbb { R } ^ { k \times d }$ denotes learnable or dynamic prompts. As shown in Fig. 1, our TASAM framework enhances SAM through three lightweight modules. First, the Terrain-Aware Adapter (TA-Adapter) injects elevation priors: DEM E is encoded via a CNN into $F _ { E } = \phi _ { \mathrm { D E M } } ( E )$ , then fused with SAM features $F _ { I } = S _ { \mathrm { e n c } } ( I )$ by gated mixing
+
+$$
+F _ {\mathrm{TA}} = \gamma \odot F _ {E} + (1 - \gamma) \odot F _ {I}, \quad \gamma = \sigma (W _ {\gamma} [ F _ {E} \| F _ {I} ]).
+$$
+
+Second, the Temporal Prompt Generator (TP-Prompt) encodes historical features $F _ { t } = S _ { \mathrm { e n c } } ( I _ { t } )$ via self-attention, aggregates them into $F _ { \mathrm { t e m p } }$ , and synthesizes k prompts with an MLP:
+
+$$
+P = \mathrm{MLP} (\mathrm{Pool} (F _ {\mathrm{temp}})).
+$$
+
+Finally, the Multi-Scale SAM Fusion (MS-SAM) resizes I into $\{ I ^ { ( s ) } \}$ }, extracts features $F ^ { ( s ) } = { \cal S } _ { \mathrm { e n c } } ( I ^ { ( s ) } )$ ), and fuses them by cross-attention:
+
+$$
+F _ {\mathrm{MS}} = \mathrm{CrossAttn} (F ^ {(1)}, F ^ {(2)}, F ^ {(3)}), \quad \hat {Y} = \mathcal {D} ([ F _ {\mathrm{MS}} \| P ]).
+$$
+
+These modules operate plug-and-play, preserve SAM’s frozen backbone, and enable robust segmentation under terrain variation, temporal dynamics, and scale diversity.
+
+# IV. EXPERIMENTS
+
+# A. Experimental Setup
+
+a) Datasets: We evaluate TASAM on three remote sensing benchmarks: LoveDA [25] (8-class land-cover with 598 training and 166 validation images), iSAID [26] (655k object instances over 15 categories for dense aerial instance segmentation), and WHU-CD [27] (building change detection for temporal variation analysis).   
+b) Evaluation Metrics: Following common practice, we report mean Intersection over Union (mIoU) as the main segmentation metric, along with F1, Precision, and Recall for balance and completeness. Computational efficiency is measured using FLOPs and inference time.
+
+![](images/ae34e41a53c4df550af0196ec6187510b8012e1ae6765168b5939ef21a4a5450.jpg)
+
+<details>
+<summary>flowchart</summary>
+
+```mermaid
+graph TD
+    A["Remote Sensing Image"] --> B["Terrain-Aware Adapter"]
+    B --> C["TA-Adapter"]
+    C --> D["SAM Encoder"]
+    D --> E["DEM"]
+    E --> F["Temporal Prompt Generator"]
+    F --> G["P"]
+    F --> H["P"]
+    F --> I["P"]
+    G --> J["Learnable or dynamically generate"]
+    H --> J
+    I --> J
+    J --> K["Dense Segmentation Map"]
+    L["..."] --> M["SAM Encoder"]
+    M --> N["Multi-Scale SAM Fusion"]
+    N --> O["Scale 0.5 x 1.0 x 2.0 x"]
+    M --> P["..."]
+    P --> M
+```
+</details>
+
+Fig. 1. Overview of the proposed TASAM framework. Given a remote sensing image, a corresponding elevation map (DEM), and a set of multi-temporal observations, TASAM enhances the Segment Anything Model (SAM) via three key modules: (1) a Terrain-Aware Adapter that injects topographic priors into the image encoder, (2) a Temporal Prompt Generator that generates spatially adaptive prompts based on temporal dynamics, and (3) a Multi-Scale SAM Fusion mechanism that enables robust segmentation across varied object sizes. These extensions allow TASAM to effectively segment complex landcover scenes without full model fine-tuning.
+
+c) Implementation Details.: All experiments are conducted on an NVIDIA A100 GPU with PyTorch 2.0. We use the official SAM ViT-B model [1] as the backbone. During training, we freeze the original SAM encoder and only optimize the introduced modules (adapters, temporal prompt generator, and cross-scale fusion). We use AdamW optimizer with a learning rate of $5 \times 1 0 ^ { - 4 }$ , batch size of 16, and train for 100 epochs. Multi-scale inputs are generated using image rescaling at factors $\{ 0 . 5 { \times } , 1 . 0 { \times } , 2 . 0 { \times } \}$ , and temporal prompt inputs use $T \ = \ 3$ frames (e.g., three timestamps for each spatial region). For fair comparison, all baselines are re-trained or evaluated using the same data splits and input resolutions.
+
+# B. Comparison with State-of-the-Art Methods
+
+As shown in Table I, TASAM achieves the best mIoU, F1, and recall on LoveDA, iSAID, and WHU-CD, surpassing both general-purpose (SAM) and domain-specific (SegFormer, iFormer) baselines. Fine-tuned SAM narrows the gap but struggles with spatial complexity, whereas TASAM shows clear advantages, especially on WHU-CD (+6.5 mIoU), highlighting the benefit of multi-temporal prompts for changesensitive segmentation. Table II shows TASAM’s robustness in dense urban, rural, and seasonal farmland regions. Terrainand topography-aware fusion improve boundary delineation, while multi-scale temporal prompting yields over 10 mIoU gains on small-object clusters.
+
+# C. Ablation Study
+
+We conduct a comprehensive ablation study to validate the contribution of each core component in TASAM, including the Terrain-Aware Adapter, Temporal Prompt Generator, and Multi-Scale Fusion module. Table III summarizes the mIoU results on the LoveDA dataset for various model variants. Starting from the fine-tuned SAM baseline (60.5 mIoU), each proposed module brings a consistent improvement. Removing the Terrain Adapter drops performance to 62.8, indicating that incorporating elevation priors significantly enhances segmentation in topographically complex regions. Removing the Temporal Prompt module results in a larger drop (63.1 mIoU), suggesting that capturing temporal changes is essential for dynamic or seasonal landscapes. The Multi-Scale Fusion module also proves important, as omitting it leads to a 2.1 point drop. The full TASAM model achieves 66.3 mIoU.
+
+TABLE I COMPARISON WITH STATE-OF-THE-ART SEGMENTATION METHODS ON THREE REMOTE SENSING BENCHMARKS. TASAM CONSISTENTLY OUTPERFORMS BOTH DOMAIN-SPECIFIC BASELINES ACROSS ALL DATASETS. BOLD NUMBERS INDICATE THE BEST PERFORMANCE. NOTE: PREC. PRESENTS PRECISION. SAM (ZS) DENOTES SAM (ZERO-SHOT) AND SAM (FT) DENOTES SAM (FINE-TUNED). 
+
+<table><tr><td>Dataset</td><td>Method</td><td>mIoU↑</td><td>F1_Score↑</td><td>Prec.↑</td><td>Recall↑</td><td>Backbone</td></tr><tr><td rowspan="5">LoveDA</td><td>SAM (ZS)</td><td>48.3</td><td>61.0</td><td>59.2</td><td>63.1</td><td>ViT-B</td></tr><tr><td>SegFormer-B1</td><td>59.7</td><td>71.5</td><td>70.8</td><td>72.2</td><td>MiT-B1</td></tr><tr><td>iFormer</td><td>62.0</td><td>73.1</td><td>72.4</td><td>73.8</td><td>iFormer-L</td></tr><tr><td>SAM (FT)</td><td>60.5</td><td>72.0</td><td>71.0</td><td>73.2</td><td>ViT-B</td></tr><tr><td>TASAM (Ours)</td><td>66.3</td><td>77.4</td><td>76.1</td><td>78.8</td><td>ViT-B + Ours</td></tr><tr><td rowspan="5">iSAID</td><td>SAM (ZS)</td><td>42.8</td><td>55.6</td><td>53.7</td><td>57.5</td><td>ViT-B</td></tr><tr><td>SegFormer-B1</td><td>54.1</td><td>66.3</td><td>64.9</td><td>67.8</td><td>MiT-B1</td></tr><tr><td>iFormer</td><td>57.9</td><td>69.2</td><td>68.0</td><td>70.3</td><td>iFormer-L</td></tr><tr><td>SAM (FT)</td><td>56.4</td><td>68.1</td><td>67.0</td><td>69.5</td><td>ViT-B</td></tr><tr><td>TASAM (Ours)</td><td>63.7</td><td>74.5</td><td>73.2</td><td>75.9</td><td>ViT-B + Ours</td></tr><tr><td rowspan="5">WHU-CD</td><td>SAM (ZS)</td><td>51.2</td><td>63.9</td><td>62.7</td><td>65.1</td><td>ViT-B</td></tr><tr><td>SegFormer-B1</td><td>61.5</td><td>74.3</td><td>73.1</td><td>75.6</td><td>MiT-B1</td></tr><tr><td>iFormer</td><td>64.4</td><td>76.0</td><td>75.1</td><td>77.2</td><td>iFormer-L</td></tr><tr><td>SAM (FT)</td><td>63.3</td><td>75.1</td><td>74.0</td><td>76.4</td><td>ViT-B</td></tr><tr><td>TASAM (Ours)</td><td>69.8</td><td>80.5</td><td>79.3</td><td>81.8</td><td>ViT-B + Ours</td></tr></table>
+
+![](images/36ef99db567eafa364cf2f86d61da389f83a1bc8da5b2a3aaf3a943b4e1e8cbc.jpg)
+
+<details>
+<summary>text_image</summary>
+
+Input
+SAM(Zero-shot)
+Segformer
+iFormer
+SAM
+Ours
+</details>
+
+Fig. 2. Visualization of attention heatmaps across methods. We compare attention maps generated by different segmentation models: SAM (Zero-Shot), Segformer, iFormer, SAM (Fine-Tuned), and our proposed TASAM. Compared to baselines, TASAM exhibits more compact and semantically aligned activations, particularly in rooftop and boundary regions. This suggests improved spatial precision and robustness to clutter.
+
+Figure 3 provides additional insights. The left plot compares different prompt strategies: manually annotated points and boxes yield lower accuracy due to sparse spatial coverage, while learned prompts offer modest improvement. The right plot shows how performance varies with the temporal window size: while using more frames improves accuracy up to 3 frames, adding more leads to marginal degradation, likely due to increased noise and redundancy.
+
+TABLE II PERFORMANCE COMPARISON ON CHALLENGING REMOTE SENSING SUB-REGIONS. TASAM DEMONSTRATES SUPERIOR SEGMENTATION ACCURACY ON SMALL OBJECTS, COMPLEX TERRAIN, AND TEMPORALLY DYNAMIC REGIONS. BOLD VALUES INDICATE THE BEST RESULTS. 
+
+<table><tr><td>Scene Type</td><td>Method</td><td>mIoU ↑</td><td>Precision ↑</td><td>Recall ↑</td></tr><tr><td rowspan="4">Urban High-Rise (Dense Buildings)</td><td>SAM (Zero-Shot)</td><td>45.2</td><td>51.0</td><td>49.5</td></tr><tr><td>SAM (Fine-Tuned)</td><td>53.9</td><td>62.1</td><td>58.2</td></tr><tr><td>iFormer</td><td>58.3</td><td>66.4</td><td>62.0</td></tr><tr><td>TASAM (Ours)</td><td>63.7</td><td>72.8</td><td>67.4</td></tr><tr><td rowspan="4">Rural Terrain (Hill/Valley)</td><td>SAM (Zero-Shot)</td><td>44.1</td><td>50.2</td><td>48.0</td></tr><tr><td>SAM (Fine-Tuned)</td><td>52.5</td><td>59.3</td><td>56.1</td></tr><tr><td>iFormer</td><td>55.7</td><td>63.8</td><td>60.4</td></tr><tr><td>TASAM (Ours)</td><td>61.0</td><td>69.1</td><td>65.7</td></tr><tr><td rowspan="4">Seasonal Farmland (Time-Variant)</td><td>SAM (Zero-Shot)</td><td>46.6</td><td>54.5</td><td>51.3</td></tr><tr><td>SAM (Fine-Tuned)</td><td>55.4</td><td>63.1</td><td>61.2</td></tr><tr><td>iFormer</td><td>57.9</td><td>66.2</td><td>64.3</td></tr><tr><td>TASAM (Ours)</td><td>65.6</td><td>73.5</td><td>71.4</td></tr><tr><td rowspan="4">Small Object Cluster (Vehicles, Rooftops)</td><td>SAM (Zero-Shot)</td><td>39.3</td><td>44.8</td><td>42.0</td></tr><tr><td>SAM (Fine-Tuned)</td><td>48.7</td><td>54.2</td><td>51.5</td></tr><tr><td>iFormer</td><td>52.0</td><td>58.6</td><td>56.0</td></tr><tr><td>TASAM (Ours)</td><td>58.9</td><td>65.7</td><td>62.3</td></tr></table>
+
+![](images/13d79cbfb2f1ffba752d59aa54918fe87ca05e0f97c879515d8aec62cf366012.jpg)
+
+<details>
+<summary>line</summary>
+
+| Method | mIoU (%) |
+|---|---|
+| Manual Point | 60.0 |
+| Manual Box | 62.5 |
+| Learned | 64.0 |
+| Temporal (Ours) | 66.5 |
+</details>
+
+![](images/9811ca49711a0dc270cf7053a4ecda45e897fa0c546e88c209dbeec07272b7d9.jpg)
+
+<details>
+<summary>line</summary>
+
+| Frames | mIoU (%) |
+| ------ | -------- |
+| 1 Frame | 61       |
+| 2 Frames | 63       |
+| 3 Frames | 66       |
+| 4 Frames | 65       |
+</details>
+
+Fig. 3. Prompt strategy and temporal window ablation. Left: Our temporal prompt mechanism outperforms manual point/box and learned prompts. Right: Increasing the temporal window size improves performance up to 3 frames, after which performance plateaus or drops.
+
+# D. Qualitative Results and Visualization
+
+To further investigate the spatial reasoning behavior of different models, we visualize attention heatmaps in Figure 2. Compared to SAM (Zero-Shot), Segformer, iFormer, and even fine-tuned SAM, our TASAM produces attention maps that are both more compact and more semantically aligned with actual object boundaries. In complex rural and urban scenes, TASAM effectively suppresses background noise and focuses on topographically relevant regions—e.g., rooftops and roads—while avoiding diffuse or fragmented attention. The sharper focus and reduced false activations demonstrate the benefit of integrating terrain priors and temporal context into prompt-aware segmentation. These visualizations not only confirm the quantitative improvements but also highlight the interpretability and robustness of TASAM in practical scenarios.
+
+# E. Prompt Sensitivity and Generalization
+
+We first examine the impact of prompt quantity on segmentation performance (Table IV). TASAM achieves optimal results using four prompts, while further increasing the number leads to saturation or slight decline. This indicates that overly dense prompting introduces redundancy without contributing meaningful guidance.
+
+TABLE III ABLATION STUDY ON LOVEDA. EACH MODULE CONTRIBUTES TO MIOU IMPROVEMENT. 
+
+<table><tr><td>Variant</td><td>Terrain</td><td>Temporal</td><td>Multi-Scale</td><td>mIoU ↑</td></tr><tr><td>SAM (Fine-Tuned)</td><td>✕</td><td>✕</td><td>✕</td><td>60.5</td></tr><tr><td>w/o Terrain Adapter</td><td>✕</td><td>√</td><td>√</td><td>62.8</td></tr><tr><td>w/o Temporal Prompt</td><td>√</td><td>✕</td><td>√</td><td>63.1</td></tr><tr><td>w/o Multi-Scale Fusion</td><td>√</td><td>√</td><td>✕</td><td>64.2</td></tr><tr><td>TASAM (Full)</td><td>√</td><td>√</td><td>√</td><td>66.3</td></tr></table>
+
+TABLE IV EFFECT OF PROMPT QUANTITY ON SEGMENTATION PERFORMANCE. TASAM ACHIEVES THE BEST RESULTS WITH 4 PROMPTS. PERFORMANCE SATURATES OR SLIGHTLY DROPS BEYOND THIS POINT DUE TO POTENTIAL REDUNDANCY. 
+
+<table><tr><td>#Prompts</td><td>1</td><td>2</td><td>4</td><td>6</td><td>8</td></tr><tr><td>mIoU (%)</td><td>63.2</td><td>64.4</td><td>66.3</td><td>66.2</td><td>65.9</td></tr><tr><td>F1 Score (%)</td><td>74.6</td><td>75.9</td><td>77.4</td><td>77.2</td><td>76.8</td></tr><tr><td>Recall (%)</td><td>75.2</td><td>76.5</td><td>78.8</td><td>78.4</td><td>78.0</td></tr></table>
+
+# F. Efficiency and Scalability
+
+We report the model complexity and inference efficiency of TASAM in Table V. While TASAM introduces only a modest increase in parameters (+1.6M) and FLOPs (+2.4G) over SAM (ViT-B), it achieves a substantial improvement of +5.8% mIoU. Moreover, TASAM maintains real-time inference capability, with only a 4.4ms increase in per-image runtime compared to the SAM baseline. When compared to iFormer, which has fewer parameters but lower accuracy, TASAM offers a more balanced trade-off between accuracy and computational cost.
+
+TABLE V EFFICIENCY AND SCALABILITY COMPARISON. TASAM ADDS MINIMAL OVERHEAD OVER SAM WHILE IMPROVING PERFORMANCE. 
+
+<table><tr><td>Method</td><td>mIoU (%)</td><td>Params (M)</td><td>FLOPs (G)</td><td>Time (ms)</td></tr><tr><td>SAM (ViT-B)</td><td>60.5</td><td>86.0</td><td>89.7</td><td>132.4</td></tr><tr><td>iFormer</td><td>62.0</td><td>72.8</td><td>65.3</td><td>101.6</td></tr><tr><td>TASAM (Ours)</td><td>66.3</td><td>87.6</td><td>92.1</td><td>136.8</td></tr></table>
+
+# V. CONCLUSION
+
+In this paper, we presented TASAM, a terrain- and temporally-aware extension of the Segment Anything Model tailored for remote sensing image segmentation. By incorporating digital elevation priors, temporal prompt generation, and multi-scale fusion into the SAM architecture, TASAM addresses key challenges in geographic complexity, temporal dynamics, and scale variability. Extensive experiments on multiple remote sensing benchmarks demonstrate that TASAM significantly outperforms both foundation models and domainspecific baselines, while introducing only minimal computational overhead. Our findings suggest that domain-adaptive augmentation of foundation models is a promising direction for geospatial understanding. In future work, we plan to explore incorporating semantic priors from multispectral or hyperspectral modalities and extending TASAM to instancelevel and 3D segmentation tasks.
+
+# REFERENCES
+
+[1] A. Kirillov, E. Mintun, N. Ravi, H. Mao, C. Rolland, L. Gustafson, T. Xiao, S. Whitehead, A. C. Berg, W.- Y. Lo et al., “Segment anything,” in ICCV, 2023, pp. 4015–4026.   
+[2] X. X. Zhu, D. Tuia, L. Mou, G.-S. Xia, L. Zhang, F. Xu, and F. Fraundorfer, “Deep learning in remote sensing: A comprehensive review and list of resources,” IEEE GRS, vol. 5, no. 4, pp. 8–36, 2017.   
+[3] C. Yuan, R. Shan, Y. Zhang, X.-X. Li, T. Yin, J. Hang, and L. Norford, “Multilayer urban canopy modelling and mapping for traffic pollutant dispersion at high density urban areas,” Science of the total environment, vol. 647, pp. 255–267, 2019.   
+[4] D. Chen, Z. Liu, L. Wang, M. Dou, J. Chen, and H. Li, “Natural disaster monitoring with wireless sensor networks: A case study of data-intensive applications upon low-cost scalable systems,” Mobile Networks and Applications, vol. 18, no. 5, pp. 651–663, 2013.   
+[5] O. Ronneberger, P. Fischer, and T. Brox, “U-net: Convolutional networks for biomedical image segmentation,” in MICCAI. Springer, 2015, pp. 234–241.   
+[6] L.-C. Chen, Y. Zhu, G. Papandreou, F. Schroff, and H. Adam, “Encoder-decoder with atrous separable convolution for semantic image segmentation,” in ECCV, 2018, pp. 801–818.   
+[7] H. Cao, Y. Wang, J. Chen, D. Jiang, X. Zhang, Q. Tian, and M. Wang, “Swin-unet: Unet-like pure transformer for medical image segmentation,” in ECCV. Springer, 2022, pp. 205–218.   
+[8] E. Xie, W. Wang, Z. Yu, A. Anandkumar, J. M. Alvarez, and P. Luo, “Segformer: Simple and efficient design for semantic segmentation with transformers,” NeurIPS, vol. 34, pp. 12 077–12 090, 2021.   
+[9] A. Radford, J. W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal, G. Sastry, A. Askell, P. Mishkin, J. Clark et al., “Learning transferable visual models from natural language supervision,” in ICML, 2021, pp. 8748–8763.   
+[10] Y. Ji, X. Xiao, G. Chen, H. Xu, C. Ma, L. Zhu, A. Liang, and J. Chen, “Cibr: Cross-modal information bottleneck regularization for robust clip generalization,” 2025, arXiv:2503.24182.   
+[11] Y. Zhang, A. Mehra, S. Niu, and J. Hamm, “Dpcore: Dynamic prompt coreset for continual test-time adaptation,” 2025.   
+[12] H. Zhang, F. Li, S. Liu, L. Zhang, H. Su, J. Zhu, L. M. Ni, and H.-Y. Shum, “Dino: Detr with improved denoising anchor boxes for end-to-end object detection,” arXiv:2203.03605, 2022.
+
+[13] X. Xiao, Y. Zhang, J. Wang, L. Zhao, Y. Wei, H. Li, Y. Li, X. Wang, S. K. Roy, H. Xu, and T. Wang, “Roadbench: A vision-language foundation model and benchmark for road damage understanding,” 2025, arXiv:2507.17353.   
+[14] X. Xiao, A. Tsaris, A. Tabassum, J. Lagergren, L. M. York, T. Wang, and X. Wang, “Focus: Fused observation of channels for unveiling spectra,” 2025, arXiv:2507.14787.   
+[15] X. Xiao, Y. Zhang, X. Li, T. Wang, X. Wang, Y. Wei, J. Hamm, and M. Xu, “Visual instance-aware prompt tuning,” 2025, arXiv:2507.07796.   
+[16] Z. Ma, X. He, S. Sun, B. Yan, H. Kwak, and J. Gao, “Zero-shot digital rock image segmentation with a finetuned segment anything model,” 2023.   
+[17] R. P. Sishodia, R. L. Ray, and S. K. Singh, “Applications of remote sensing in precision agriculture: A review,” Remote sensing, vol. 12, no. 19, p. 3136, 2020.   
+[18] D. Yu and C. Fang, “Urban remote sensing with spatial big data: A review and renewed perspective of urban studies in recent decades,” Remote Sensing, vol. 15, no. 5, p. 1307, 2023.   
+[19] J. Li, Y. Zhao, P. Bates, J. Neal, S. Tooth, L. Hawker, and C. Maffei, “Digital elevation models for topographic characterisation and flood flow modelling along lowgradient, terminal dryland rivers: A comparison of spaceborne datasets for the r´ıo colorado, bolivia,” Journal of Hydrology, vol. 591, p. 125617, 2020.   
+[20] J. Gao, D. Peng, T. Zhou, T. Wang, and C. Xu, “Terrain matching localization for underwater vehicle based on gradient fitting,” Journal of Sensors, vol. 2018, no. 1, p. 3717430, 2018.   
+[21] C. Wang, Y. Ji, Y. Meng, Y. Zhang, and Y. Zhu, “Sopseg: Prompt-based small object instance segmentation in remote sensing imagery,” 2025.   
+[22] R. C. Daudt, B. Le Saux, A. Boulch, and Y. Gousseau, “Urban change detection for multispectral earth observation using convolutional neural networks,” in IGARSS 2018. Ieee, 2018, pp. 2115–2118.   
+[23] R. C. Daudt, B. Le Saux, and A. Boulch, “Fully convolutional siamese networks for change detection,” in 2018 25th IEEE ICIP. IEEE, 2018, pp. 4063–4067.   
+[24] L. Ding, H. Guo, S. Liu, L. Mou, J. Zhang, and L. Bruzzone, “Bi-temporal semantic reasoning for the semantic change detection in hr remote sensing images,” IEEE TGRS, vol. 60, pp. 1–14, 2022.   
+[25] J. Wang, Z. Zheng, A. Ma, X. Lu, and Y. Zhong, “Loveda: A remote sensing land-cover dataset for domain adaptive semantic segmentation,” 2021.   
+[26] S. Waqas Zamir, A. Arora, A. Gupta, S. Khan, G. Sun, F. Shahbaz Khan, F. Zhu, L. Shao, G.-S. Xia, and X. Bai, “isaid: A large-scale dataset for instance segmentation in aerial images,” in CVPR workshops, 2019, pp. 28–37.   
+[27] S. Ji, S. Wei, and M. Lu, “Fully convolutional networks for multisource building extraction from an open aerial and satellite imagery data set,” IEEE TGRS, vol. 57, no. 1, pp. 574–586, 2018.
