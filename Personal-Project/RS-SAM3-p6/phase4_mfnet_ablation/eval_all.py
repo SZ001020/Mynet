@@ -11,8 +11,9 @@ PHASE1 = f"{BASE}/Personal-Project/RS-SAM3-p6/phase1_mm_adapter"
 PHASE_A = f"{BASE}/Personal-Project/RS-SAM3-p7/phase_a_dsm_prompt"
 F0_DIR = f"{BASE}/Personal-Project/RS-SAM3-p6/phase4_mfnet_ablation/f0_mfnet_sam3"
 F1_DIR = f"{BASE}/Personal-Project/RS-SAM3-p6/phase4_mfnet_ablation/f1_fusion"
+F0P_DIR = f"{BASE}/Personal-Project/RS-SAM3-p6/phase4_mfnet_ablation/f0p_frozen_baseline"
 SHARED = f"{BASE}/Personal-Project/RS-SAM3-p6/phase4_mfnet_ablation/shared"
-sys.path.extend([SE, PHASE1, PHASE_A, F0_DIR, F1_DIR, SHARED])
+sys.path.extend([SE, PHASE1, PHASE_A, F0_DIR, F1_DIR, F0P_DIR, SHARED])
 
 CLASS_NAMES = ["road", "building", "grass", "tree", "car"]
 
@@ -31,7 +32,19 @@ def load_model(ckpt_path, model_type):
         from model_f0 import MFNetSAM3
         model = MFNetSAM3(sam3, lora_rank=ckpt_args.get("lora_rank", 8),
                           num_classes=5, dropout=0.1, resolution=ckpt_args.get("resolution", 1008)).cuda()
-    else:
+    elif model_type == "f0p":
+        from model_f0p import FrozenSAM3DFM
+        model = FrozenSAM3DFM(sam3, num_classes=5, dropout=0.1, resolution=ckpt_args.get("resolution", 1008)).cuda()
+    elif model_type == "f0p_lora":
+        from model_f0p_lora import FrozenSAM3DFMLoRA
+        model = FrozenSAM3DFMLoRA(sam3, num_classes=5, dropout=0.1, resolution=ckpt_args.get("resolution", 1008)).cuda()
+    elif model_type == "f0p_l2":
+        from model_f0p_l2 import FrozenSAM3DFMLoRAv2
+        model = FrozenSAM3DFMLoRAv2(sam3, num_classes=5, dropout=0.1, resolution=ckpt_args.get("resolution", 1008)).cuda()
+    elif model_type == "f0p_m":
+        from model_f0p_m import FrozenSAM3MMLoRA
+        model = FrozenSAM3MMLoRA(sam3, num_classes=5, dropout=0.1, resolution=ckpt_args.get("resolution", 1008)).cuda()
+    else:  # "f1" or default
         from model_f1 import Phase4AdapterModel
         use_lora = ckpt_args.get("use_lora", False)
         use_prompt = ckpt_args.get("use_prompt", False)
@@ -59,7 +72,9 @@ def evaluate(model, dataset="vaihingen"):
     from dataset_adapter import _rgb_to_class
     all_inter = np.zeros(5, dtype=np.float64)
     all_union = np.zeros(5, dtype=np.float64)
+    all_gt = np.zeros(5, dtype=np.float64)
     all_correct, all_total = 0.0, 0.0
+    tile_results = []
 
     for tile in tiles:
         print(f"  {tile}...", flush=True)
@@ -91,34 +106,63 @@ def evaluate(model, dataset="vaihingen"):
         pred = logit_sum.argmax(0)
 
         mask = gt != 255
-        all_correct += (pred[mask] == gt[mask]).sum()
-        all_total += mask.sum()
+        tile_correct = (pred[mask] == gt[mask]).sum()
+        tile_total = mask.sum()
+        all_correct += tile_correct; all_total += tile_total
+        tile_info = {"tile": tile, "oa": float(tile_correct / max(tile_total, 1) * 100)}
         for c in range(5):
             pc, lc = pred == c, gt == c
-            all_inter[c] += (pc & lc).sum()
-            all_union[c] += (pc | lc).sum()
+            inter = (pc & lc).sum()
+            union = (pc | lc).sum()
+            gt_cnt = lc.sum()
+            all_inter[c] += inter; all_union[c] += union; all_gt[c] += gt_cnt
+            tile_info[CLASS_NAMES[c]] = float(inter / max(union, 1) * 100)
+            tile_info[f"{CLASS_NAMES[c]}_recall"] = float(inter / max(gt_cnt, 1) * 100)
+        tile_results.append(tile_info)
 
     oa = all_correct / max(all_total, 1) * 100
     ious = {CLASS_NAMES[c]: all_inter[c] / max(all_union[c], 1) * 100 for c in range(5)}
+    recalls = {CLASS_NAMES[c]: all_inter[c] / max(all_gt[c], 1) * 100 for c in range(5)}
     miou = float(np.mean(list(ious.values())))
-    return {"avg_oa": oa, "avg_miou": miou, "per_class_iou": ious}
+    return {"avg_oa": oa, "avg_miou": miou, "per_class_iou": ious, "per_class_recall": recalls, "tiles": tile_results}
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", default="vaihingen", choices=["vaihingen", "potsdam"])
+    args = parser.parse_args()
+
     configs = [
+        # Phase4 main experiments
         ("F0", "/root/autodl-tmp/runs/plan6_phase4_f0_vaihingen_20260518_213923/best_model.pt", "f0"),
         ("F1", "/root/autodl-tmp/runs/plan6_phase4_lora_vaihingen_20260519_124902/best_model.pt", "f1"),
         ("F2", "/root/autodl-tmp/runs/plan6_phase4_frozen_vaihingen_20260519_155635/best_model.pt", "f1"),
         ("F3", "/root/autodl-tmp/runs/plan6_phase4_prompt_vaihingen_20260519_191703/best_model.pt", "f1"),
+        # Phase4 supplementary
+        ("F0p", "/root/autodl-tmp/runs/plan6_phase4_f0p_frozen_vaihingen_20260519_222933/best_model.pt", "f0p"),
+        ("F0p_L", "/root/autodl-tmp/runs/plan6_phase4_f0p_lora_vaihingen_20260520_093831/best_model.pt", "f0p_lora"),
+        ("F0p_M", "/root/autodl-tmp/runs/plan6_phase4_f0p_m_vaihingen_20260520_223449/best_model.pt", "f0p_m"),
+        ("F0p_L2", "/root/autodl-tmp/runs/plan6_phase4_f0p_l2_vaihingen_20260520_192526/best_model.pt", "f0p_l2"),
+        # Unfreeze experiments
+        ("U1", "/root/autodl-tmp/runs/plan6_phase4_u24_31_vaihingen_20260525_211145/best_model.pt", "f0p"),
+        ("U2", "/root/autodl-tmp/runs/plan6_phase4_u24_31_mlp_vaihingen_20260525_232410/best_model.pt", "f0p"),
+        ("U3", "/root/autodl-tmp/runs/plan6_phase4_u28_31_vaihingen_20260526_005659/best_model.pt", "f0p"),
     ]
     for name, ckpt, mtype in configs:
-        print(f"\n=== {name} 256² eval ===")
+        if not os.path.exists(ckpt):
+            print(f"\n=== {name}: SKIP (no checkpoint) ===")
+            continue
+        print(f"\n=== {name} 256² {args.dataset} eval ===")
         model = load_model(ckpt, mtype)
-        r = evaluate(model)
+        r = evaluate(model, args.dataset)
         print(f"  OA={r['avg_oa']:.2f}% mIoU={r['avg_miou']:.2f}%")
         print(f"  IoU: {r['per_class_iou']}")
+        print(f"  Recall: {r.get('per_class_recall', {})}")
         out_path = os.path.join(os.path.dirname(ckpt), f"eval_256_phase4.json")
         json.dump(r, open(out_path, "w"), indent=2)
         print(f"  Saved: {out_path}")
+        del model
+        import gc; gc.collect()
+        torch.cuda.empty_cache()
 
 if __name__ == "__main__":
     main()

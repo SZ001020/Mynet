@@ -1,8 +1,8 @@
 # Plan6: SAM3 In-ViT RGB/DSM MMAdapter 路线
 
-> 日期：2026-05-20
-> 状态：Phase 1-4 + 附加实验全部完成
-> Phase 4 + 附加实验结论：SAM3 frozen ≈ SAM1 frozen；LoRA 在 SAM3 上的净贡献 +1.95pp（SAM1 上 +6.95pp），SAM3 更固化
+> 日期：2026-05-21
+> 状态：Phase 1-4 + 三组附加实验完成；第四组附加实验规划中（深层解冻验证）
+> Phase 4 结论：SAM3 frozen ≈ SAM1 frozen；LoRA +1.95pp；Adapter 路线和 LoRA 路线打平
 > 当前最优：Plan7-A 77.14%（非本路线）
 > Phase 3 消融结论：in-ViT MMAdapter 是绝对核心（+6.75pp），gate/loss/data 选择不关键（±0.2pp），decoder 中等贡献（+0.7pp）
 
@@ -611,3 +611,79 @@ RGB tokens, DSM tokens → shared frozen attention (LoRA on q,v only)
 1. LoRA on attn+MLP (F0'+L) 是最优配置，去掉 MLP LoRA 损失 0.23pp
 2. **MMLoRA dual-branch λ 混合无增益**（F0'+M -0.35pp vs F0'+L）— encoder 内部跨模态融合在 SAM3+LoRA 条件下是冗余的
 3. 此方向已关闭。SAM3 上的最优 LoRA 方案就是 F0'+L
+
+---
+
+## Phase 4 第四组附加实验：深层 Attention 解冻验证
+
+### 动机
+
+MMA 论文（Multi-Modal Adapter for VLMs）在 CLIP ViT 上通过 dataset-level recognition 证明了：**低层特征跨数据集通用（该冻），高层特征数据集特定（该训）。** Adapting-SAM3 把这个结论沿用到 SAM3 上，把 adapter 放在 blocks 20-31。但 SAM3 ViTDet 上从未被严格验证过。
+
+Plan6 Phase 1.6 试过一次：unfreeze blocks 28-31 attn，lr=5e-7，30 epoch，在线裁剪。结果退化 4pp。但这不能下结论——lr 太小（三个数量级低于正常微调 lr），在线裁剪加剧过拟合。
+
+**需要一次干净的重跑**：固定窗口、正常 lr、合理 epoch，验证"在 SAM3 上只解冻深层 attention 权重"是否有效。
+
+> 理论基础来源：[来源：MMA 论文 Figure 1 dataset-level recognition + Adapting-SAM3 blocks 20-31 adapter placement]
+
+### 实验设计
+
+| 实验 | Backbone | 解冻范围 | 数据 | 说明 |
+|------|---------|---------|------|------|
+| **F0' (已有)** | SAM3 frozen | 无 | 固定窗口 | 冻结基线 75.29% |
+| **U1** | SAM3 | blocks 24-31 attn (qkv+proj) | 固定窗口 | 只解冻深层 attention |
+| **U2** | SAM3 | blocks 24-31 attn + MLP | 固定窗口 | 解冻更多，边界测试 |
+| **U3** | SAM3 | blocks 28-31 attn (同 Phase 1.6) | 固定窗口 | 验证 Phase 1.6 失败是 lr/数据问题 |
+
+### 训练配置（修正 Phase 1.6 的三个错误）
+
+| 参数 | Phase 1.6 (失败) | Phase 4 U1-U3 (修正) |
+|------|:---:|:---:|
+| 数据加载 | 在线随机裁剪 | **固定窗口**（和 F0' 一致） |
+| attn lr | 5e-7 | **1e-5**（低但仍正常） |
+| decoder lr | 5e-5 | 5e-5 |
+| epochs | 30 | **12**（够看趋势） |
+| batch | 2 | 4 |
+| seed | — | 42 |
+
+### 预期
+
+```
+如果 U1 > F0' (75.29%): 深层解冻有效——MMA 的结论在 SAM3 上成立
+如果 U1 ≈ F0': 解冻深层和冻结效果一样——SAM3 ViTDet 的 window attention 可能限制了收益
+如果 U1 < F0': 加深了 Phase 1.6 的结论——SAM3 是解冻无益的
+如果 U1 > U2: 只解冻 attn 就够了，MLP 不需要动
+```
+
+### 实现
+
+- 从 F0' best 热启动，unfreeze 指定层，续训 12 epoch
+- 复用 F0' 的 4×SEFusion + MFNetDecoder（冻结）
+- 代码位置：`Personal-Project/RS-SAM3-p6/phase4_mfnet_ablation/f0p_frozen_baseline/unfreeze/`
+
+### 第四组附加实验结果（2026-05-26）
+
+**Crop validation：**
+
+| 实验 | 解冻范围 | Best mIoU | Best epoch | vs F0' |
+|------|---------|:---:|:---:|:---:|
+| F0' (frozen baseline) | 无 | 75.29% | — | — |
+| **U1** | blocks 24-31 attn (qkv+proj) | 75.49% | 10 | +0.20pp |
+| **U2** | blocks 24-31 attn+MLP | 75.55% | 4 | +0.26pp |
+| **U3** | blocks 28-31 attn (Phase 1.6 复刻) | 75.23% | 7 | -0.06pp |
+
+**对比 Phase 1.6：**
+
+| | Phase 1.6 (失败) | U3 (修正) |
+|------|:---:|:---:|
+| 数据 | 在线裁剪 | 固定窗口 |
+| lr | 5e-7 | 1e-5 |
+| 结果 | 72.51% (-4pp) | 75.23% (-0.06pp) |
+
+Phase 1.6 的退化主要是在线裁剪 + 极低 lr 造成的，不是解冻本身的问题。但即使修正后，解冻也没有增益。
+
+**结论：**
+1. **SAM3 ViTDet 深层解冻不提供有意义的增益**（±0.26pp 噪声范围）
+2. MMA 论文在 CLIP 上的"深层数据集特定、该训"结论未迁移到 SAM3 ViTDet — SAM3 window attention 可能限制了权重微调的收益空间
+3. **此方向关闭** —— 无论是 Adapter、LoRA 还是 Unfreeze，在 SAM3 上 stable 的结果都在 75.3-77.6% 区间，受 frozen backbone 天花板限制
+4. U1-U3 无需跑 256² eval（crop 结果已确认无效）

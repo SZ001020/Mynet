@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Active Research
 
-This is the SSRS remote sensing segmentation repo. Active branch: `segearthov3`, working through 7 research plans (plan.md → plan7.md). The task is frozen-backbone SAM3 semantic segmentation on ISPRS Vaihingen/Potsdam with DSM (digital surface model) fusion.
+This is the SSRS remote sensing segmentation repo. Active branch: `segearthov3`, working through 9 research plans (plan.md → plan9.md). The task is frozen-backbone SAM3 semantic segmentation on ISPRS Vaihingen/Potsdam with DSM (digital surface model) fusion.
 
 **Core architecture**: SAM3 ViTDet (frozen) + in-ViT MMAdapter (RGB/DSM dual-stream at every ViT block) + MFNetDecoder.
 
@@ -26,7 +26,11 @@ This is the SSRS remote sensing segmentation repo. Active branch: `segearthov3`,
 | Plan6 Phase1 (old eval) | 76.57% | 87.27% | ~5M | per-patch argmax |
 | MFNet Frozen SAM1 (reference) | 75.11% | 88.01% | LoRA | SAM1 |
 
-**Phase 4 key finding (2026-05-19)**: LoRA on SAM3 ViTDet (rank=8) is the dominant factor (+1.5pp within the Phase 4 chain), comparable in importance to in-ViT MMAdapter. Shared encoder + LoRA + SEFusion (77.34%) is competitive but slightly below Plan7-A (77.55%, same soft-logit eval, -0.21pp). LoRA + simple architecture ≈ frozen + complex adapter architecture. The value of Phase 4 is the fair controlled comparison, not a new SOTA.
+**Phase 4 key finding (2026-05-19)**: LoRA on SAM3 ViTDet (rank=8) is the dominant factor (+1.95pp from F0'→F0'+L), comparable in importance to in-ViT MMAdapter. Shared encoder + LoRA + 1×SEFusion (F0: 77.34%) is competitive but slightly below Plan7-A (77.55%, same soft-logit eval, -0.21pp). Frozen + LoRA + 4×SEFusion (F0'+L: 77.24%) is close behind. LoRA + simple architecture ≈ frozen + complex adapter architecture. The value of Phase 4 is the fair controlled comparison, not a new SOTA.
+
+**Plan9 Phase A (2026-05-26) — NEGATIVE**: LoRA + DSM edge/slope input-level fusion. Edge/slope concatenated as extra DSM channels → Conv1×1 → SAM3 encoder. P9-A degraded F0'+L from 77.24% to ~76.45% (-0.79pp). Reason: input-level channel concatenation loses structural information in patch_embed; SAM3's RGB-pretrained patch_embed cannot interpret DSM+edge+slope channel semantics. Plan7-A's +0.57pp comes from token-level PromptEncoder + gate injection, not from the edge/slope data itself.
+
+**Plan9 Phase B (2026-05-27) — 规划中**: Token-level PromptEncoder + gate injection on LoRA baseline. Same paradigm as Plan7-A (PromptEncoder → per-block 3-way gate), but replacing MMAdapter with LoRA. Gate directly weights attn outputs (no adapter MLPs), prompt stream uses frozen self-attention. Single experiment P9-B2 from F0'+L (77.24%). Goal: verify whether LoRA + prompt gate can be additive (Plan7-A's prompt contribution was measured on adapter architecture, not LoRA).
 
 **Plan8 (2026-05-16) — NEGATIVE**: Cross-attention (-0.26pp) and DSM attention bias (-0.65pp) in frozen ViT provide no benefit over gate-only baseline. Gate fusion alone is sufficient for RGB-DSM interaction at this scale.
 
@@ -45,6 +49,8 @@ This is the SSRS remote sensing segmentation repo. Active branch: `segearthov3`,
 | SAM-HQ residual correction | 77.05 vs 77.14 | -0.09pp | Plan7-C3 |
 | Multi-scale TTA | 77.33 vs 77.55 | -0.22pp | Plan7-D1 |
 | Curvature/roughness prompt expansion | 76.49 vs 77.14 | -0.65pp | Plan7-B3 |
+| Input-level DSM edge/slope channel concat | 76.45 vs 77.24 | -0.79pp | Plan9-A |
+| LoRA + input-level edge/slope prompt | 76.45 vs 76.81 | -0.36pp | Plan9 |
 
 **Before proposing any new direction, check this table and the Experiment Lineage below.**
 
@@ -79,13 +85,24 @@ Plan8 — SAM3 base, seed=42, all from scratch (formal ablation)
 
 Plan6 Phase4 — MFNet strict comparison, seed=42 (formal ablation)
   │
-  ├─→ F0 (shared encoder + LoRA + SEFusion + MFNetDecoder) → 77.34% ✅ [PHASE4 BEST]
+  ├─→ F0 (shared encoder + LoRA + 1×SEFusion + MFNetDecoder) → 77.34% ✅ [PHASE4 BEST]
   ├─→ F1 (in-ViT MMAdapter + LoRA) → 77.29% ➖ -0.11pp vs F0
   │   └─→ in-ViT adapter provides NO gain over shared+SEFusion when LoRA present
   ├─→ F2 (in-ViT MMAdapter, frozen) → 75.51% ❌ -1.49pp vs F1
-  │   └─→ LoRA is the DOMINANT factor: contributes ~1.5pp
+  │   └─→ LoRA is the DOMINANT factor: contributes ~1.95pp
   └─→ F3 (in-ViT MMAdapter, frozen + prompt) → 76.52% (+0.65pp vs F2)
       └─→ Prompt gain consistent with Plan7-A (+0.57pp); confirms reproducibility
+
+Plan6 Phase4 子链 — F0' pure frozen baseline (continuation from Phase4)
+  │
+  ├─→ F0' (SAM3 frozen + 4×SEFusion + MFNetDecoder) → 75.29% [对标 MFNet 75.11%]
+  └─→ F0'+L (F0' + LoRA rank=8) → 77.24% ✅ +1.95pp ← LoRA 净贡献
+
+Plan9 — LoRA + DSM edge/slope fusion
+  │
+  ├─→ Phase A (from F0'+L 77.24%): input-level 3ch DSM → 76.45% ❌ -0.36pp
+  │   └─→ Closed: edge/slope only works via token-level gate, not input enrichment
+  └─→ Phase B (from F0'+L 77.24%): token-level PromptEncoder + per-block gate (规划中)
 
 Earlier plans (superseded):
   Plan3: Adapter+decoder beats full fine-tuning despite 175× fewer params
@@ -139,10 +156,12 @@ Our code lives under `Personal-Project/`. Vendored reference projects under `Ref
 |-----------|---------|--------|
 | `Personal-Project/RS-SAM3-p6/phase1_mm_adapter/` | Plan6 Phase1: in-ViT MMAdapter (best 76.57%) | Reference |
 | `Personal-Project/RS-SAM3-p6/phase3_ablation/` | Plan6 Phase3: adapter/gate/data/loss/decoder ablation | Done |
-| `Personal-Project/RS-SAM3-p7/phase_a_dsm_prompt/` | Plan7-A: DSM edge/slope prompt (best 77.14%) | **Active** |
+| `Personal-Project/RS-SAM3-p6/phase4_mfnet_ablation/` | Plan6 Phase4: MFNet strict comparison, LoRA ablation (best F0 77.34%) | Done |
+| `Personal-Project/RS-SAM3-p7/phase_a_dsm_prompt/` | Plan7-A: DSM edge/slope prompt (best 77.55%) | Reference |
 | `Personal-Project/RS-SAM3-p7/phase_b_prompt_ablation/` | Plan7-B: slope/curvature morphology ablation | Done |
 | `Personal-Project/RS-SAM3-p7/phase_c_residual_boundary/` | Plan7-C3: SAM-HQ residual correction (no gain) | Done |
 | `Personal-Project/RS-SAM3-p7/phase_d_multiscale_spatial/` | Plan7-D1: multi-scale TTA eval (no gain) | Done |
+| `Personal-Project/RS-SAM3-p9/phase_a_lora_prompt/` | Plan9: LoRA + DSM edge/slope prompt (closed, -0.36pp vs F0'+L) | Done |
 | `Personal-Project/RS-SAM3-p8/` | Plan8: cross-attn + attn bias (negative) | Done |
 | `Personal-Project/RS-SAM3-p3/` `RS-SAM3-p3r/` `RS-SAM-p3b/` | Plan3 Route A/B: VPT adapter + UNet | Superseded |
 | `Personal-Project/RS-SAM3-p1/` `RS-SAM3-p2/` `RS-SAM3-p4/` `RS-SAM3-p5/` `RS-SAM3/` | Plan1/2/4/5 | Superseded |
@@ -150,7 +169,7 @@ Our code lives under `Personal-Project/`. Vendored reference projects under `Ref
 | `Reference-Project/sam3-main/` | Official SAM3 package (`pip install -e Reference-Project/sam3-main/`) | Read-only |
 | `Reference-Project/MFNet/` `Reference-Project/SAM_RS/` | MFNet and SAM_RS papers (legacy) | Read-only |
 | `docs/` | Paper notes for 10+ RS papers | Reference |
-| `Plan/` | plan1-8.md research plans | Reference |
+| `Plan/` | plan1-9.md research plans | Reference |
 | `model_registry.py` | Authoritative registry of all checkpoints, metrics, lineage | **Single source of truth** |
 
 Each experiment directory has its own isolated code (`model.py`, `train.py`, `eval.py`). Parameter signatures differ between versions — when loading old checkpoints, use the corresponding code.
@@ -217,6 +236,18 @@ python train_a.py --dataset vaihingen --dsm-attn-mode full --checkpoint-attn \
 # Train Plan6 Phase1 (in-ViT MMAdapter)
 cd Personal-Project/RS-SAM3-p6/phase1_mm_adapter
 python train_phase1.py --dataset vaihingen --dsm-attn-mode full --checkpoint-attn
+
+# Train Phase4 F0 (shared encoder + LoRA + SEFusion)
+cd Personal-Project/RS-SAM3-p6/phase4_mfnet_ablation/f0_mfnet_sam3
+python train_f0.py --dataset vaihingen --epochs 12 --batch 2
+
+# Train Phase4 F0' + LoRA (frozen + LoRA + 4xSEFusion)
+cd Personal-Project/RS-SAM3-p6/phase4_mfnet_ablation/f0p_frozen_baseline
+python train_f0p_lora.py --dataset vaihingen --init-from <F0p_best> --epochs 8 --batch 2
+
+# Train Plan9 (LoRA + DSM edge/slope input fusion)
+cd Personal-Project/RS-SAM3-p7/phase_e_lora_prompt
+python train_p9.py --dataset vaihingen --init-from <F0pL_or_F0_best> --epochs 8 --batch 2
 
 # Install SAM3
 pip install -e Reference-Project/sam3-main/
