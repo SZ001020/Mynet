@@ -1,0 +1,12 @@
+{
+  "dataset": "vaihingen",
+  "epochs": 8,
+  "batch": 2,
+  "epoch_steps": 1000,
+  "lr": 5e-05,
+  "warmup_ratio": 0.2,
+  "resolution": 1008,
+  "seed": 42,
+  "val_every": 1,
+  "output": "/root/autodl-tmp/runs"
+}

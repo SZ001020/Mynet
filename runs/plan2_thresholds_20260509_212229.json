@@ -1,0 +1,9 @@
+{
+  "vaihingen": {
+    "road": 40,
+    "building": 10,
+    "grass": 30,
+    "tree": 20,
+    "car": 3
+  }
+}

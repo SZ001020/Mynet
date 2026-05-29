@@ -1,0 +1,12 @@
+{
+  "dataset": "potsdam",
+  "epochs": 20,
+  "batch": 2,
+  "epoch_steps": 1000,
+  "lr": 5e-05,
+  "resolution": 1008,
+  "seed": 42,
+  "init_from": "/root/autodl-tmp/runs/plan6_phase4_f0p_frozen_potsdam_20260528_035103/best_model.pt",
+  "val_every": 1,
+  "output": "/root/autodl-tmp/runs"
+}

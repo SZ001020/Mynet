@@ -1,0 +1,15 @@
+{
+  "dataset": "vaihingen",
+  "epochs": 12,
+  "batch": 4,
+  "attn_lr": 1e-05,
+  "decoder_lr": 5e-05,
+  "resolution": 1008,
+  "unfreeze_start": 24,
+  "unfreeze_end": 31,
+  "unfreeze_mlp": false,
+  "seed": 42,
+  "val_every": 1,
+  "output": "/root/autodl-tmp/runs",
+  "init_from": "/root/autodl-tmp/runs/plan6_phase4_f0p_frozen_vaihingen_20260519_222933/best_model.pt"
+}

@@ -1,0 +1,13 @@
+{
+  "mode": "partial",
+  "epochs": 5,
+  "batch_size": 2,
+  "lr": 0.0001,
+  "crop_size": 512,
+  "lora_rank": 8,
+  "trainable_params": 797189,
+  "total_params": 841306939,
+  "best_v_miou": 52.142086601487925,
+  "best_p_miou": 25.69066175482621,
+  "timestamp": "20260429_231705"
+}

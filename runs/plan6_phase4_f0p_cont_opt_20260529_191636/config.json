@@ -1,0 +1,5 @@
+{
+  "init_from": "/root/autodl-tmp/runs/plan6_phase4_f0p_frozen_vaihingen_20260529_173409/best_model.pt",
+  "epochs": 4,
+  "opt_loaded": true
+}

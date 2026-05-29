@@ -1,0 +1,5 @@
+{
+  "init_from": "/root/autodl-tmp/runs/plan6_phase4_f0p_lora_vaihingen_20260520_093831/best_model.pt",
+  "epochs": 8,
+  "batch": 4
+}

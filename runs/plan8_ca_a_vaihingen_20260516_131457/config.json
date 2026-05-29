@@ -1,0 +1,16 @@
+{
+  "dataset": "vaihingen",
+  "epochs": 8,
+  "batch": 2,
+  "epoch_steps": 1000,
+  "lr": 5e-05,
+  "dsm_lr": 2.5e-05,
+  "prompt_lr": 2.5e-05,
+  "adapter_bottleneck": 32,
+  "resolution": 1008,
+  "dsm_attn_mode": "full",
+  "checkpoint_attn": true,
+  "init_from": null,
+  "val_every": 1,
+  "output": "/root/autodl-tmp/runs"
+}

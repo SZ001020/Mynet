@@ -1,0 +1,4 @@
+# Ignore model checkpoint weights (stored on /root/autodl-tmp/runs/)
+*.pt
+*.pth
+*.safetensors

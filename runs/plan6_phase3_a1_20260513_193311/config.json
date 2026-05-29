@@ -1,0 +1,8 @@
+{
+  "model": "a1",
+  "epochs": 20,
+  "batch": 2,
+  "epoch_steps": 1000,
+  "lr": 5e-05,
+  "output": "/root/autodl-tmp/runs"
+}

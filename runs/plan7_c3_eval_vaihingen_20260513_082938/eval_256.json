@@ -1,0 +1,174 @@
+{
+  "dataset": "vaihingen",
+  "checkpoint": "/root/autodl-tmp/runs/plan7_c3_residual_vaihingen_20260513_004439/best_model.pt",
+  "checkpoint_epoch": 2,
+  "checkpoint_best_v": 77.14817733764649,
+  "avg_oa": 87.67360542105294,
+  "avg_miou": 76.05919657778975,
+  "acc_miou": 77.04548952527546,
+  "acc_mrecall": 86.94306920262845,
+  "per_class_iou": {
+    "road": 77.7738128641135,
+    "building": 87.76032924733418,
+    "grass": 63.82814697720236,
+    "tree": 78.02495626621166,
+    "car": 77.84020227151558
+  },
+  "per_class_recall": {
+    "road": 89.99746021713918,
+    "building": 93.01945763416659,
+    "grass": 77.95383284840092,
+    "tree": 85.44971553041253,
+    "car": 88.29487978302302
+  },
+  "tiles": [
+    {
+      "tile": "top_mosaic_09cm_area5",
+      "oa": 90.21468960275925,
+      "miou": 75.50008630992419,
+      "mrecall": 85.15232141761791,
+      "per_class_iou": {
+        "road": 80.5357314889433,
+        "building": 88.96520459252247,
+        "grass": 54.73674453096032,
+        "tree": 72.96215766099185,
+        "car": 80.30059327620303
+      },
+      "per_class_recall": {
+        "road": 93.77249006030586,
+        "building": 91.77550608371756,
+        "grass": 63.020673116159934,
+        "tree": 86.74715362191299,
+        "car": 90.44578420599329
+      },
+      "counts": {
+        "road_inter": 1579983.0,
+        "road_union": 1961841.0,
+        "road_gt": 1684911.0,
+        "building_inter": 2227364.0,
+        "building_union": 2503635.0,
+        "building_gt": 2426970.0,
+        "grass_inter": 200770.0,
+        "grass_union": 366792.0,
+        "grass_gt": 318578.0,
+        "tree_inter": 283887.0,
+        "tree_union": 389088.0,
+        "tree_gt": 327258.0,
+        "car_inter": 60908.0,
+        "car_union": 75850.0,
+        "car_gt": 67342.0
+      }
+    },
+    {
+      "tile": "top_mosaic_09cm_area21",
+      "oa": 87.34963482226559,
+      "miou": 74.70402681557839,
+      "mrecall": 85.50193946233826,
+      "per_class_iou": {
+        "road": 79.0005672049205,
+        "building": 89.84252341316062,
+        "grass": 56.70912528148718,
+        "tree": 79.13777508224479,
+        "car": 68.8301430960788
+      },
+      "per_class_recall": {
+        "road": 90.27235355688639,
+        "building": 95.88084776114576,
+        "grass": 77.59748545306702,
+        "tree": 83.99912467556211,
+        "car": 79.75988586503001
+      },
+      "counts": {
+        "road_inter": 1247953.0,
+        "road_union": 1579676.0,
+        "road_gt": 1382431.0,
+        "building_inter": 948764.0,
+        "building_union": 1056030.0,
+        "building_gt": 989524.0,
+        "grass_inter": 489554.0,
+        "grass_union": 863272.0,
+        "grass_gt": 630889.0,
+        "tree_inter": 1516222.0,
+        "tree_union": 1915927.0,
+        "tree_gt": 1805045.0,
+        "car_inter": 29630.0,
+        "car_union": 43048.0,
+        "car_gt": 37149.0
+      }
+    },
+    {
+      "tile": "top_mosaic_09cm_area15",
+      "oa": 84.78673267342847,
+      "miou": 75.26381172831395,
+      "mrecall": 85.47085813089187,
+      "per_class_iou": {
+        "road": 68.12672482141437,
+        "building": 84.04768136246149,
+        "grass": 66.2117776643635,
+        "tree": 76.26205550562702,
+        "car": 81.67081928770335
+      },
+      "per_class_recall": {
+        "road": 81.09276913433561,
+        "building": 91.39643033194751,
+        "grass": 83.88827518499546,
+        "tree": 83.03968685282095,
+        "car": 87.93712915035981
+      },
+      "counts": {
+        "road_inter": 693434.0,
+        "road_union": 1017859.0,
+        "road_gt": 855112.0,
+        "building_inter": 982667.0,
+        "building_union": 1169178.0,
+        "building_gt": 1075170.0,
+        "grass_inter": 1098850.0,
+        "grass_union": 1659599.0,
+        "grass_gt": 1309897.0,
+        "tree_inter": 1364499.0,
+        "tree_union": 1789224.0,
+        "tree_gt": 1643189.0,
+        "car_inter": 27862.0,
+        "car_union": 34115.0,
+        "car_gt": 31684.0
+      }
+    },
+    {
+      "tile": "top_mosaic_09cm_area30",
+      "oa": 88.34336458575844,
+      "miou": 78.76886145734245,
+      "mrecall": 88.43172279701767,
+      "per_class_iou": {
+        "road": 79.33489247618505,
+        "building": 87.13503427864715,
+        "grass": 68.35745247431969,
+        "tree": 80.43062089393354,
+        "car": 78.58630716362676
+      },
+      "per_class_recall": {
+        "road": 90.63019268739289,
+        "building": 94.51814296781158,
+        "grass": 75.42859107300205,
+        "tree": 91.05097358890364,
+        "car": 90.53071366797812
+      },
+      "counts": {
+        "road_inter": 1251738.0,
+        "road_union": 1577790.0,
+        "road_gt": 1381149.0,
+        "building_inter": 1218871.0,
+        "building_union": 1398830.0,
+        "building_gt": 1289563.0,
+        "grass_inter": 833762.0,
+        "grass_union": 1219709.0,
+        "grass_gt": 1105366.0,
+        "tree_inter": 1000347.0,
+        "tree_union": 1243739.0,
+        "tree_gt": 1098667.0,
+        "car_inter": 74323.0,
+        "car_union": 94575.0,
+        "car_gt": 82097.0
+      }
+    }
+  ]
+}
