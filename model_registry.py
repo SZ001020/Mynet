@@ -9,15 +9,43 @@ Plan5: Boundary/object auxiliary supervision（有 checkpoint）
 Plan6: In-ViT RGB/DSM MMAdapter（有 checkpoint）
 Plan7: 多模态结构先验注入（Phase A 已完成，有 checkpoint）
 
+═══════════════════════════════════════════════════════════
+评估标准 (Evaluation Protocol)
+═══════════════════════════════════════════════════════════
+
+本注册表使用「256² 内部协议」，与 MFNet 论文协议不同：
+
+  参数          | 本注册表 (256² 协议)   | MFNet 论文协议
+  ─────────────┼──────────────────────┼─────────────────
+  窗口大小       | 256×256              | 256×256
+  步长 (stride)  | 128                  | 32
+  边缘裁剪 (trim)| 16                   | 0
+  标签           | 非侵蚀 (participants) | 侵蚀 (noBoundary)
+  Logit 累积     | per-patch argmax 或 soft-logit | soft-logit
+  DSM 归一化     | per-tile min-max 或 nDSM | per-tile min-max
+  批量推理       | 1                    | 14
+
+典型差异: 同一模型用 MFNet 协议评估会比本协议高 ~9pp mIoU。
+本注册表的数据不可直接与 MFNet 论文数字对比。
+如需与 MFNet 论文对比, 请使用 mfnet_protocol_registry.py。
+
+各条目通过 protocol 字段或 note 字段标注所用协议:
+  - "per-patch argmax": 早期 per-patch argmax 评估 (低估 ~0.4-0.8pp)
+  - "soft-logit accumulation": 标准软 logit 累积 (推荐)
+  - "global confusion matrix": 全局混淆矩阵累积
+
+═══════════════════════════════════════════════════════════
+数据说明
+═══════════════════════════════════════════════════════════
+
 ⚠️ eval_per_class_oa 说明：
   - 2026-05-11 之前，所有 per_class_oa 使用 (TP+TN)/total 公式，car/grass 会被 TN 大幅拉高。
   - 2026-05-11 起，新增 per_class_recall = TP/(TP+FN)，与 MFNet 论文的 "per-class OA" 公式一致。
-  - 有 per_class_recall 的条目才可与 MFNet 直接对比；仅有 per_class_oa 的条目是旧公式，不可对比。
+  - 有 per_class_recall 的条目才可跨模型对比；仅有 per_class_oa 的条目使用旧公式，不可对比。
 
 ⚠️ 2026-05-12 评估聚合口径更新：
   - 正式 eval 脚本改为全验证集累计 correct/intersection/union 后计算 OA、mIoU、per-class recall。
-  - 旧 JSON/注册表中已经保存的 OA/mIoU 多数来自 tile-wise 简单平均，数值可能与严格 MFNet 口径有小幅差异。
-  - 需要重跑 eval 后再更新注册表中的最终对比数值。
+  - 旧 JSON/注册表中已经保存的 OA/mIoU 多数来自 tile-wise 简单平均，数值可能有小幅差异。
 
 用法:
   python eval_universal.py --list    # 列出所有模型
@@ -429,6 +457,39 @@ REGISTRY = [
         "protocol": "256² sliding window, stride=128, soft-logit accumulation",
         "note": "Shared encoder + LoRA(rank=8) + SEFusion + MFNetDecoder. Soft-logit 77.34% vs Plan7-A soft-logit 77.55% (-0.21pp). LoRA+simple arch ≈ frozen+complex arch. Key contribution: first fair controlled comparison of MFNet vs adapter on SAM3."
     },
+    # Phase4 F0 scheduler/optimizer ablation — both negative
+    {
+        "name": "Phase4 F0 (AdamW + MultiStepLR, 50ep) — FAILED",
+        "phase": "Plan6 Phase 4 F0 scheduler ablation",
+        "ckpt": "/root/autodl-tmp/runs/plan6_phase4_f0_vaihingen_20260607_084046/best_model.pt",
+        "init_from": "from scratch (seed=42)",
+        "lineage_type": "formal_ablation",
+        "comparison_role": "MultiStepLR vs CosineAnnealing on AdamW. Baseline: F0 CosineAnnealing 77.34%.",
+        "source": "Personal-Project/RS-SAM3-p6/phase4_mfnet_ablation/f0_mfnet_sam3",
+        "class": "MFNetSAM3", "module": "model_f0",
+        "kwargs": {"lora_rank": 8, "num_classes": 5, "dropout": 0.1},
+        "use_dsm": True,
+        "eval_oa": None, "eval_miou": 76.57,
+        "train_best_miou": 76.57, "train_best_epoch": 7,
+        "protocol": "256² sliding window, crop validation, AdamW + MultiStepLR([25,35,45], gamma=0.1), 35ep (stopped early)",
+        "note": "❌ AdamW+MultiStepLR: E7 peak 76.57%, then plateau→degrade. -0.77pp vs CosineAnnealing 77.34%. Cause: AdamW adaptive state conflicts with step-wise lr drops; constant high lr for 25 epochs drives AdamW into sharp minimum."
+    },
+    {
+        "name": "Phase4 F0 (SGD + MultiStepLR, 50ep) — FAILED",
+        "phase": "Plan6 Phase 4 F0 scheduler ablation",
+        "ckpt": "/root/autodl-tmp/runs/plan6_phase4_f0_vaihingen_20260607_174443/best_model.pt",
+        "init_from": "from scratch (seed=42)",
+        "lineage_type": "formal_ablation",
+        "comparison_role": "SGD+MultiStepLR vs AdamW+CosineAnnealing. Tests whether optimizer alone explains MultiStepLR failure.",
+        "source": "Personal-Project/RS-SAM3-p6/phase4_mfnet_ablation/f0_mfnet_sam3",
+        "class": "MFNetSAM3", "module": "model_f0",
+        "kwargs": {"lora_rank": 8, "num_classes": 5, "dropout": 0.1},
+        "use_dsm": True,
+        "eval_oa": None, "eval_miou": 76.55,
+        "train_best_miou": 76.55, "train_best_epoch": 3,
+        "protocol": "256² sliding window, crop validation, SGD(lr=0.01,momentum=0.9)+MultiStepLR([25,35,45]), 24ep (stopped early)",
+        "note": "❌ SGD+MultiStepLR: E3 peak 76.55%, then plateau. -0.79pp vs CosineAnnealing. SGD did NOT rescue MultiStepLR — Vaihingen only 12 tiles, model saturates in 3 epochs regardless of optimizer. Root cause is Vaihingen too small for long MultiStepLR schedule, not optimizer choice."
+    },
     {
         "name": "Phase4 F1: in-ViT MMAdapter + LoRA",
         "phase": "Plan6 Phase 4 F1",
@@ -725,8 +786,8 @@ REGISTRY = [
         },
         "train_best_miou": 76.87,
         "train_best_epoch": 3,
-        "protocol": "256² sliding window, stride=128, per-patch argmax",
-        "note": "Actually init_from 215044 (2-epoch Plan7-A short run), whose parent is Plan6 Phase1. Strict global eval: 77.14 mIoU (per-patch argmax). Soft-logit eval: 77.55. Current Plan7 best; B1/B3 did not improve over edge+slope."
+        "protocol": "256² sliding window, stride=128, global confusion matrix (soft-logit accumulation)",
+        "note": "Init from 215044 (2-epoch Plan7-A short run, dir deleted), parent is Plan6 Phase1. Global eval 77.14 is soft-logit accumulation (per-patch argmax = 76.27). D1 single-scale soft-logit eval = 77.55 (different eval script, yields ~0.41pp higher than original eval). Current Plan7 best; B1/B3 did not improve over edge+slope."
     },
     {
         "name": "Plan7-B1: DSM slope-only prompt",
@@ -923,17 +984,18 @@ REGISTRY = [
         "train_best_miou": 76.20,
         "note": "Ablation: softmax 2-way gate. best=76.20% vs A3 sigmoid 76.16%. +0.04pp, no difference."
     },
-]
 
-#     # Plan8 — 增强 In-ViT RGB↔DSM 交互 (RS-SAM3-p8)
     # ═══════════════════════════════════════════════════════════
+    # Plan8 — 增强 In-ViT RGB↔DSM 交互 (RS-SAM3-p8)
     # Result: NEGATIVE. Both cross-attn and attn bias provide no gain over gate-only.
+    # ═══════════════════════════════════════════════════════════
     {
         "name": "Plan8-CTRL: gate-only (Plan7-A arch, trained from scratch)",
         "phase": "Plan8 CTRL",
         "ckpt": "/root/autodl-tmp/runs/plan8_ctrl_vaihingen_20260516_081446/best_model.pt",
         "eval_oa": 86.33, "eval_miou": 74.77,
         "eval_per_class_iou": {"road": 76.34, "building": 84.53, "grass": 62.47, "tree": 76.75, "car": 73.78},
+        "eval_per_class_recall": {"road": 88.56, "building": 89.82, "grass": 81.82, "tree": 83.20, "car": 79.09},
         "train_best_miou": 75.19,
         "protocol": "256² sliding window, soft-logit overlap averaging",
         "init_from": None,
@@ -946,6 +1008,7 @@ REGISTRY = [
         "ckpt": "/root/autodl-tmp/runs/plan8_ca_a_vaihingen_20260516_131457/best_model.pt",
         "eval_oa": 86.21, "eval_miou": 74.52,
         "eval_per_class_iou": {"road": 76.13, "building": 84.80, "grass": 61.47, "tree": 76.62, "car": 73.57},
+        "eval_per_class_recall": {"road": 89.22, "building": 89.88, "grass": 79.48, "tree": 83.57, "car": 78.86},
         "train_best_miou": 75.36,
         "protocol": "256² sliding window, soft-logit overlap averaging",
         "init_from": None,
@@ -959,6 +1022,7 @@ REGISTRY = [
         "ckpt": "/root/autodl-tmp/runs/plan8_ab_a_vaihingen_20260516_144112/best_model.pt",
         "eval_oa": 86.22, "eval_miou": 74.12,
         "eval_per_class_iou": {"road": 75.67, "building": 83.05, "grass": 63.13, "tree": 77.49, "car": 71.28},
+        "eval_per_class_recall": {"road": 90.14, "building": 88.50, "grass": 78.23, "tree": 85.23, "car": 75.79},
         "train_best_miou": 74.68,
         "protocol": "256² sliding window, soft-logit overlap averaging",
         "init_from": None,
@@ -966,9 +1030,107 @@ REGISTRY = [
         "comparison_role": "vs CTRL: attn bias effect",
         "note": "-0.65pp vs CTRL. DSM attn bias degrades performance. Chain 2 stopped."
     },
-]═════════════════════════════════════════════════════════════
+
+    # ═══════════════════════════════════════════════════════════
+    # Plan11 — 植被区分优化 (RS-SAM3-p11)
+    # ═══════════════════════════════════════════════════════════
+    # Result: nDSM +1.95pp vs from-scratch Plan8-CTRL. veg_boundary_weight consistently negative.
+    {
+        "name": "P11-A: min-max + veg boundary weight (from Plan7-A init)",
+        "phase": "Plan11 Phase A",
+        "ckpt": "/root/autodl-tmp/runs/plan11_a_veg_boundary_loss_vaihingen_20260604_202157/best_model.pt",
+        "init_from": "/root/autodl-tmp/runs/plan7_phase_a_dsm_prompt_vaihingen_20260510_225309/best_model.pt",
+        "lineage_type": "formal_ablation",
+        "comparison_role": "veg_boundary_weight effect on min-max DSM; baseline is Plan7-A (77.14)",
+        "source": "Personal-Project/RS-SAM3-p11/phase_a_veg_boundary_loss",
+        "class": "Plan7PromptMFNet", "module": "train",
+        "kwargs": {"adapter_bottleneck": 32, "num_classes": 5, "veg_boundary_weight": 3.0},
+        "use_dsm": True,
+        "eval_oa": 87.16, "eval_miou": 76.46,
+        "eval_per_class_iou": {"road": 76.84, "building": 86.42, "grass": 63.64, "tree": 77.72, "car": 77.67},
+        "eval_per_class_recall": {"road": 89.90, "building": 91.58, "grass": 78.43, "tree": 84.99, "car": 86.51},
+        "train_best_miou": 76.43, "train_best_epoch": 3,
+        "protocol": "256² sliding window, per-patch argmax",
+        "note": "veg_boundary_weight=3.0 on Plan7-A min-max DSM. -0.68pp vs Plan7-A. Vegetation boundary weight is harmful."
+    },
+    {
+        "name": "P11-B: nDSM baseline (from scratch, seed=42)",
+        "phase": "Plan11 Phase B",
+        "ckpt": "/root/autodl-tmp/runs/plan11_b_ndsm_vaihingen_20260604_225146/best_model.pt",
+        "init_from": None,
+        "lineage_type": "from scratch",
+        "comparison_role": "nDSM effect vs Plan8-CTRL (same arch, same seed, min-max DSM, 74.77)",
+        "source": "Personal-Project/RS-SAM3-p11/phase_b_ndsm",
+        "class": "Plan7PromptMFNet", "module": "train",
+        "kwargs": {"adapter_bottleneck": 32, "num_classes": 5, "seed": 42},
+        "use_dsm": True,
+        "eval_oa": 87.42, "eval_miou": 76.72,
+        "eval_per_class_iou": {"road": 76.84, "building": 86.47, "grass": 63.70, "tree": 78.06, "car": 78.51},
+        "eval_per_class_recall": {"road": 91.25, "building": 90.80, "grass": 77.42, "tree": 85.38, "car": 88.66},
+        "train_best_miou": 76.71, "train_best_epoch": 9,
+        "protocol": "256² sliding window, per-patch argmax, nDSM normalization",
+        "note": "nDSM + global normalization. +1.95pp vs Plan8-CTRL (74.77). Improvement from road (+1.35pp recall) and car (+2.15pp), NOT from vegetation confusion reduction."
+    },
+    {
+        "name": "P11-C: nDSM + veg boundary weight (from scratch, seed=42)",
+        "phase": "Plan11 Phase C",
+        "ckpt": "/root/autodl-tmp/runs/plan11_c_combined_vaihingen_20260605_012150/best_model.pt",
+        "init_from": None,
+        "lineage_type": "formal_ablation",
+        "comparison_role": "veg_boundary_weight effect on nDSM; baseline is P11-B (76.72)",
+        "source": "Personal-Project/RS-SAM3-p11/phase_c_combined",
+        "class": "Plan7PromptMFNet", "module": "train",
+        "kwargs": {"adapter_bottleneck": 32, "num_classes": 5, "veg_boundary_weight": 3.0, "seed": 42},
+        "use_dsm": True,
+        "eval_oa": 87.14, "eval_miou": 76.51,
+        "eval_per_class_iou": {"road": 77.11, "building": 86.83, "grass": 62.84, "tree": 77.46, "car": 78.30},
+        "eval_per_class_recall": {"road": 91.06, "building": 91.28, "grass": 77.00, "tree": 84.95, "car": 87.74},
+        "train_best_miou": 76.40, "train_best_epoch": 15,
+        "protocol": "256² sliding window, per-patch argmax, nDSM normalization",
+        "note": "veg_boundary_weight on nDSM. -0.21pp vs P11-B. veg_boundary_weight consistently harmful across both DSM normalizations."
+    },
+    {
+        "name": "P11-D: nDSM + photometric augmentation (from scratch, seed=42)",
+        "phase": "Plan11 Phase D",
+        "ckpt": "/root/autodl-tmp/runs/plan11_d_aug_vaihingen_20260605_035155/best_model.pt",
+        "init_from": None,
+        "lineage_type": "formal_ablation",
+        "comparison_role": "augmentation effect on nDSM; baseline is P11-B (76.72)",
+        "source": "Personal-Project/RS-SAM3-p11/phase_d_augmentation",
+        "class": "Plan7PromptMFNet", "module": "train",
+        "kwargs": {"adapter_bottleneck": 32, "num_classes": 5, "seed": 42,
+                   "aug_color_jitter": 0.2, "aug_blur_prob": 0.3},
+        "use_dsm": True,
+        "eval_oa": 87.30, "eval_miou": 76.56,
+        "eval_per_class_iou": {"road": 77.51, "building": 87.01, "grass": 62.93, "tree": 77.61, "car": 77.72},
+        "eval_per_class_recall": {"road": 90.80, "building": 92.05, "grass": 76.53, "tree": 85.33, "car": 86.78},
+        "train_best_miou": 76.62, "train_best_epoch": 11,
+        "protocol": "256² sliding window, per-patch argmax, nDSM normalization",
+        "note": "ColorJitter + GaussianBlur on nDSM. -0.16pp vs P11-B (noise-level). Photometric augmentation does not help on 12-tile Vaihingen."
+    },
+    {
+        "name": "P11-E: nDSM + adapter ablation (bottleneck=8, 4 global blocks only, seed=42)",
+        "phase": "Plan11 Phase E",
+        "ckpt": "/root/autodl-tmp/runs/plan11_e_adapter_vaihingen_20260605_062329/best_model.pt",
+        "init_from": None,
+        "lineage_type": "formal_ablation",
+        "comparison_role": "adapter parameter count effect; baseline is P11-B (76.72, 32 blocks, bn=32, ~10.65M params)",
+        "source": "Personal-Project/RS-SAM3-p11/phase_e_adapter_ablation",
+        "class": "Plan7PromptMFNet", "module": "train",
+        "kwargs": {"adapter_bottleneck": 8, "num_classes": 5, "seed": 42, "adapter_placement": "global"},
+        "use_dsm": True,
+        "eval_oa": None, "eval_miou": 72.61,
+        "eval_per_class_iou": {"road": 73.53, "building": 83.51, "grass": 58.92, "tree": 74.98, "car": 72.09},
+        "eval_per_class_recall": {"road": 86.82, "building": 90.87, "grass": 74.75, "tree": 83.16, "car": 82.23},
+        "train_best_miou": 75.75, "train_best_epoch": 15,
+        "protocol": "256² sliding window, per-patch argmax, nDSM normalization",
+        "note": "Adapter reduced to 4 global blocks [7,15,23,31] with bottleneck=8 (~0.33M params). -4.11pp vs P11-B. Full 32-block injection is essential."
+    },
+]
+
+# ═══════════════════════════════════════════════════════════
 # MFNet Paper Baselines (reference, not our checkpoints)
-# ═════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════
 MFNET_BASELINES = {
     # NOTE: MFNet paper "per-class OA" = TP/(TP+FN) = per-class Recall.
     # These values are comparable to our eval_per_class_recall, NOT eval_per_class_oa.
@@ -984,5 +1146,20 @@ MFNET_BASELINES = {
     "MFNet Best (SAM1, MMAdapter)": {
         "oa": 92.93, "miou": 84.72, "mf1": 91.51,
         "per_class_oa": {"road": 93.39, "building": 98.84, "grass": 81.16, "tree": 93.17, "car": 89.23},
+    },
+
+    # ── Potsdam (our reproduction, not paper values) ──
+    # Protocol: MFNet native eval — 256² sliding window, stride=128, soft-logit accumulation,
+    # per-tile min-max DSM normalization, NO edge trimming, eroded labels.
+    # ⚠️ Differs from our standard 256² protocol which trims min(16, patch//4) pixels from each patch edge.
+    "MFNet Potsdam (our repro, SAM1 LoRA+Decoder, SEG+BDY+OBJ)": {
+        "dataset": "potsdam",
+        "oa": 90.69, "miou": 85.14, "kappa": 0.8770, "mf1": 91.79,
+        "per_class_iou": {"road": 86.11, "building": 93.98, "grass": 75.58, "tree": 76.87, "car": 92.82},
+        "per_class_f1":  {"road": 92.48, "building": 97.00, "grass": 86.28, "tree": 86.93, "car": 96.25},
+        "best_epoch": 42,
+        "ckpt": "/root/autodl-tmp/runs/mfnet_potsdam_20260606_152557/UNetformer_best.pth",
+        "source": "Reference-Project/MFNet/train.py",
+        "note": "Reproduced with Reference-Project/MFNet/train.py, 50 epochs. SAM1 ViT-L frozen + LoRA (2.75M) + UNetFormer decoder (6.22M) = 8.97M trainable. SEG+BDY+OBJ loss with 10-epoch structure warmup. Potsdam 18 train / 6 test tiles. 5-class mIoU excludes clutter (clutter=46.49%)."
     },
 }

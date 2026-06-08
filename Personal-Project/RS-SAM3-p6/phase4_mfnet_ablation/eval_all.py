@@ -13,7 +13,9 @@ F0_DIR = f"{BASE}/Personal-Project/RS-SAM3-p6/phase4_mfnet_ablation/f0_mfnet_sam
 F1_DIR = f"{BASE}/Personal-Project/RS-SAM3-p6/phase4_mfnet_ablation/f1_fusion"
 F0P_DIR = f"{BASE}/Personal-Project/RS-SAM3-p6/phase4_mfnet_ablation/f0p_frozen_baseline"
 SHARED = f"{BASE}/Personal-Project/RS-SAM3-p6/phase4_mfnet_ablation/shared"
-sys.path.extend([SE, PHASE1, PHASE_A, F0_DIR, F1_DIR, F0P_DIR, SHARED])
+METRICS = f"{BASE}/Personal-Project"
+sys.path.extend([SE, PHASE1, PHASE_A, F0_DIR, F1_DIR, F0P_DIR, SHARED, METRICS])
+from metrics_utils import compute_kappa
 
 CLASS_NAMES = ["road", "building", "grass", "tree", "car"]
 
@@ -124,7 +126,8 @@ def evaluate(model, dataset="vaihingen"):
     ious = {CLASS_NAMES[c]: all_inter[c] / max(all_union[c], 1) * 100 for c in range(5)}
     recalls = {CLASS_NAMES[c]: all_inter[c] / max(all_gt[c], 1) * 100 for c in range(5)}
     miou = float(np.mean(list(ious.values())))
-    return {"avg_oa": oa, "avg_miou": miou, "per_class_iou": ious, "per_class_recall": recalls, "tiles": tile_results}
+    kappa = compute_kappa(all_inter, all_gt, per_class_union=all_union)
+    return {"avg_oa": oa, "avg_miou": miou, "kappa": kappa, "per_class_iou": ious, "per_class_recall": recalls, "tiles": tile_results}
 
 def main():
     parser = argparse.ArgumentParser()
@@ -154,7 +157,7 @@ def main():
         print(f"\n=== {name} 256² {args.dataset} eval ===")
         model = load_model(ckpt, mtype)
         r = evaluate(model, args.dataset)
-        print(f"  OA={r['avg_oa']:.2f}% mIoU={r['avg_miou']:.2f}%")
+        print(f"  OA={r['avg_oa']:.2f}% mIoU={r['avg_miou']:.2f}% Kappa={r.get('kappa', 0):.4f}")
         print(f"  IoU: {r['per_class_iou']}")
         print(f"  Recall: {r.get('per_class_recall', {})}")
         out_path = os.path.join(os.path.dirname(ckpt), f"eval_256_phase4.json")

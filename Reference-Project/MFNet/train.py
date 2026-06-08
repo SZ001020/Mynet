@@ -56,6 +56,7 @@ CSV_STANDARD_FIELDS = [
     "warmup_scale", "conf_threshold", "conf_kept_ratio",
     "val_metric", "best_val_metric", "lr", "batch_size", "window_size", "stride",
     "total_acc", "mean_f1", "kappa", "mean_miou",
+    "roads_iou", "buildings_iou", "low_veg_iou", "trees_iou", "cars_iou", "clutter_iou",
     "roads_f1", "buildings_f1", "low_veg_f1", "trees_f1", "cars_f1", "clutter_f1",
     "timestamp",
 ]

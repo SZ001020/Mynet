@@ -555,9 +555,9 @@ def metrics(predictions, gts, label_values=LABELS, return_details=False):
     print("Kappa: %.4f" %(kappa))
 
     # Compute MIoU coefficient
-    MIoU = np.diag(cm) / (np.sum(cm, axis=1) + np.sum(cm, axis=0) - np.diag(cm))
-    print(MIoU)
-    MIoU = np.nanmean(MIoU[:5])
+    per_class_iou = np.diag(cm) / (np.sum(cm, axis=1) + np.sum(cm, axis=0) - np.diag(cm))
+    print(per_class_iou)
+    MIoU = np.nanmean(per_class_iou[:5])
     print('mean MIoU: %.4f' % (MIoU))
     print("---")
 
@@ -567,6 +567,12 @@ def metrics(predictions, gts, label_values=LABELS, return_details=False):
             "mean_f1": float(np.nanmean(F1Score[:5])),
             "kappa": float(kappa),
             "mean_miou": float(MIoU),
+            "roads_iou": float(per_class_iou[0]) if len(per_class_iou) > 0 else None,
+            "buildings_iou": float(per_class_iou[1]) if len(per_class_iou) > 1 else None,
+            "low_veg_iou": float(per_class_iou[2]) if len(per_class_iou) > 2 else None,
+            "trees_iou": float(per_class_iou[3]) if len(per_class_iou) > 3 else None,
+            "cars_iou": float(per_class_iou[4]) if len(per_class_iou) > 4 else None,
+            "clutter_iou": float(per_class_iou[5]) if len(per_class_iou) > 5 else None,
             "roads_f1": float(F1Score[0]) if len(F1Score) > 0 else None,
             "buildings_f1": float(F1Score[1]) if len(F1Score) > 1 else None,
             "low_veg_f1": float(F1Score[2]) if len(F1Score) > 2 else None,
@@ -620,9 +626,9 @@ def metrics_loveda(predictions, gts, label_values=LABELS, return_details=False):
     print("Kappa: %.4f" %(kappa))
 
     # Compute MIoU coefficient
-    MIoU = np.diag(cm) / (np.sum(cm, axis=1) + np.sum(cm, axis=0) - np.diag(cm))
-    print(MIoU)
-    MIoU = np.nanmean(MIoU[:])
+    per_class_iou = np.diag(cm) / (np.sum(cm, axis=1) + np.sum(cm, axis=0) - np.diag(cm))
+    print(per_class_iou)
+    MIoU = np.nanmean(per_class_iou[:])
     print('mean MIoU: %.4f' % (MIoU))
     print("---")
 
@@ -632,6 +638,12 @@ def metrics_loveda(predictions, gts, label_values=LABELS, return_details=False):
             "mean_f1": float(np.nanmean(F1Score[:])),
             "kappa": float(kappa),
             "mean_miou": float(MIoU),
+            "roads_iou": float(per_class_iou[0]) if len(per_class_iou) > 0 else None,
+            "buildings_iou": float(per_class_iou[1]) if len(per_class_iou) > 1 else None,
+            "low_veg_iou": float(per_class_iou[2]) if len(per_class_iou) > 2 else None,
+            "trees_iou": float(per_class_iou[3]) if len(per_class_iou) > 3 else None,
+            "cars_iou": float(per_class_iou[4]) if len(per_class_iou) > 4 else None,
+            "clutter_iou": float(per_class_iou[5]) if len(per_class_iou) > 5 else None,
             "roads_f1": float(F1Score[0]) if len(F1Score) > 0 else None,
             "buildings_f1": float(F1Score[1]) if len(F1Score) > 1 else None,
             "low_veg_f1": float(F1Score[2]) if len(F1Score) > 2 else None,

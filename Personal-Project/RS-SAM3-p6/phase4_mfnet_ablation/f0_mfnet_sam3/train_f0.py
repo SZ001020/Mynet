@@ -178,10 +178,12 @@ def make_val_ds(img_dir, gt_dir, tiles, img_suf, gt_suf, dsm_paths, stride=128):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", default="vaihingen", choices=["vaihingen", "potsdam"])
-    parser.add_argument("--epochs", type=int, default=12)
+    parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch", type=int, default=2)
     parser.add_argument("--epoch-steps", type=int, default=1000)
     parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--optimizer", default="adamw", choices=["adamw", "sgd"],
+                        help="sgd uses lr=0.01 + momentum=0.9 + wd=5e-4 + MultiStepLR (MFNet recipe)")
     parser.add_argument("--resolution", type=int, default=1008)
     parser.add_argument("--lora-rank", type=int, default=8)
     parser.add_argument("--seed", type=int, default=42)
@@ -214,8 +216,15 @@ def main():
                       dropout=0.1, resolution=args.resolution).cuda()
     model.train()
 
-    opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-3)
-    sch = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=args.epochs)
+    if args.optimizer == "sgd":
+        opt_lr = args.lr if args.lr != 1e-4 else 0.01
+        opt = torch.optim.SGD(model.parameters(), lr=opt_lr, momentum=0.9, weight_decay=0.0005)
+        sch = torch.optim.lr_scheduler.MultiStepLR(opt, milestones=[25, 35, 45], gamma=0.1)
+    else:
+        opt_lr = args.lr
+        opt = torch.optim.AdamW(model.parameters(), lr=opt_lr, weight_decay=1e-3)
+        sch = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=args.epochs)
+    print(f"  Optimizer: {args.optimizer} lr={opt_lr} scheduler={type(sch).__name__}")
     scaler = torch.amp.GradScaler("cuda")
 
     history = {"loss": [], "metrics": [], "lr": []}

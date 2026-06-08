@@ -22,6 +22,8 @@ sys.path.insert(0, PHASE_DIR)
 from dataset_adapter import POTSDAM_VAL, VAIHINGEN_VAL, _rgb_to_class  # noqa: E402
 from model import Plan7PromptMFNet  # noqa: E402
 from train_a import dataset_paths, load_sam3  # noqa: E402
+sys.path.insert(0, f"{BASE}/Personal-Project")
+from metrics_utils import compute_kappa  # noqa: E402
 
 CLASS_NAMES = ["road", "building", "grass", "tree", "car"]
 
@@ -146,9 +148,14 @@ def main():
         per_class_recall[n] = float(inter / max(gt_pixels, 1.0) * 100)
     avg_miou = float(np.mean(list(per_class_iou.values())))
     mrecall = float(np.mean(list(per_class_recall.values())))
+    inter_arr = np.array([sum(r[f"{n}_inter"] for r in results) for n in CLASS_NAMES])
+    gt_arr = np.array([sum(r[f"{n}_gt"] for r in results) for n in CLASS_NAMES])
+    union_arr = np.array([sum(r[f"{n}_union"] for r in results) for n in CLASS_NAMES])
+    kappa = compute_kappa(inter_arr, gt_arr, per_class_union=union_arr)
     summary = {
         "avg_oa": avg_oa,
         "avg_miou": avg_miou,
+        "kappa": kappa,
         "per_class_iou": per_class_iou,
         "per_class_recall": per_class_recall,
         "tiles": results,
@@ -157,7 +164,7 @@ def main():
         "checkpoint_crop_best": ckpt.get("best_v"),
     }
     print("\nSUMMARY")
-    print(f"  OA={avg_oa:.2f}%  mIoU={avg_miou:.2f}%  mRecall={mrecall:.2f}%")
+    print(f"  OA={avg_oa:.2f}%  mIoU={avg_miou:.2f}%  Kappa={kappa:.4f}  mRecall={mrecall:.2f}%")
     print("  Per-class IoU : " + ", ".join(f"{k}={v:.2f}" for k, v in per_class_iou.items()))
     print("  Per-class Rec : " + ", ".join(f"{k}={v:.2f}" for k, v in per_class_recall.items()))
     out = args.output or os.path.join(os.path.dirname(args.checkpoint), f"eval_256_{args.dataset}_plan7_a.json")

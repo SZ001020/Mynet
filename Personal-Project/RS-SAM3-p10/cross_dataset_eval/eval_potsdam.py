@@ -15,6 +15,8 @@ PHASE1 = f"{BASE}/Personal-Project/RS-SAM3-p6/phase1_mm_adapter"
 sys.path.extend([SE, PHASE1, PHASE_A, F0_DIR, F0P_DIR, SHARED])
 
 from dataset_adapter import POTSDAM_VAL, _rgb_to_class
+sys.path.insert(0, f"{BASE}/Personal-Project")
+from metrics_utils import compute_kappa
 CLASS_NAMES = ["road", "building", "grass", "tree", "car"]
 NUM_CLASSES = len(CLASS_NAMES)
 
@@ -71,6 +73,7 @@ def load_model(ckpt_path: str, arch: str):
 def evaluate_model(model, name: str) -> dict:
     ai = np.zeros(NUM_CLASSES, dtype=np.float64)
     au = np.zeros(NUM_CLASSES, dtype=np.float64)
+    ag = np.zeros(NUM_CLASSES, dtype=np.float64)
     ac, at = 0.0, 0.0
 
     for tile in VAL_TILES:
@@ -117,12 +120,14 @@ def evaluate_model(model, name: str) -> dict:
             pc, lc = pred == c, gt == c
             ai[c] += (pc & lc).sum()
             au[c] += (pc | lc).sum()
+            ag[c] += lc.sum()
 
     ious = {CLASS_NAMES[c]: float(ai[c] / max(au[c], 1) * 100) for c in range(NUM_CLASSES)}
     oa = float(ac / max(at, 1) * 100)
     miou = float(np.mean(list(ious.values())))
-    print(f"    OA={oa:.2f}% mIoU={miou:.2f}%")
-    return {"avg_oa": oa, "avg_miou": miou, "per_class_iou": ious}
+    kappa = compute_kappa(ai, ag, per_class_union=au)
+    print(f"    OA={oa:.2f}% mIoU={miou:.2f}% Kappa={kappa:.4f}")
+    return {"avg_oa": oa, "avg_miou": miou, "kappa": kappa, "per_class_iou": ious}
 
 
 def main():
