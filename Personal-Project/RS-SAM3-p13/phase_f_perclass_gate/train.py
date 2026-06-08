@@ -1,0 +1,300 @@
+#!/usr/bin/env python3
+"""P13-F: Per-class vegetation gates (tree_gate + grass_gate).
+
+Fixes P13-E's shared-gate problem: tree and grass each have their own gate,
+allowing independent suppression on building textures. Cross-suppression loss
+ensures tree_gate is 0 on grass pixels and grass_gate is 0 on tree pixels.
+"""
+
+from __future__ import annotations
+
+import argparse, json, os, random, sys, time
+from datetime import datetime
+
+import numpy as np
+import torch
+import torch.nn.functional as F
+from PIL import Image
+from scipy.ndimage import grey_opening
+
+BASE = "/root/Mynet"
+SE = f"{BASE}/Reference-Project/SegEarth-OV-3-main"
+P7_DIR = f"{BASE}/Personal-Project/RS-SAM3-p7/phase_a_dsm_prompt"
+P11B_DIR = f"{BASE}/Personal-Project/RS-SAM3-p11/phase_b_ndsm"
+P13F_DIR = f"{BASE}/Personal-Project/RS-SAM3-p13/phase_f_perclass_gate"
+sys.path.insert(0, SE)
+sys.path.insert(0, P7_DIR)
+sys.path.insert(0, P11B_DIR)
+sys.path.insert(0, P13F_DIR)
+
+from dataset_adapter import (  # noqa: E402
+    IGNORE_INDEX, NUM_CLASSES,
+    POTSDAM_TRAIN, POTSDAM_VAL, VAIHINGEN_TRAIN, VAIHINGEN_VAL, _rgb_to_class,
+)
+from dataset_online import OnlineCropDataset, compute_ndsm  # noqa: E402
+from model import Plan13FPerClassMFNet  # noqa: E402
+from structure_loss import structure_loss  # noqa: E402
+
+CLASS_NAMES = ["road", "building", "grass", "tree", "car"]
+
+
+class Window256DatasetDSM(torch.utils.data.Dataset):
+    def __init__(self, img_dir, gt_dir, tiles, img_suffix, gt_suffix, dsm_paths, stride=128):
+        self.samples = []
+        for tile in tiles:
+            ip = f"{img_dir}/{tile}{img_suffix}"
+            gp = f"{gt_dir}/{tile}{gt_suffix}"
+            dp = dsm_paths.get(tile)
+            if not os.path.exists(ip) or not os.path.exists(gp):
+                continue
+            img = np.array(Image.open(ip).convert("RGB"))
+            gt = _rgb_to_class(np.array(Image.open(gp).convert("RGB")))
+            if dp and os.path.exists(dp):
+                dsm_raw = np.array(Image.open(dp)).astype(np.float32)
+                dsm = compute_ndsm(dsm_raw)
+            else:
+                dsm = np.zeros(img.shape[:2], dtype=np.float32)
+            h, w = img.shape[:2]
+            for y in range(0, h - 128, stride):
+                for x in range(0, w - 128, stride):
+                    y2, x2 = min(y + 256, h), min(x + 256, w)
+                    ph, pw = y2 - y, x2 - x
+                    if ph < 128 or pw < 128:
+                        continue
+                    patch, label = img[y:y2, x:x2], gt[y:y2, x:x2]
+                    dsm_patch = dsm[y:y2, x:x2]
+                    if ph < 256 or pw < 256:
+                        patch = np.pad(patch, ((0,256-ph),(0,256-pw),(0,0)), mode="reflect")
+                        label = np.pad(label, ((0,256-ph),(0,256-pw)), mode="constant", constant_values=IGNORE_INDEX)
+                        dsm_patch = np.pad(dsm_patch, ((0,256-ph),(0,256-pw)), mode="reflect")
+                    if (label == IGNORE_INDEX).mean() <= 0.5:
+                        self.samples.append((patch, dsm_patch, label))
+        print(f"  {len(self.samples)} fixed RGB/DSM windows (val)")
+
+    def __len__(self): return len(self.samples)
+    def __getitem__(self, idx):
+        img, dsm, label = self.samples[idx]
+        return (torch.from_numpy(img.copy()).permute(2,0,1).float()/255.0,
+                torch.from_numpy(dsm.copy()).float(), torch.from_numpy(label.copy()).long())
+
+
+def dataset_paths(dataset: str):
+    if dataset == "vaihingen":
+        tiles_train, tiles_val = VAIHINGEN_TRAIN, VAIHINGEN_VAL
+        img_dir, gt_dir = "/root/autodl-tmp/dataset/Vaihingen/top", "/root/autodl-tmp/dataset/Vaihingen/gts_for_participants"
+        img_suffix, gt_suffix = ".tif", ".tif"
+        dsm_dir = "/root/autodl-tmp/dataset/Vaihingen/dsm"
+        dsm_paths = {t: f'{dsm_dir}/dsm_09cm_matching_area{t.replace("top_mosaic_09cm_area","")}.tif'
+                     for t in tiles_train + tiles_val}
+    else:
+        tiles_train, tiles_val = POTSDAM_TRAIN, POTSDAM_VAL
+        img_dir, gt_dir = "/root/autodl-tmp/dataset/Potsdam/2_Ortho_RGB", "/root/autodl-tmp/dataset/Potsdam/5_Labels_for_participants"
+        img_suffix, gt_suffix = "_RGB.tif", "_label.tif"
+        dsm_dir = "/root/autodl-tmp/dataset/Potsdam/1_DSM"
+        dsm_paths = {t: f'{dsm_dir}/dsm_potsdam_{t.replace("top_potsdam_","")}.tif'
+                     for t in tiles_train + tiles_val}
+    return tiles_train, tiles_val, img_dir, gt_dir, img_suffix, gt_suffix, dsm_paths
+
+
+def load_sam3(device: str = "cuda"):
+    prev = os.getcwd(); os.chdir(SE)
+    from sam3 import build_sam3_image_model
+    model = build_sam3_image_model(
+        bpe_path=f"{SE}/sam3/assets/bpe_simple_vocab_16e6.txt.gz",
+        checkpoint_path=f"{SE}/weights/sam3/sam3.pt", device=device)
+    os.chdir(prev)
+    return model.cuda()
+
+
+def veg_refine_loss(refined_logits, labels, weight=1.0):
+    veg_gt = (labels == 2) | (labels == 3)
+    if veg_gt.sum() < 1:
+        return torch.tensor(0.0, device=labels.device)
+    veg_logits = refined_logits[:, 2:4]
+    veg_logits = F.interpolate(veg_logits, labels.shape[-2:], mode="bilinear", align_corners=False)
+    veg_logits_2d = veg_logits.permute(0,2,3,1)[veg_gt]
+    return weight * F.cross_entropy(veg_logits_2d, labels[veg_gt] - 2)
+
+
+def building_suppression_loss(gate_logits, labels, weight=1.0):
+    """BCEWithLogits: BOTH gates should be 0 on building pixels."""
+    building_gt = (labels == 1)
+    if building_gt.sum() < 1:
+        return torch.tensor(0.0, device=labels.device)
+    gate = F.interpolate(gate_logits.float(), labels.shape[-2:], mode="bilinear", align_corners=False)
+    # gate_logits: [B, 2, H, W] = [tree_g, grass_g]. Both should be 0 on building.
+    gate_bld = gate.permute(0,2,3,1)[building_gt]  # [N, 2]
+    target = torch.zeros_like(gate_bld)
+    return weight * F.binary_cross_entropy_with_logits(gate_bld, target)
+
+
+def cross_suppression_loss(gate_logits, labels, weight=0.5):
+    """On tree pixels: grass_gate should be 0. On grass pixels: tree_gate should be 0."""
+    tree_gt = (labels == 3); grass_gt = (labels == 2)
+    loss = torch.tensor(0.0, device=labels.device)
+    gate = F.interpolate(gate_logits.float(), labels.shape[-2:], mode="bilinear", align_corners=False)
+    # gate[:,0] = tree_gate, gate[:,1] = grass_gate
+
+    if grass_gt.sum() > 0:
+        tree_gate_on_grass = gate[:, 0:1].permute(0,2,3,1)[grass_gt]
+        loss = loss + weight * F.binary_cross_entropy_with_logits(
+            tree_gate_on_grass, torch.zeros_like(tree_gate_on_grass))
+
+    if tree_gt.sum() > 0:
+        grass_gate_on_tree = gate[:, 1:2].permute(0,2,3,1)[tree_gt]
+        loss = loss + weight * F.binary_cross_entropy_with_logits(
+            grass_gate_on_tree, torch.zeros_like(grass_gate_on_tree))
+
+    return loss
+
+
+@torch.no_grad()
+def validate(model, loader, device):
+    model.eval()
+    inter = torch.zeros(NUM_CLASSES, device=device)
+    union = torch.zeros(NUM_CLASSES, device=device)
+    correct = 0; total = 0
+    for images, dsm, labels in loader:
+        images, dsm, labels = images.to(device), dsm.to(device), labels.to(device)
+        refined, _veg_delta, _gate_logits = model(images, dsm)
+        logits = F.interpolate(refined, labels.shape[-2:], mode="bilinear", align_corners=False)
+        pred = logits.argmax(1); mask = labels != IGNORE_INDEX
+        correct += (pred[mask] == labels[mask]).sum().item(); total += mask.sum().item()
+        for c in range(NUM_CLASSES):
+            pc, lc = pred == c, labels == c
+            inter[c] += (pc & lc).sum(); union[c] += (pc | lc).sum()
+    per_class_iou = {CLASS_NAMES[c]: (inter[c]/union[c].clamp(min=1)*100).item() for c in range(NUM_CLASSES)}
+    per_class_oa = {CLASS_NAMES[c]: ((inter[c]+total-union[c])/max(total,1)*100).item() for c in range(NUM_CLASSES)}
+    return {"avg_oa": correct/max(total,1)*100, "avg_miou": float(np.mean(list(per_class_iou.values()))),
+            "per_class_iou": per_class_iou, "per_class_oa": per_class_oa}
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", default="vaihingen", choices=["vaihingen","potsdam"])
+    parser.add_argument("--init-from", default="/root/autodl-tmp/runs/plan13_c_texture_branch_vaihingen_20260605_215434/best_model.pt")
+    parser.add_argument("--epochs", type=int, default=10)
+    parser.add_argument("--batch", type=int, default=1)
+    parser.add_argument("--epoch-steps", type=int, default=1000)
+    parser.add_argument("--lr", type=float, default=5e-6)
+    parser.add_argument("--new-lr", type=float, default=2e-5)
+    parser.add_argument("--veg-weight", type=float, default=0.5)
+    parser.add_argument("--building-weight", type=float, default=0.3)
+    parser.add_argument("--cross-weight", type=float, default=0.3)
+    parser.add_argument("--adapter-bottleneck", type=int, default=32)
+    parser.add_argument("--resolution", type=int, default=1008)
+    parser.add_argument("--dsm-attn-mode", default="full", choices=["adapter","full"])
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--val-every", type=int, default=1)
+    parser.add_argument("--output", default="/root/autodl-tmp/runs")
+    args = parser.parse_args()
+
+    random.seed(args.seed); np.random.seed(args.seed)
+    torch.manual_seed(args.seed); torch.cuda.manual_seed_all(args.seed)
+    device = torch.device("cuda")
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    out_dir = os.path.join(args.output, f"plan13_f_perclass_gate_{args.dataset}_{ts}")
+    os.makedirs(out_dir, exist_ok=True)
+    json.dump(vars(args), open(os.path.join(out_dir, "config.json"), "w"), indent=2, default=str)
+
+    print("P13-F: Per-class vegetation gates (tree_gate + grass_gate)")
+    print(f"  Init from: {args.init_from}")
+    print(f"  Dataset: {args.dataset}  Output: {out_dir}")
+
+    train_t, val_t, img_dir, gt_dir, img_suf, gt_suf, dsm_paths = dataset_paths(args.dataset)
+    train_ds = OnlineCropDataset(img_dir, gt_dir, train_t, img_suf, gt_suf, dsm_paths,
+                                 is_train=True, crop_size=256, epoch_steps=args.epoch_steps, batch_size=args.batch)
+    val_ds = Window256DatasetDSM(img_dir, gt_dir, val_t, img_suf, gt_suf, dsm_paths)
+    train_loader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch, shuffle=False, num_workers=0, drop_last=False, pin_memory=True)
+    val_loader = torch.utils.data.DataLoader(val_ds, batch_size=1, shuffle=False, num_workers=0)
+
+    print("\nBuilding model...")
+    sam3 = load_sam3()
+    model = Plan13FPerClassMFNet(sam3, adapter_bottleneck=args.adapter_bottleneck,
+                                 num_classes=NUM_CLASSES, dropout=0.1, dsm_attn_mode=args.dsm_attn_mode,
+                                 checkpoint_attn=False, resolution=args.resolution).cuda()
+
+    # Load P13-C checkpoint (fix 2ch -> 4ch head shape)
+    if os.path.exists(args.init_from):
+        ckpt = torch.load(args.init_from, map_location="cuda", weights_only=False)
+        old_sd = ckpt["model"]
+        for key in ['veg_refine_head.fusion.6.weight', 'veg_refine_head.fusion.6.bias']:
+            old_w = old_sd.get(key)
+            if old_w is not None and old_w.shape[0] == 2:
+                new_sd = model.state_dict()
+                new_w = new_sd[key].clone(); new_w[:2] = old_w
+                old_sd[key] = new_w
+        missing, unexpected = model.load_state_dict(old_sd, strict=False)
+        print(f"  Loaded ckpt epoch {ckpt.get('epoch')}, crop-best={ckpt.get('best_v',0):.2f}%")
+        print(f"  Missing: {len(missing)}, Unexpected: {len(unexpected)}")
+    else:
+        print("  WARNING: init-from not found, training from scratch")
+
+    model.train()
+    new_names = {"texture_stem", "veg_refine_head"}
+    existing_p, new_p = [], []
+    for name, param in model.named_parameters():
+        if not param.requires_grad: continue
+        (new_p if any(n in name for n in new_names) else existing_p).append(param)
+    print(f"  Existing params: {sum(p.numel() for p in existing_p):,} (lr={args.lr})")
+    print(f"  New params: {sum(p.numel() for p in new_p):,} (lr={args.new_lr})")
+
+    optimizer = torch.optim.AdamW([{"params": existing_p, "lr": args.lr},
+                                    {"params": new_p, "lr": args.new_lr}], weight_decay=1e-3)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
+    scaler = torch.amp.GradScaler("cuda")
+
+    history = {"loss": [], "loss_main": [], "loss_veg": [], "loss_bld": [], "loss_cross": [], "metrics": [], "lr": []}
+    best_miou, best_metrics = 0.0, None
+    for epoch in range(1, args.epochs + 1):
+        model.train(); start = time.time()
+        r_loss, r_main, r_veg, r_bld, r_cross = 0.0, 0.0, 0.0, 0.0, 0.0
+        for step, (images, dsm, labels) in enumerate(train_loader):
+            images, dsm, labels = images.to(device), dsm.to(device), labels.to(device)
+            with torch.amp.autocast("cuda", dtype=torch.bfloat16):
+                refined, _veg_delta, gate_logits = model(images, dsm)
+                refined = F.interpolate(refined, labels.shape[-2:], mode="bilinear", align_corners=False)
+                loss_main = structure_loss(refined.float(), labels)
+                loss_veg = veg_refine_loss(refined.float(), labels, weight=args.veg_weight)
+                loss_bld = building_suppression_loss(gate_logits, labels, weight=args.building_weight)
+                loss_cross = cross_suppression_loss(gate_logits, labels, weight=args.cross_weight)
+                loss = loss_main + loss_veg + loss_bld + loss_cross
+            optimizer.zero_grad(set_to_none=True)
+            scaler.scale(loss).backward(); scaler.unscale_(optimizer)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            scaler.step(optimizer); scaler.update()
+            r_loss += loss.item(); r_main += loss_main.item(); r_veg += loss_veg.item()
+            r_bld += loss_bld.item(); r_cross += loss_cross.item()
+            if step % 100 == 0:
+                print(f"  E{epoch:03d}/{args.epochs} B{step:04d}/{len(train_loader)} "
+                      f"loss={loss.item():.4f} (m={loss_main.item():.3f} v={loss_veg.item():.3f} "
+                      f"b={loss_bld.item():.3f} x={loss_cross.item():.3f}) lr={scheduler.get_last_lr()[0]:.2e}")
+
+        scheduler.step()
+        n = max(len(train_loader), 1)
+        avg_loss, avg_main = r_loss/n, r_main/n
+        avg_veg, avg_bld, avg_cross = r_veg/n, r_bld/n, r_cross/n
+        metrics = None
+        if epoch == 1 or epoch % args.val_every == 0 or epoch == args.epochs:
+            metrics = validate(model, val_loader, device)
+            print(f"  E{epoch:03d}: loss={avg_loss:.4f} (m={avg_main:.3f} v={avg_veg:.3f} "
+                  f"b={avg_bld:.3f} x={avg_cross:.3f}) OA={metrics['avg_oa']:.2f}% "
+                  f"mIoU={metrics['avg_miou']:.2f}% best={best_miou:.2f}% time={time.time()-start:.0f}s")
+            print(f"    per-class IoU: {metrics['per_class_iou']}")
+            if metrics["avg_miou"] > best_miou:
+                best_miou = metrics["avg_miou"]; best_metrics = metrics
+                torch.save({"epoch": epoch, "model": model.state_dict(), "best_v": best_miou,
+                            "metrics": metrics, "args": vars(args)}, os.path.join(out_dir, "best_model.pt"))
+        history["loss"].append(avg_loss); history["loss_main"].append(avg_main)
+        history["loss_veg"].append(avg_veg); history["loss_bld"].append(avg_bld)
+        history["loss_cross"].append(avg_cross); history["lr"].append(scheduler.get_last_lr())
+        history["metrics"].append(metrics)
+        json.dump(history, open(os.path.join(out_dir, "history.json"), "w"), indent=2)
+        if best_metrics is not None:
+            json.dump(best_metrics, open(os.path.join(out_dir, "metrics.json"), "w"), indent=2)
+
+    print(f"\nDone. Best mIoU={best_miou:.2f}%  Output: {out_dir}")
+
+
+if __name__ == "__main__":
+    main()

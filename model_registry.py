@@ -343,7 +343,8 @@ REGISTRY = [
     {
         "name": "Plan6 Phase1 full DSM self-attention (GLOBAL BEST)",
         "phase": "Plan6 Phase 1",
-        "ckpt": "/root/autodl-tmp/runs/plan6_phase1_mm_adapter_vaihingen_20260509_202720/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history/metrics/eval JSON，可从训练脚本复现。",
         "source": "Personal-Project/Personal-Project/RS-SAM3-p6/phase1_mm_adapter",
         "class": "Plan6MMAdapterMFNet",
         "module": "model_phase1",
@@ -387,7 +388,8 @@ REGISTRY = [
     {
         "name": "Plan6 P2-D1: Multi-scale TTA on Phase1 best (scales=1.0+0.75)",
         "phase": "Plan6 Phase 2 D1",
-        "ckpt": "/root/autodl-tmp/runs/plan6_phase1_mm_adapter_vaihingen_20260509_202720/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除依赖的 Plan6 Phase1 best_model.pt；该条目是 eval-only 记录，指标 JSON 仍保留。",
         "init_from": "same as Plan6 Phase1 (eval only, no training)",
         "lineage_type": "eval_only",
         "comparison_role": "Zero-training multi-scale on Plan6 Phase1; test if patch-grid bias is prompt-independent",
@@ -414,7 +416,8 @@ REGISTRY = [
     {
         "name": "Phase4 F0: shared encoder + LoRA + SEFusion (MFNet on SAM3)",
         "phase": "Plan6 Phase 4 F0",
-        "ckpt": "/root/autodl-tmp/runs/plan6_phase4_f0_vaihingen_20260518_213923/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history/eval JSON，可从训练脚本复现。",
         "init_from": "from scratch (seed=42)",
         "lineage_type": "from scratch",
         "comparison_role": "MFNet-equivalent baseline on SAM3: shared encoder + LoRA + SEFusion late fusion",
@@ -432,7 +435,8 @@ REGISTRY = [
     {
         "name": "Phase4 F1: in-ViT MMAdapter + LoRA",
         "phase": "Plan6 Phase 4 F1",
-        "ckpt": "/root/autodl-tmp/runs/plan6_phase4_lora_vaihingen_20260519_124902/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history/eval JSON，可从训练脚本复现。",
         "init_from": "from scratch (seed=42)",
         "lineage_type": "from scratch",
         "comparison_role": "in-ViT adapter + LoRA vs F0 (shared+LoRA). Isolates fusion strategy contribution.",
@@ -450,7 +454,8 @@ REGISTRY = [
     {
         "name": "Phase4 F2: in-ViT MMAdapter frozen (no LoRA)",
         "phase": "Plan6 Phase 4 F2",
-        "ckpt": "/root/autodl-tmp/runs/plan6_phase4_frozen_vaihingen_20260519_155635/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history/eval JSON，可从训练脚本复现。",
         "init_from": "/root/autodl-tmp/runs/plan6_phase4_lora_vaihingen_20260519_124902/best_model.pt",
         "lineage_type": "formal_ablation",
         "comparison_role": "Frozen vs LoRA. Isolates parameter strategy contribution.",
@@ -468,7 +473,8 @@ REGISTRY = [
     {
         "name": "Phase4 F3: in-ViT MMAdapter frozen + DSM edge/slope prompt",
         "phase": "Plan6 Phase 4 F3",
-        "ckpt": "/root/autodl-tmp/runs/plan6_phase4_prompt_vaihingen_20260519_191703/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history/eval JSON，可从训练脚本复现。",
         "init_from": "/root/autodl-tmp/runs/plan6_phase4_frozen_vaihingen_20260519_155635/best_model.pt",
         "lineage_type": "formal_ablation",
         "comparison_role": "+prompt vs frozen. Isolates structural prior contribution.",
@@ -488,7 +494,8 @@ REGISTRY = [
     {
         "name": "Phase4 F0'+L2: Frozen SAM3 + 4xSEFusion + LoRA(attn-only)",
         "phase": "Plan6 Phase 4 F0'+L2",
-        "ckpt": "/root/autodl-tmp/runs/plan6_phase4_f0p_l2_vaihingen_20260520_192526/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history/eval JSON，可从训练脚本复现。",
         "init_from": "/root/autodl-tmp/runs/plan6_phase4_f0p_lora_vaihingen_20260520_093831/best_model.pt",
         "lineage_type": "formal_ablation",
         "comparison_role": "LoRA attn-only vs attn+MLP; matches MFNet MMLoRA injection position",
@@ -506,7 +513,8 @@ REGISTRY = [
     {
         "name": "Phase4 F0'+M: SAM3 + MMLoRA (attn LoRA + per-block λ mixing, 4 global blocks)",
         "phase": "Plan6 Phase 4 F0'+M",
-        "ckpt": "/root/autodl-tmp/runs/plan6_phase4_f0p_m_vaihingen_20260520_223449/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history/eval JSON，可从训练脚本复现。",
         "init_from": "/root/autodl-tmp/runs/plan6_phase4_f0p_l2_vaihingen_20260520_192526/best_model.pt",
         "lineage_type": "formal_ablation",
         "comparison_role": "MMLoRA dual-branch λ mixing vs plain LoRA; tests encoder-internal cross-modal fusion",
@@ -527,7 +535,8 @@ REGISTRY = [
     {
         "name": "Phase4 U1: Frozen SAM3 + 4xSEFusion, unfreeze blocks 24-31 attn",
         "phase": "Plan6 Phase 4 U1",
-        "ckpt": "/root/autodl-tmp/runs/plan6_phase4_u24_31_vaihingen_20260525_211145/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history/eval JSON，可从训练脚本复现。",
         "init_from": "/root/autodl-tmp/runs/plan6_phase4_f0p_frozen_vaihingen_20260519_222933/best_model.pt",
         "lineage_type": "formal_ablation",
         "comparison_role": "Clean test of MMA deep-unfreeze hypothesis on SAM3 (fixed windows, normal lr)",
@@ -545,7 +554,8 @@ REGISTRY = [
     {
         "name": "Phase4 U2: Frozen SAM3 + 4xSEFusion, unfreeze blocks 24-31 attn+MLP",
         "phase": "Plan6 Phase 4 U2",
-        "ckpt": "/root/autodl-tmp/runs/plan6_phase4_u24_31_mlp_vaihingen_20260525_232410/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history/eval JSON，可从训练脚本复现。",
         "init_from": "/root/autodl-tmp/runs/plan6_phase4_f0p_frozen_vaihingen_20260519_222933/best_model.pt",
         "lineage_type": "formal_ablation",
         "comparison_role": "Unfreeze attn+MLP vs attn-only (U1)",
@@ -563,7 +573,8 @@ REGISTRY = [
     {
         "name": "Phase4 U3: Frozen SAM3 + 4xSEFusion, unfreeze blocks 28-31 attn (Phase 1.6 repl)",
         "phase": "Plan6 Phase 4 U3",
-        "ckpt": "/root/autodl-tmp/runs/plan6_phase4_u28_31_vaihingen_20260526_005659/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history/eval JSON，可从训练脚本复现。",
         "init_from": "/root/autodl-tmp/runs/plan6_phase4_f0p_frozen_vaihingen_20260519_222933/best_model.pt",
         "lineage_type": "formal_ablation",
         "comparison_role": "Phase 1.6 replication with fixed windows + normal lr",
@@ -584,7 +595,8 @@ REGISTRY = [
     {
         "name": "Plan9 P9-A: F0'+L + 3ch DSM (DSM+edge+slope) input enrichment",
         "phase": "Plan9 Phase A",
-        "ckpt": "/root/autodl-tmp/runs/plan9_p9A_vaihingen_20260526_143908/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history，可从训练脚本复现。",
         "init_from": "/root/autodl-tmp/runs/plan6_phase4_f0p_lora_vaihingen_20260520_093831/best_model.pt",
         "lineage_type": "formal_ablation",
         "comparison_role": "LoRA + input-level edge/slope prompt vs LoRA-only (F0'+L). Tests if prompt works without adapter gate.",
@@ -604,7 +616,8 @@ REGISTRY = [
     {
         "name": "Plan10 P10-A: Plan7-A on Potsdam (from scratch, 20 epoch)",
         "phase": "Plan10 Phase A",
-        "ckpt": "/root/autodl-tmp/runs/plan7_phase_a_dsm_prompt_potsdam_20260526_210230/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history/metrics，可从训练脚本复现。",
         "init_from": "from scratch (seed default)",
         "lineage_type": "from scratch",
         "comparison_role": "Potsdam cross-dataset: adapter+prompt architecture on larger dataset",
@@ -621,7 +634,8 @@ REGISTRY = [
     {
         "name": "Plan10 P10-B: F0 on Potsdam (shared encoder + LoRA + 1xSEF, 20 epoch)",
         "phase": "Plan10 Phase B",
-        "ckpt": "/root/autodl-tmp/runs/plan6_phase4_f0_potsdam_20260527_092853/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history，可从训练脚本复现。",
         "init_from": "from scratch (seed=42)",
         "lineage_type": "from scratch",
         "comparison_role": "Potsdam cross-dataset: LoRA+shared encoder on larger dataset",
@@ -638,7 +652,8 @@ REGISTRY = [
     {
         "name": "Plan10 P10-C: F0'+L on Potsdam (frozen+LoRA+4xSEF, 20 epoch)",
         "phase": "Plan10 Phase C",
-        "ckpt": "/root/autodl-tmp/runs/plan6_phase4_f0p_lora_potsdam_20260528_105807/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history/eval JSON，可从训练脚本复现。",
         "init_from": "/root/autodl-tmp/runs/plan6_phase4_f0p_frozen_potsdam_20260528_035103/best_model.pt",
         "lineage_type": "continuation",
         "comparison_role": "Potsdam cross-dataset: frozen+LoRA+4xSEF on larger dataset",
@@ -657,7 +672,8 @@ REGISTRY = [
     {
         "name": "Phase4 F0': Frozen SAM3 + 4xSEFusion (DFM) + MFNetDecoder",
         "phase": "Plan6 Phase 4 F0'",
-        "ckpt": "/root/autodl-tmp/runs/plan6_phase4_f0p_frozen_vaihingen_20260519_222933/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history/eval JSON，可从训练脚本复现。",
         "init_from": "from scratch (seed=42)",
         "lineage_type": "from scratch",
         "comparison_role": "Strict MFNet \"Without Adapter\" equivalent on SAM3. Clean frozen baseline.",
@@ -675,7 +691,8 @@ REGISTRY = [
     {
         "name": "Phase4 F0'+L: Frozen SAM3 + 4xSEFusion + LoRA (rank=8)",
         "phase": "Plan6 Phase 4 F0'+L",
-        "ckpt": "/root/autodl-tmp/runs/plan6_phase4_f0p_lora_vaihingen_20260520_093831/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history/eval JSON，可从训练脚本复现。",
         "init_from": "/root/autodl-tmp/runs/plan6_phase4_f0p_frozen_vaihingen_20260519_222933/best_model.pt",
         "lineage_type": "formal_ablation",
         "comparison_role": "LoRA's net contribution on clean frozen SAM3 baseline (+1.95pp)",
@@ -697,7 +714,8 @@ REGISTRY = [
     {
         "name": "Plan7-A: MMAdapter + DSM edge/slope prompt",
         "phase": "Plan7 Phase A",
-        "ckpt": "/root/autodl-tmp/runs/plan7_phase_a_dsm_prompt_vaihingen_20260510_225309/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history/metrics/eval JSON，可从训练脚本复现。",
         "init_from": "/root/autodl-tmp/runs/plan7_phase_a_dsm_prompt_vaihingen_20260510_215044/best_model.pt",
         "parent_of_parent": "/root/autodl-tmp/runs/plan6_phase1_mm_adapter_vaihingen_20260509_202720/best_model.pt",
         "lineage_type": "formal_ablation",
@@ -725,8 +743,8 @@ REGISTRY = [
         },
         "train_best_miou": 76.87,
         "train_best_epoch": 3,
-        "protocol": "256² sliding window, stride=128, per-patch argmax",
-        "note": "Actually init_from 215044 (2-epoch Plan7-A short run), whose parent is Plan6 Phase1. Strict global eval: 77.14 mIoU (per-patch argmax). Soft-logit eval: 77.55. Current Plan7 best; B1/B3 did not improve over edge+slope."
+        "protocol": "256² sliding window, stride=128, global confusion matrix (soft-logit accumulation)",
+        "note": "Init from 215044 (2-epoch Plan7-A short run, dir deleted), parent is Plan6 Phase1. Global eval 77.14 is soft-logit accumulation (per-patch argmax = 76.27). D1 single-scale soft-logit eval = 77.55 (different eval script, yields ~0.41pp higher than original eval). Current Plan7 best; B1/B3 did not improve over edge+slope."
     },
     {
         "name": "Plan7-B1: DSM slope-only prompt",
@@ -923,17 +941,19 @@ REGISTRY = [
         "train_best_miou": 76.20,
         "note": "Ablation: softmax 2-way gate. best=76.20% vs A3 sigmoid 76.16%. +0.04pp, no difference."
     },
-]
 
-#     # Plan8 — 增强 In-ViT RGB↔DSM 交互 (RS-SAM3-p8)
     # ═══════════════════════════════════════════════════════════
+    # Plan8 — 增强 In-ViT RGB↔DSM 交互 (RS-SAM3-p8)
     # Result: NEGATIVE. Both cross-attn and attn bias provide no gain over gate-only.
+    # ═══════════════════════════════════════════════════════════
     {
         "name": "Plan8-CTRL: gate-only (Plan7-A arch, trained from scratch)",
         "phase": "Plan8 CTRL",
-        "ckpt": "/root/autodl-tmp/runs/plan8_ctrl_vaihingen_20260516_081446/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history/metrics/eval JSON，可从训练脚本复现。",
         "eval_oa": 86.33, "eval_miou": 74.77,
         "eval_per_class_iou": {"road": 76.34, "building": 84.53, "grass": 62.47, "tree": 76.75, "car": 73.78},
+        "eval_per_class_recall": {"road": 88.56, "building": 89.82, "grass": 81.82, "tree": 83.20, "car": 79.09},
         "train_best_miou": 75.19,
         "protocol": "256² sliding window, soft-logit overlap averaging",
         "init_from": None,
@@ -943,9 +963,11 @@ REGISTRY = [
     {
         "name": "Plan8-CA-A: gate + unidirectional DSM→RGB cross-attention",
         "phase": "Plan8 Chain 1 Phase A",
-        "ckpt": "/root/autodl-tmp/runs/plan8_ca_a_vaihingen_20260516_131457/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history/metrics/eval JSON，可从训练脚本复现。",
         "eval_oa": 86.21, "eval_miou": 74.52,
         "eval_per_class_iou": {"road": 76.13, "building": 84.80, "grass": 61.47, "tree": 76.62, "car": 73.57},
+        "eval_per_class_recall": {"road": 89.22, "building": 89.88, "grass": 79.48, "tree": 83.57, "car": 78.86},
         "train_best_miou": 75.36,
         "protocol": "256² sliding window, soft-logit overlap averaging",
         "init_from": None,
@@ -956,9 +978,11 @@ REGISTRY = [
     {
         "name": "Plan8-AB-A: gate + DSM elevation attention bias",
         "phase": "Plan8 Chain 2 Phase A",
-        "ckpt": "/root/autodl-tmp/runs/plan8_ab_a_vaihingen_20260516_144112/best_model.pt",
+        "ckpt": None,
+        "deleted_note": "2026-06-07 清理磁盘时删除本地 best_model.pt；run 目录仍保留 config/history/metrics/eval JSON，可从训练脚本复现。",
         "eval_oa": 86.22, "eval_miou": 74.12,
         "eval_per_class_iou": {"road": 75.67, "building": 83.05, "grass": 63.13, "tree": 77.49, "car": 71.28},
+        "eval_per_class_recall": {"road": 90.14, "building": 88.50, "grass": 78.23, "tree": 85.23, "car": 75.79},
         "train_best_miou": 74.68,
         "protocol": "256² sliding window, soft-logit overlap averaging",
         "init_from": None,
@@ -966,9 +990,218 @@ REGISTRY = [
         "comparison_role": "vs CTRL: attn bias effect",
         "note": "-0.65pp vs CTRL. DSM attn bias degrades performance. Chain 2 stopped."
     },
-]═════════════════════════════════════════════════════════════
+
+    # ═══════════════════════════════════════════════════════════
+    # Plan11 — 植被区分优化 (RS-SAM3-p11)
+    # ═══════════════════════════════════════════════════════════
+    # Result: nDSM +1.95pp vs from-scratch Plan8-CTRL. veg_boundary_weight consistently negative.
+    {
+        "name": "P11-A: min-max + veg boundary weight (from Plan7-A init)",
+        "phase": "Plan11 Phase A",
+        "ckpt": "/root/autodl-tmp/runs/plan11_a_veg_boundary_loss_vaihingen_20260604_202157/best_model.pt",
+        "init_from": "/root/autodl-tmp/runs/plan7_phase_a_dsm_prompt_vaihingen_20260510_225309/best_model.pt",
+        "lineage_type": "formal_ablation",
+        "comparison_role": "veg_boundary_weight effect on min-max DSM; baseline is Plan7-A (77.14)",
+        "source": "Personal-Project/RS-SAM3-p11/phase_a_veg_boundary_loss",
+        "class": "Plan7PromptMFNet", "module": "train",
+        "kwargs": {"adapter_bottleneck": 32, "num_classes": 5, "veg_boundary_weight": 3.0},
+        "use_dsm": True,
+        "eval_oa": 87.16, "eval_miou": 76.46,
+        "eval_per_class_iou": {"road": 76.84, "building": 86.42, "grass": 63.64, "tree": 77.72, "car": 77.67},
+        "eval_per_class_recall": {"road": 89.90, "building": 91.58, "grass": 78.43, "tree": 84.99, "car": 86.51},
+        "train_best_miou": 76.43, "train_best_epoch": 3,
+        "protocol": "256² sliding window, per-patch argmax",
+        "note": "veg_boundary_weight=3.0 on Plan7-A min-max DSM. -0.68pp vs Plan7-A. Vegetation boundary weight is harmful."
+    },
+    {
+        "name": "P11-B: nDSM baseline (from scratch, seed=42)",
+        "phase": "Plan11 Phase B",
+        "ckpt": "/root/autodl-tmp/runs/plan11_b_ndsm_vaihingen_20260604_225146/best_model.pt",
+        "init_from": None,
+        "lineage_type": "from scratch",
+        "comparison_role": "nDSM effect vs Plan8-CTRL (same arch, same seed, min-max DSM, 74.77)",
+        "source": "Personal-Project/RS-SAM3-p11/phase_b_ndsm",
+        "class": "Plan7PromptMFNet", "module": "train",
+        "kwargs": {"adapter_bottleneck": 32, "num_classes": 5, "seed": 42},
+        "use_dsm": True,
+        "eval_oa": 87.42, "eval_miou": 76.72,
+        "eval_per_class_iou": {"road": 76.84, "building": 86.47, "grass": 63.70, "tree": 78.06, "car": 78.51},
+        "eval_per_class_recall": {"road": 91.25, "building": 90.80, "grass": 77.42, "tree": 85.38, "car": 88.66},
+        "train_best_miou": 76.71, "train_best_epoch": 9,
+        "protocol": "256² sliding window, per-patch argmax, nDSM normalization",
+        "note": "nDSM + global normalization. +1.95pp vs Plan8-CTRL (74.77). Improvement from road (+1.35pp recall) and car (+2.15pp), NOT from vegetation confusion reduction."
+    },
+    {
+        "name": "P11-C: nDSM + veg boundary weight (from scratch, seed=42)",
+        "phase": "Plan11 Phase C",
+        "ckpt": "/root/autodl-tmp/runs/plan11_c_combined_vaihingen_20260605_012150/best_model.pt",
+        "init_from": None,
+        "lineage_type": "formal_ablation",
+        "comparison_role": "veg_boundary_weight effect on nDSM; baseline is P11-B (76.72)",
+        "source": "Personal-Project/RS-SAM3-p11/phase_c_combined",
+        "class": "Plan7PromptMFNet", "module": "train",
+        "kwargs": {"adapter_bottleneck": 32, "num_classes": 5, "veg_boundary_weight": 3.0, "seed": 42},
+        "use_dsm": True,
+        "eval_oa": 87.14, "eval_miou": 76.51,
+        "eval_per_class_iou": {"road": 77.11, "building": 86.83, "grass": 62.84, "tree": 77.46, "car": 78.30},
+        "eval_per_class_recall": {"road": 91.06, "building": 91.28, "grass": 77.00, "tree": 84.95, "car": 87.74},
+        "train_best_miou": 76.40, "train_best_epoch": 15,
+        "protocol": "256² sliding window, per-patch argmax, nDSM normalization",
+        "note": "veg_boundary_weight on nDSM. -0.21pp vs P11-B. veg_boundary_weight consistently harmful across both DSM normalizations."
+    },
+    {
+        "name": "P11-D: nDSM + photometric augmentation (from scratch, seed=42)",
+        "phase": "Plan11 Phase D",
+        "ckpt": "/root/autodl-tmp/runs/plan11_d_aug_vaihingen_20260605_035155/best_model.pt",
+        "init_from": None,
+        "lineage_type": "formal_ablation",
+        "comparison_role": "augmentation effect on nDSM; baseline is P11-B (76.72)",
+        "source": "Personal-Project/RS-SAM3-p11/phase_d_augmentation",
+        "class": "Plan7PromptMFNet", "module": "train",
+        "kwargs": {"adapter_bottleneck": 32, "num_classes": 5, "seed": 42,
+                   "aug_color_jitter": 0.2, "aug_blur_prob": 0.3},
+        "use_dsm": True,
+        "eval_oa": 87.30, "eval_miou": 76.56,
+        "eval_per_class_iou": {"road": 77.51, "building": 87.01, "grass": 62.93, "tree": 77.61, "car": 77.72},
+        "eval_per_class_recall": {"road": 90.80, "building": 92.05, "grass": 76.53, "tree": 85.33, "car": 86.78},
+        "train_best_miou": 76.62, "train_best_epoch": 11,
+        "protocol": "256² sliding window, per-patch argmax, nDSM normalization",
+        "note": "ColorJitter + GaussianBlur on nDSM. -0.16pp vs P11-B (noise-level). Photometric augmentation does not help on 12-tile Vaihingen."
+    },
+    {
+        "name": "P11-E: nDSM + adapter ablation (bottleneck=8, 4 global blocks only, seed=42)",
+        "phase": "Plan11 Phase E",
+        "ckpt": "/root/autodl-tmp/runs/plan11_e_adapter_vaihingen_20260605_062329/best_model.pt",
+        "init_from": None,
+        "lineage_type": "formal_ablation",
+        "comparison_role": "adapter parameter count effect; baseline is P11-B (76.72, 32 blocks, bn=32, ~10.65M params)",
+        "source": "Personal-Project/RS-SAM3-p11/phase_e_adapter_ablation",
+        "class": "Plan7PromptMFNet", "module": "train",
+        "kwargs": {"adapter_bottleneck": 8, "num_classes": 5, "seed": 42, "adapter_placement": "global"},
+        "use_dsm": True,
+        "eval_oa": None, "eval_miou": 72.61,
+        "eval_per_class_iou": {"road": 73.53, "building": 83.51, "grass": 58.92, "tree": 74.98, "car": 72.09},
+        "eval_per_class_recall": {"road": 86.82, "building": 90.87, "grass": 74.75, "tree": 83.16, "car": 82.23},
+        "train_best_miou": 75.75, "train_best_epoch": 15,
+        "protocol": "256² sliding window, per-patch argmax, nDSM normalization",
+        "note": "Adapter reduced to 4 global blocks [7,15,23,31] with bottleneck=8 (~0.33M params). -4.11pp vs P11-B. Full 32-block injection is essential."
+    },
+
+    # Plan13 — 多层级 ViT 特征 + 纹理分支 (RS-SAM3-p13)
+    # ============================================================
+    # 最终结论: 全部失败。多层级 ViT -0.47pp, 纹理分支 +0.30pp (噪声级)。
+    # 纹理分支是零和重排序工具, 非净提升。详见 plan13.md。
+    {
+        "name": "P13-A: Multi-level ViT feature pyramid (from scratch, seed=42, nDSM)",
+        "plan": "plan13",
+        "phase": "phase_a_multilevel_vit",
+        "ckpt": "/root/autodl-tmp/runs/plan13_a_multilevel_vit_vaihingen_20260605_164138/best_model.pt",
+        "init_from": None,
+        "lineage_type": "from_scratch",
+        "comparison_role": "multi-level ViT feature effect; baseline is P11-B",
+        "source": "Personal-Project/RS-SAM3-p13/phase_a_multilevel_vit",
+        "architecture": "Plan13MultiLevelMFNet: SAM3 ViTDet (frozen) + in-ViT MMAdapter + MultiLevelPyramid (block7->1/4, block15->1/8, block23->1/16, block31->1/32) + MFNetDecoder",
+        "use_dsm": True,
+        "eval_oa": 87.18, "eval_miou": 76.42,
+        "eval_per_class_iou": {"road": 76.93, "building": 86.43, "grass": 63.55, "tree": 77.72, "car": 77.46},
+        "eval_per_class_recall": {"road": 90.86, "building": 91.13, "grass": 77.27, "tree": 85.29, "car": 87.98},
+        "train_best_miou": 76.47, "train_best_epoch": 15,
+        "protocol": "256² sliding window, per-patch argmax, nDSM",
+        "eval_mfnet_oa": 92.05, "eval_mfnet_miou": 84.84,
+        "eval_mfnet_per_class_recall": {"roads": 94.0, "buildings": 94.9, "low veg.": 82.6, "trees": 92.4, "cars": 98.2},
+        "protocol_mfnet": "256x256 stride=32, no edge crop, eroded labels, soft-logit accumulation, global CM",
+        "note": "-0.30pp (old) / -0.47pp (MFNet). ViT 14x14 patch bottleneck confirmed. Formal ablation."
+    },
+    {
+        "name": "P13-C: RGB texture branch + vegetation refinement head (from P11-B init, nDSM)",
+        "plan": "plan13",
+        "phase": "phase_c_texture_branch",
+        "ckpt": "/root/autodl-tmp/runs/plan13_c_texture_branch_vaihingen_20260605_215434/best_model.pt",
+        "init_from": "/root/autodl-tmp/runs/plan11_b_ndsm_vaihingen_20260604_225146/best_model.pt",
+        "lineage_type": "continuation",
+        "comparison_role": "external RGB texture effect; baseline is P11-B",
+        "source": "Personal-Project/RS-SAM3-p13/phase_c_texture_branch",
+        "architecture": "Plan13CTextureMFNet: P11-B + TextureStem + VegRefinementHead (2ch tree/grass delta)",
+        "use_dsm": True,
+        "eval_oa": 87.36, "eval_miou": 76.70,
+        "eval_per_class_iou": {"road": 77.06, "building": 86.28, "grass": 64.17, "tree": 78.30, "car": 77.69},
+        "eval_per_class_recall": {"road": 90.90, "building": 91.32, "grass": 77.13, "tree": 85.84, "car": 88.45},
+        "train_best_miou": 76.61, "train_best_epoch": 10,
+        "protocol": "256² sliding window, per-patch argmax, nDSM",
+        "eval_mfnet_oa": 92.35, "eval_mfnet_miou": 85.55,
+        "eval_mfnet_per_class_recall": {"roads": 94.0, "buildings": 95.5, "low veg.": 82.4, "trees": 93.1, "cars": 97.9},
+        "protocol_mfnet": "256x256 stride=32, no edge crop, eroded labels, soft-logit accumulation, global CM",
+        "note": "-0.02pp (old) / +0.24pp (MFNet). Tree recall +0.6pp but grass->building +15K. Texture branch shows directional signal but net effect is noise-level tradeoff."
+    },
+    {
+        "name": "P13-E: Gated vegetation delta + building suppression (from P13-C init, nDSM)",
+        "plan": "plan13",
+        "phase": "phase_e_building_suppression",
+        "ckpt": "/root/autodl-tmp/runs/plan13_e_building_suppression_vaihingen_20260605_232903/best_model.pt",
+        "init_from": "/root/autodl-tmp/runs/plan13_c_texture_branch_vaihingen_20260605_215434/best_model.pt",
+        "lineage_type": "continuation",
+        "comparison_role": "shared gate building suppression; baseline is P13-C, reference P11-B",
+        "source": "Personal-Project/RS-SAM3-p13/phase_e_building_suppression",
+        "architecture": "Plan13EGatedMFNet: P13-C + single-channel veg confidence gate (sigmoid) to suppress veg predictions on building pixels",
+        "use_dsm": True,
+        "eval_oa": 87.14, "eval_miou": 76.54,
+        "eval_per_class_iou": {"road": 76.56, "building": 85.98, "grass": 64.04, "tree": 78.05, "car": 78.08},
+        "eval_per_class_recall": {"road": 91.55, "building": 90.59, "grass": 77.77, "tree": 84.68, "car": 88.12},
+        "train_best_miou": 76.58, "train_best_epoch": 3,
+        "protocol": "256² sliding window, per-patch argmax, nDSM",
+        "eval_mfnet_oa": 92.28, "eval_mfnet_miou": 85.53,
+        "eval_mfnet_per_class_recall": {"roads": 94.5, "buildings": 95.1, "low veg.": 82.8, "trees": 92.4, "cars": 97.9},
+        "protocol_mfnet": "256x256 stride=32, no edge crop, eroded labels, soft-logit accumulation, global CM",
+        "note": "Shared gate fixes grass->building but overshoots: suppresses ALL veg (tree too). -0.18pp (old) / +0.22pp (MFNet). Grass recall best (82.8%) but tree recall worst (92.4%). Gate mechanism works but needs per-class separation."
+    },
+    {
+        "name": "P13-F: Per-class vegetation gates + cross-suppression (from P13-C init, nDSM)",
+        "plan": "plan13",
+        "phase": "phase_f_perclass_gate",
+        "ckpt": "/root/autodl-tmp/runs/plan13_f_perclass_gate_vaihingen_20260606_130419/best_model.pt",
+        "init_from": "/root/autodl-tmp/runs/plan13_c_texture_branch_vaihingen_20260605_215434/best_model.pt",
+        "lineage_type": "continuation",
+        "comparison_role": "per-class gate + cross-suppression; baseline is P13-E, reference P11-B",
+        "source": "Personal-Project/RS-SAM3-p13/phase_f_perclass_gate",
+        "architecture": "Plan13FPerClassMFNet: P13-E with 2 separate gates (tree_gate + grass_gate) + cross-suppression loss",
+        "use_dsm": True,
+        "eval_oa": 87.29, "eval_miou": 76.64,
+        "eval_per_class_iou": {"road": 76.73, "building": 86.18, "grass": 64.04, "tree": 78.38, "car": 77.87},
+        "eval_per_class_recall": {"road": 90.03, "building": 91.21, "grass": 76.82, "tree": 86.86, "car": 87.92},
+        "train_best_miou": 76.60, "train_best_epoch": 8,
+        "protocol": "256² sliding window, per-patch argmax, nDSM",
+        "eval_mfnet_oa": 92.33, "eval_mfnet_miou": 85.61,
+        "eval_mfnet_per_class_recall": {"roads": 93.4, "buildings": 95.5, "low veg.": 82.2, "trees": 93.8, "cars": 97.6},
+        "protocol_mfnet": "256x256 stride=32, no edge crop, eroded labels, soft-logit accumulation, global CM",
+        "note": "Per-class gate fixes P13-E overshoot: tree recall 86.86% (all-time best), tree->grass 5.2% (best). But road recall -0.95pp offsets gains. -0.08pp (old) / +0.30pp (MFNet). Best Plan13 model but improvement within noise range. Zero-sum tradeoff confirmed across all texture variants."
+    },
+    {
+        "name": "P13-G5: Strict vegetation-only multiscale texture + nDSM roughness + DiceCE (from P11-B init, nDSM)",
+        "plan": "plan13",
+        "phase": "phase_g_strict_veg_texture",
+        "ckpt": "/root/autodl-tmp/runs/plan13_g_g5_pred_rgb_ndsmrough_dicece_vaihingen_20260606_232552/best_model.pt",
+        "init_from": "/root/autodl-tmp/runs/plan11_b_ndsm_vaihingen_20260604_225146/best_model.pt",
+        "lineage_type": "continuation",
+        "comparison_role": "strict veg-only multiscale texture effect; baseline is P11-B (76.72%)",
+        "source": "Personal-Project/RS-SAM3-p13/phase_g_strict_veg_texture",
+        "architecture": "Plan13GStrictVegTexture: P11-B frozen + MultiScaleTextureStem (3x3/7x7/11x11) + NDSMRoughnessStem + VegetationBinaryHead (2ch grass/tree residual), strict veg mask gating",
+        "use_dsm": True,
+        "eval_oa": 87.74, "eval_miou": 77.20,
+        "eval_per_class_iou": {"road": 77.10, "building": 88.21, "grass": 64.26, "tree": 78.35, "car": 78.09},
+        "eval_per_class_recall": {"road": 91.77, "building": 91.50, "grass": 75.16, "tree": 87.46, "car": 90.19},
+        "train_best_miou": 78.90, "train_best_epoch": 10,
+        "protocol": "256² sliding window, stride=128, soft-logit accumulation, nDSM",
+        "eval_mfnet_oa": 92.30, "eval_mfnet_miou": 85.30,
+        "eval_mfnet_per_class_recall": {"roads": 94.5, "buildings": 95.3, "low veg.": 81.3, "trees": 93.3, "cars": 98.1},
+        "protocol_mfnet": "256x256 stride=32, no edge crop, eroded labels, soft-logit accumulation, global CM",
+        "key_confusion": {"grass_to_tree": 429430, "tree_to_grass": 346849, "veg_sum": 776279},
+        "note": "+0.48pp vs P11-B (76.72→77.20). Plan13 唯一正向结果。Strict veg mask: 非植被 logits bit-identical to P11-B (invariant_errors=0)。Building +1.74pp 来自 refinement head 压低 veg logit 后翻转回 building 的边界像素。MFNet 协议下无改善 (85.30 vs P11-B 85.31) 因为改善集中在边界(被 eroded labels 排除)。P11-B 50 epoch 续训确认已收敛(平台期), 排除优化红利。待 from-scratch 验证确认架构贡献。"
+    },
+]
+
+# ═══════════════════════════════════════════════════════════
 # MFNet Paper Baselines (reference, not our checkpoints)
-# ═════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════
 MFNET_BASELINES = {
     # NOTE: MFNet paper "per-class OA" = TP/(TP+FN) = per-class Recall.
     # These values are comparable to our eval_per_class_recall, NOT eval_per_class_oa.
